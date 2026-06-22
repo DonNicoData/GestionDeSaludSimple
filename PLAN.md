@@ -278,18 +278,32 @@ Evaluación: ingesta del usuario vs TMB ±300 kcal = normal.
 
 ### 7.3 Formulario – Métricas
 
+> **Política (revisada en fix post-Fase 4):** las 7 métricas son **requeridas**. Los valores los trae el profesional de su equipo de medición (báscula inteligente, examen de composición corporal). No se contempla el caso "no medido" porque generaba la sensación de flujo incompleto al llegar a la pantalla de resultados con tarjetas vacías.
+
 | Campo | Label + ayuda |
 |---|---|
 | Título sección | *"Ahora, las mediciones de hoy"* |
-| Subtítulo | *"Si no tienes algún valor exacto, no te preocupes. Usa el que tengas a mano."* |
+| Subtítulo | *"Anota los 7 valores que te dio tu equipo de medición."* |
 | Peso | *"Tu peso actual"* / *"En kilogramos, lo más preciso posible"* |
-| IMC | *"Tu IMC"* / *"Si no lo tienes calculado, lo encontramos por ti al ver resultados"* |
-| % Grasa | *"Porcentaje de grasa corporal"* / *"Lo suelen medir básculas inteligentes. Si no lo tienes, dalo en 0"* |
-| % Músculo | *"Porcentaje de masa muscular"* / *"Igual que la grasa, viene de tu báscula o examen"* |
+| IMC | *"Tu IMC"* / *"Lo marca tu báscula o tu app de salud. Anota el valor exacto que te da el equipo."* |
+| % Grasa | *"Porcentaje de grasa corporal"* / *"Lo marca tu báscula inteligente o tu examen de composición corporal."* |
+| % Músculo | *"Porcentaje de masa muscular"* / *"Lo marca tu báscula o tu examen de composición corporal."* |
 | Calorías | *"Calorías que consumes al día"* / *"Una estimación está bien, no tiene que ser exacta"* |
-| Edad biológica | *"Tu edad biológica"* / *"La que indica tu cuerpo, no tu DNI. Si no la conoces, déjala en 0"* |
+| Edad biológica | *"Tu edad biológica"* / *"La que indica tu cuerpo según tu último análisis. No es tu DNI."* |
 | Grasa visceral | *"Nivel de grasa visceral"* / *"Viene en tu báscula o bioimpedancia. Número entero"* |
 | Botón ver resultados | *"Ver mis resultados →"* |
+
+**Rangos de validación requeridos:**
+
+| Campo | Min | Max |
+|---|---|---|
+| Peso | 20 kg | 300 kg |
+| IMC | 10 | 60 |
+| % Grasa | 3% | 50% |
+| % Músculo | 10% | 70% |
+| Calorías | 800 kcal | 6000 kcal |
+| Edad biológica | 10 años | 100 años |
+| Grasa visceral | 1 | 30 |
 
 ### 7.4 Pantalla de resultados
 

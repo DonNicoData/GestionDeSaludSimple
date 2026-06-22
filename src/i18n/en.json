@@ -170,5 +170,77 @@
     "close": "Close",
     "back": "Back",
     "optional": "optional"
+  },
+  "results": {
+    "title": "Your results",
+    "subtitle": "We compare your values with the healthy ranges for your age and gender. Green is fine, yellow asks for attention, and red is worth checking soon.",
+    "notMeasured": "Not measured",
+    "status": {
+      "normal": "All good here",
+      "warning": "Soft attention: review this value",
+      "alert": "Important: check with a professional"
+    },
+    "summary": {
+      "allNormal": "Excellent, all your parameters are within the healthy ranges. Keep taking such good care of yourself.",
+      "fewWarnings": "Almost everything looks great. There are a couple of values worth paying attention to.",
+      "manyWarnings": "Most of your parameters are on the right track. A few would benefit from a little more attention.",
+      "hasAlerts_one": "We detected one value outside the ideal range. It's important that you review it with a health professional.",
+      "hasAlerts_other": "We detected {{count}} values outside the ideal range. It's important that you review them with a health professional.",
+      "mixed_one": "You have a mostly healthy picture, but there's one value worth reviewing soon.",
+      "mixed_other": "You have a mostly healthy picture, but there are {{count}} values worth reviewing soon."
+    },
+    "metrics": {
+      "weight": {
+        "label": "Weight",
+        "suffix": "kg",
+        "idealLabel": "Estimated ideal weight"
+      },
+      "bmi": {
+        "label": "BMI",
+        "suffix": "kg/m²",
+        "idealLabel": "Healthy range"
+      },
+      "bodyFatPct": {
+        "label": "Body fat %",
+        "suffix": "%",
+        "idealLabel": "Healthy range"
+      },
+      "muscleMassPct": {
+        "label": "Muscle mass %",
+        "suffix": "%",
+        "idealLabel": "Healthy range"
+      },
+      "calories": {
+        "label": "Calories",
+        "suffix": "kcal",
+        "idealLabel": "Estimated BMR"
+      },
+      "bioAge": {
+        "label": "Biological age",
+        "suffix": "years",
+        "idealLabel": "Expected for your age"
+      },
+      "visceralFat": {
+        "label": "Visceral fat",
+        "suffix": "level",
+        "idealLabel": "Healthy range"
+      }
+    },
+    "buttons": {
+      "save": "Save my data",
+      "back": "Back to measurements"
+    },
+    "modal": {
+      "title": "Done! Your data is safely stored",
+      "subtitleAllNormal": "Everything is within the expected ranges. Keep taking such good care of yourself.",
+      "subtitleWithWarnings": "Your data was saved. Remember to pay attention to the values marked in yellow.",
+      "subtitleWithAlerts": "Your data was saved, but we recommend reviewing the values in red with your health professional.",
+      "exportQuestion": "In which format would you like to download your record?",
+      "exportExcel": "Download Excel",
+      "exportPdf": "Download PDF",
+      "skip": "Not now, thanks",
+      "comingSoonTitle": "Coming soon",
+      "comingSoonBody": "Persistent storage and Excel/PDF export arrive in upcoming phases."
+    }
   }
 }
