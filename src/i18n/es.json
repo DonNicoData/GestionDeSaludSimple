@@ -170,5 +170,77 @@
     "close": "Cerrar",
     "back": "Volver",
     "optional": "opcional"
+  },
+  "results": {
+    "title": "Tus resultados",
+    "subtitle": "Comparamos tus valores con los rangos saludables para tu edad y género. Lo verde está bien, lo amarillo pide atención y lo rojo conviene revisarlo pronto.",
+    "notMeasured": "No medido",
+    "status": {
+      "normal": "Todo bien por aquí",
+      "warning": "Atención suave: revisa este valor",
+      "alert": "Importante: consulta con un profesional"
+    },
+    "summary": {
+      "allNormal": "Excelente, todos tus parámetros están dentro de los rangos saludables. Sigue cuidándote así de bien.",
+      "fewWarnings": "Casi todo está muy bien. Hay un par de valores a los que vale la pena prestarles atención.",
+      "manyWarnings": "La mayoría de tus parámetros están en buen camino. Algunos piden un poquito más de atención.",
+      "hasAlerts_one": "Detectamos un valor fuera del rango ideal. Es importante que lo revises con un profesional de salud.",
+      "hasAlerts_other": "Detectamos {{count}} valores fuera del rango ideal. Es importante que los revises con un profesional de salud.",
+      "mixed_one": "Tienes un panorama mayormente saludable, pero hay un valor que conviene revisar pronto.",
+      "mixed_other": "Tienes un panorama mayormente saludable, pero hay {{count}} valores que conviene revisar pronto."
+    },
+    "metrics": {
+      "weight": {
+        "label": "Peso",
+        "suffix": "kg",
+        "idealLabel": "Peso ideal estimado"
+      },
+      "bmi": {
+        "label": "IMC",
+        "suffix": "kg/m²",
+        "idealLabel": "Rango saludable"
+      },
+      "bodyFatPct": {
+        "label": "% Grasa corporal",
+        "suffix": "%",
+        "idealLabel": "Rango saludable"
+      },
+      "muscleMassPct": {
+        "label": "% Masa muscular",
+        "suffix": "%",
+        "idealLabel": "Rango saludable"
+      },
+      "calories": {
+        "label": "Calorías",
+        "suffix": "kcal",
+        "idealLabel": "TMB estimada"
+      },
+      "bioAge": {
+        "label": "Edad biológica",
+        "suffix": "años",
+        "idealLabel": "Esperado para tu edad"
+      },
+      "visceralFat": {
+        "label": "Grasa visceral",
+        "suffix": "nivel",
+        "idealLabel": "Rango saludable"
+      }
+    },
+    "buttons": {
+      "save": "Guardar mis datos",
+      "back": "Volver a las mediciones"
+    },
+    "modal": {
+      "title": "¡Listo! Tus datos están guardados de forma segura",
+      "subtitleAllNormal": "Todo está dentro de los rangos esperados. Sigue cuidándote así de bien.",
+      "subtitleWithWarnings": "Tus datos se guardaron. Recuerda prestar atención a los valores marcados en amarillo.",
+      "subtitleWithAlerts": "Tus datos se guardaron, pero te recomendamos consultar los valores en rojo con tu profesional de salud.",
+      "exportQuestion": "¿En qué formato te gustaría descargar tu registro?",
+      "exportExcel": "Descargar Excel",
+      "exportPdf": "Descargar PDF",
+      "skip": "Ahora no, gracias",
+      "comingSoonTitle": "Pronto disponible",
+      "comingSoonBody": "El guardado persistente y la exportación a Excel/PDF llegan en próximas fases."
+    }
   }
 }

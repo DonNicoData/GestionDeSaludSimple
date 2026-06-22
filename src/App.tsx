@@ -3,20 +3,30 @@ import { Header } from '@/components/layout/Header'
 import { HomePage } from '@/pages/HomePage'
 import { FormPage } from '@/pages/FormPage'
 import { MetricsPage } from '@/pages/MetricsPage'
+import { ResultsPage } from '@/pages/ResultsPage'
 import { clearAllDrafts, hasAnyDraft } from '@/hooks/useFormDraft'
+import type { BasicDataOutput, MetricsOutput } from '@/lib/validation'
 
-type Page = 'home' | 'form' | 'metrics'
+type Page = 'home' | 'form' | 'metrics' | 'results'
+
+interface BasicDataState extends BasicDataOutput {
+  age: number
+  fullName: string
+}
 
 function App() {
   const [page, setPage] = useState<Page>('home')
   const [hasDraft, setHasDraft] = useState<boolean>(() => hasAnyDraft())
+  const [basicData, setBasicData] = useState<BasicDataState | null>(null)
+  const [metrics, setMetrics] = useState<MetricsOutput | null>(null)
 
   const navigate = useCallback(
     (next: Page) => {
-      // Limpiar borradores al volver al Home (regla del usuario)
       if (next === 'home') {
         clearAllDrafts()
         setHasDraft(false)
+        setBasicData(null)
+        setMetrics(null)
       }
       setPage(next)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -43,20 +53,23 @@ function App() {
     setHasDraft(false)
   }, [])
 
-  const handleBasicDataSubmit = useCallback(() => {
-    // El borrador persiste automáticamente al submit (Form ya lo guardó).
-    // Solo necesitamos avanzar a la siguiente pantalla.
-    navigate('metrics')
-  }, [navigate])
+  const handleBasicDataSubmit = useCallback(
+    (data: BasicDataState) => {
+      setBasicData(data)
+      navigate('metrics')
+    },
+    [navigate],
+  )
 
-  const handleMetricsSubmit = useCallback(() => {
-    // Placeholder para Fase 5/6: aquí se guardará el registro en la DB.
-    // Por ahora solo informamos al usuario y limpiamos borradores.
-    clearAllDrafts()
-    setHasDraft(false)
-    window.alert(
-      'Métricas registradas. Resultados y guardado persistente llegan en próximas fases.',
-    )
+  const handleMetricsSubmit = useCallback(
+    (data: MetricsOutput) => {
+      setMetrics(data)
+      navigate('results')
+    },
+    [navigate],
+  )
+
+  const handleResultsConfirm = useCallback(() => {
     navigate('home')
   }, [navigate])
 
@@ -81,6 +94,25 @@ function App() {
           <MetricsPage
             onBack={() => navigate('form')}
             onContinue={handleMetricsSubmit}
+          />
+        )}
+        {page === 'results' && basicData && metrics && (
+          <ResultsPage
+            client={{
+              id: 0,
+              firstName: basicData.firstName,
+              lastName1: basicData.lastName1,
+              lastName2: basicData.lastName2,
+              birthDate: basicData.birthDate,
+              age: basicData.age,
+              gender: basicData.gender,
+              heightCm: basicData.heightCm,
+              wristContexture: basicData.wristContexture,
+              createdAt: new Date(),
+            }}
+            record={metrics}
+            onBack={() => navigate('metrics')}
+            onConfirmSave={handleResultsConfirm}
           />
         )}
       </main>

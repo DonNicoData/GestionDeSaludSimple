@@ -10,11 +10,11 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.2.0-fase2
+**Estado al cierre de este hito:** v0.4.0-fase4
 
-**Última fase completada:** ✅ Fase 2 — Formulario de datos básicos + persistencia de borradores
+**Última fase completada:** ✅ Fase 4 — Lógica de evaluación con rangos médicos + Pantalla de Resultados con semáforo 🟢🟡🔴
 
-**Próxima fase por hacer:** ⏭️ Fase 4 — Lógica de evaluación con rangos médicos (pinta los resultados con semáforo 🟢🟡🔴)
+**Próxima fase por hacer:** ⏭️ Fase 5 — Tooltips explicativos por métrica + mensajes contextuales enriquecidos
 
 **Atajos para retomar en otro momento:**
 
@@ -22,18 +22,19 @@ Convenciones de tags:
 |---|---|
 | ¿En qué fase vamos? | *"¿Dónde quedamos?"* o *"estado del proyecto"* |
 | Continuar con la siguiente fase | *"Sigamos con la fase N"* |
-| Volver a un hito específico | *"Volvamos a `v0.2.0-fase2`"* |
+| Volver a un hito específico | *"Volvamos a `v0.4.0-fase4`"* |
 | Ver qué falta | *"¿Qué falta para terminar?"* |
 
 **Tags disponibles:**
 - `v0.0.0-plan` — planificación aprobada
 - `v0.1.0-fase1` — setup base, i18n, Home
-- `v0.2.0-fase2` — formulario datos básicos + persistencia *(ESTAMOS AQUÍ)*
+- `v0.2.0-fase2` — formulario datos básicos + persistencia
 - `v0.3.0-fase3` — formulario de métricas
+- `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo *(ESTAMOS AQUÍ)*
 
 **Para volver a este punto exacto en cualquier momento:**
 ```bash
-git checkout v0.2.0-fase2
+git checkout v0.4.0-fase4
 ```
 
 ---
@@ -220,15 +221,219 @@ bash scripts/run.sh dev   # http://localhost:5173
 
 | Fase | Descripción | Estado |
 |---|---|---|
-| **Fase 3** | Formulario de 7 métricas | ✅ **COMPLETADA** (parte de v0.3.0-fase3) |
-| **Fase 4** | Lógica de evaluación con rangos médicos por edad/género + Pantalla de Resultados con semáforo 🟢🟡🔴 | ⏭️ **SIGUIENTE** |
-| **Fase 5** | Tooltips explicativos en cada métrica + mensajes contextuales | Pendiente |
+| **Fase 3** | Formulario de 7 métricas | ✅ **COMPLETADA** (`v0.3.0-fase3`) |
+| **Fase 4** | Lógica de evaluación con rangos médicos por edad/género + Pantalla de Resultados con semáforo 🟢🟡🔴 | ✅ **COMPLETADA** (`v0.4.0-fase4`) |
+| **Fase 5** | Tooltips explicativos en cada métrica + mensajes contextuales | ⏭️ **SIGUIENTE** |
 | **Fase 6** | Persistencia con Dexie (IndexedDB) + detección de duplicados | Pendiente |
 | **Fase 7** | Exportación a Excel (.xlsx) y PDF | Pendiente |
 | **Fase 8** | Panel admin con login + CRUD + filtro por nombre | Pendiente |
 | **Fase 9** | PWA instalable + service worker | Pendiente |
 | **Fase 10** | APK Android con Capacitor | Pendiente |
 | **Fase 11** | Pulido visual y de tono | Pendiente |
+
+
+## v0.4.0-fase4 — Lógica de evaluación + Pantalla de Resultados con semáforo
+**Fecha:** Junio 2026
+**Estado:** ✅ Completa y validada
+
+### Descripción general
+
+Fase 4 entrega el **motor de evaluación médica** y la **pantalla de resultados** con semáforo 🟢🟡🔴. El evaluador es una función pura, sin React ni DOM, totalmente testeable con Vitest. La UI pinta 7 tarjetas (una por métrica) con badge de estado, valor formateado y rango ideal contextual.
+
+Las métricas no provistas (opcionales que el usuario dejó en 0) se muestran como "No medido" y **no afectan el resumen global** (no son malas ni buenas, simplemente no se midieron).
+
+El botón "Guardar" abre un modal cálido (PLAN §7.5) pero **no persiste aún**: el guardado real llega en Fase 6 con Dexie (IndexedDB). Los botones Excel/PDF están deshabilitados hasta Fase 7.
+
+### Stack adicional
+
+| Paquete | Versión | Propósito |
+|---|---|---|
+| vitest | 2.1.x | Test runner del evaluador |
+
+### Funcionalidad visible
+
+**Pantalla de resultados:**
+- Header con título y subtítulo cálidos
+- Banner de resumen global (4 variantes según combinación normal/warning/alert)
+- Grid responsive de 7 tarjetas (`grid-cols-1 sm:grid-cols-2`)
+- Cada tarjeta muestra:
+  - Etiqueta de la métrica + badge de semáforo
+  - Valor grande con sufijo (kg, %, kcal, etc.) o "No medido"
+  - Rango ideal formateado (ej. "18.5 – 24.9")
+  - Mensaje corto según estado
+- Botones: "Volver a las mediciones" (outline) + "Guardar mis datos" (primary)
+- Modal cálido post-guardado con subtítulo adaptado al estado global
+
+### Motor de evaluación (`src/lib/evaluator.ts`)
+
+Función pura: `evaluate(record, client): MetricEvaluation[]` → siempre 7 entradas.
+
+| Métrica | Reglas (PLAN §6) |
+|---|---|
+| **Peso** | vs peso ideal Lorentz × contextura. ±10% normal, ±10–20% warning, >20% alert |
+| **IMC** | OMS universal. 18.5–24.9 normal, fuera warning, ≥30 alert. Calculado desde peso/altura si el usuario lo dejó vacío |
+| **% Grasa** | Tabla por edad × género (5 brackets × 2 géneros). < lower warning, lower–upper normal, upper–acceptableUpper warning, ≥ alertLower alert |
+| **% Músculo** | Tabla por edad × género. < lower warning. Altos no se penalizan (atlético) |
+| **Calorías** | TMB Mifflin-St Jeor ±300 = normal, fuera warning |
+| **Edad biológica** | vs edad cronológica ±5 = normal. > +5 warning. < -5 normal (mejor) |
+| **Grasa visceral** | 1–9 normal, 10–14 warning, ≥15 alert |
+
+### Semáforo
+
+| Estado | Color | Borde / fondo |
+|---|---|---|
+| `normal` | Verde salud (`#4CAF7C`) | `border-primary` / `bg-primary-soft/40` |
+| `warning` | Ámbar (`#F4B860`) | `border-warning/60` / `bg-warning/15` |
+| `alert` | Coral (`#E57373`) | `border-alert/60` / `bg-alert/15` |
+
+Acento lateral izquierdo en cada tarjeta (1px vertical bar) refuerza el color del estado.
+
+### Resumen global
+
+Cuenta sobre métricas **provistas** (`provided=true`):
+
+| Alerts | Warnings | Clave i18n |
+|---|---|---|
+| ≥1 | * | `results.summary.hasAlerts` (plural con count) |
+| 0 | 0 | `results.summary.allNormal` |
+| 0 | 1–2 | `results.summary.fewWarnings` |
+| 0 | ≥3 | `results.summary.manyWarnings` |
+
+El banner cambia color según severidad (rojo si hay alerts, ámbar si warnings, verde si todo normal).
+
+### Tests unitarios (Vitest)
+
+**59 tests pasando** en `src/lib/__tests__/evaluator.test.ts`. Cobertura:
+
+- ✅ IMC: bajo peso, normal (centro y techo), sobrepeso (techo), obesidad (≥30), cálculo automático
+- ✅ % Grasa: rangos por género × 5 brackets etarios, fronteras (39→40 años)
+- ✅ % Músculo: bajo warning, alto normal (atlético)
+- ✅ Grasa visceral: techo de cada rango (9, 14, 15)
+- ✅ Peso: simetría desvíos (±10/15/25%), contextura cambiando status
+- ✅ Calorías: en TMB exacto, ±300, ±500
+- ✅ Edad biológica: igual, ±5, mejor que cronológica, peor que cronológica
+- ✅ Helpers: `calculateBmi`, `idealWeightKg` (Lorentz + contextura), `basalMetabolicRate` (Mifflin-St Jeor)
+- ✅ API: 7 evaluaciones siempre, orden estable, idealRange presente, `provided` correcto
+
+### Decisiones técnicas cerradas en esta fase
+
+| Decisión | Valor |
+|---|---|
+| Evaluador | Función pura en `lib/evaluator.ts`, sin React |
+| Framework de tests | Vitest (rápido, ESM nativo, mismo bundler que Vite) |
+| Cobertura | Solo `evaluator.ts` (lógica médica crítica) |
+| Render del semáforo | Pastilla con borde + dot de color + texto |
+| Métricas no provistas | Badge "No medido", no cuentan en el resumen |
+| Guardar en esta fase | Modal cálido con placeholder, botones Excel/PDF deshabilitados |
+| Persistencia real | Diferida a Fase 6 (Dexie/IndexedDB) |
+| i18n | Plurales con `_one` / `_other` (i18next built-in) |
+
+### Archivos entregados (Fase 4)
+
+```
+src/
+├── components/results/
+│   ├── SemaphoreBadge.tsx          # Pastilla verde/ámbar/coral
+│   ├── MetricCard.tsx              # Tarjeta con valor + badge + rango ideal
+│   └── ResultsSummary.tsx          # Banner resumen global con plurales
+├── pages/
+│   └── ResultsPage.tsx             # Grid + modal cálido de "guardado"
+├── lib/
+│   ├── evaluator.ts                # Función pura evaluate()
+│   └── __tests__/evaluator.test.ts # 59 tests Vitest
+└── types/index.ts                  # + MetricKey, MetricEvaluation
+
+vitest.config.ts                    # Alias @/ y entorno node
+package.json                        # + scripts test, test:watch
+scripts/run.sh                      # + comando test
+```
+
+### Cómo probar
+
+```bash
+cd /home/nico/projects/GestionDeSaludSimple
+bash scripts/run.sh test      # 59 tests pasan
+bash scripts/run.sh typecheck # 0 errores
+bash scripts/run.sh dev       # http://localhost:5173
+```
+
+**Flujo manual completo:**
+1. Home → "Registrar mis datos"
+2. Llenar datos básicos → "Continuar"
+3. Llenar métricas (probar varias combinaciones: dejar BMI vacío, dejar % grasa en 0, etc.)
+4. "Ver mis resultados"
+5. Verificar:
+   - Banner resumen coherente con la cantidad de alertas/advertencias
+   - 7 tarjetas con colores correctos
+   - IMC calculado si quedó vacío
+   - Métricas no medidas aparecen en gris con "No medido"
+   - Botón "Volver a las mediciones" regresa al form de métricas con datos
+   - "Guardar mis datos" abre modal con subtítulo adaptado
+   - Modal muestra Excel/PDF deshabilitados
+   - "Ahora no, gracias" cierra modal y vuelve al Home
+6. Toggle ES/EN → toda la UI se traduce
+
+### Pendiente (orden de ejecución)
+
+| Fase | Descripción | Estado |
+|---|---|---|
+| **Fase 5** | Tooltips explicativos en cada métrica + mensajes contextuales | ⏭️ **SIGUIENTE** |
+| **Fase 6** | Persistencia con Dexie (IndexedDB) + detección de duplicados | Pendiente |
+| **Fase 7** | Exportación a Excel (.xlsx) y PDF | Pendiente |
+| **Fase 8** | Panel admin con login + CRUD + filtro por nombre | Pendiente |
+| **Fase 9** | PWA instalable + service worker | Pendiente |
+| **Fase 10** | APK Android con Capacitor | Pendiente |
+| **Fase 11** | Pulido visual y de tono | Pendiente |
+
+---
+
+## v0.3.0-fase3 — Formulario de 7 métricas (versión definitiva)
+**Fecha:** Junio 2026
+**Estado:** ✅ Completa y validada
+
+### Descripción general
+
+Fase 3 entrega el formulario real de las 7 métricas corporales, reemplazando el placeholder "Próximamente". Comparte la misma arquitectura que Fase 2:
+
+- Validación con Zod (schemas separados con mensajes cálidos traducidos)
+- Persistencia de borrador con sessionStorage (sobrevive a refresh)
+- Estados visuales de input (neutral / error / valid)
+- Accesibilidad WCAG 2.1
+- Inputs numéricos blindados (sin spinners nativos, sin wheel)
+
+### Funcionalidad visible
+
+**Form de métricas (7 campos):**
+
+| # | Métrica | Tipo | Requerido | Rango |
+|---|---|---|---|---|
+| 1 | Peso | decimal | ✅ Sí | 20–300 kg |
+| 2 | IMC | decimal | ❌ Opcional (0 = no medido) | 0–60 |
+| 3 | % Grasa corporal | decimal | ❌ Opcional | 0–50% |
+| 4 | % Masa muscular | decimal | ❌ Opcional | 0–70% |
+| 5 | Calorías | entero | ✅ Sí | 800–6000 kcal |
+| 6 | Edad biológica | entero | ❌ Opcional | 0–100 años |
+| 7 | Grasa visceral | entero | ✅ Sí | 1–30 |
+
+**Comportamiento clave:**
+- Si IMC = 0 → en la pantalla de resultados se calcula desde peso/altura
+- % grasa / músculo / edad biológica = 0 → se muestran como "No medido" en resultados
+
+### Archivos entregados (Fase 3)
+
+```
+src/components/form/MetricsForm.tsx    # 7 campos con persistencia
+src/lib/validation.ts                  # + metricsSchema, validateMetricField
+```
+
+### Decisiones técnicas cerradas
+
+| Decisión | Valor |
+|---|---|
+| IMC opcional | Si = 0, se calcula automáticamente en resultados |
+| Edad biológica opcional | Si = 0, no se evalúa (no flaggea como "mejor que cronológica") |
+| Calorías requeridas | Necesarias para calcular TMB en Mifflin-St Jeor |
+| Grasa visceral requerida | Métrica clínica crítica, no opcional |
 
 ---
 

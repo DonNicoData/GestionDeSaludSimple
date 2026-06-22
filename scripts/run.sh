@@ -56,12 +56,17 @@ case "$cmd" in
     cd "$PROJECT_WIN"
     "$NODE_WIN" node_modules/typescript/bin/tsc --noEmit "$@"
     ;;
+  test)
+    sync_to_win
+    cd "$PROJECT_WIN"
+    "$NODE_WIN" node_modules/vitest/vitest.mjs run "$@"
+    ;;
   sync)
     sync_to_win
     echo "Sincronizado a $PROJECT_WIN"
     ;;
   *)
-    echo "Uso: $0 {install|build|dev|preview|typecheck|sync}"
+    echo "Uso: $0 {install|build|dev|preview|typecheck|test|sync}"
     exit 1
     ;;
 esac

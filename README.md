@@ -40,6 +40,7 @@ npm install
 npm run dev          # desarrollo
 npm run build        # build de producción
 npm run typecheck    # verificación de tipos
+npm run test         # tests unitarios (Vitest)
 npm run preview      # preview local
 ```
 
@@ -52,6 +53,7 @@ bash scripts/run.sh install     # instalar dependencias
 bash scripts/run.sh dev         # servidor de desarrollo
 bash scripts/run.sh build       # build de producción
 bash scripts/run.sh typecheck   # verificación de tipos
+bash scripts/run.sh test        # tests unitarios (Vitest)
 bash scripts/run.sh preview     # preview local
 ```
 
