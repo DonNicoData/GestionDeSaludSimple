@@ -48,18 +48,22 @@ export type MetricKey =
 
 /**
  * Resultado de evaluar una métrica individual contra los rangos médicos.
- * - `provided=false`: el usuario no la midió (campo opcional). La UI la
- *   muestra como "no medida" pero no se incluye en el semáforo.
- * - `provided=true` con `status='normal'|'warning'|'alert'`: pintado con
- *   el color correspondiente en la UI.
- * - `idealRange`: rango saludable expresado como texto i18n-friendly
- *   (ej. "18.5 – 24.9") cuando aplica. Útil para tooltips.
+ * Las 7 métricas son siempre requeridas (los valores vienen del equipo
+ * de medición), por lo que `value` nunca es null.
+ *
+ * - `status='normal'|'warning'|'alert'`: pintado con el color
+ *   correspondiente en la UI.
+ * - `idealRange`: rango saludable como texto (ej. "18.5 – 24.9") que se
+ *   muestra como referencia informativa en la tarjeta.
+ * - `contexture`: solo presente en la métrica `weight` (es la única que
+ *   usa Lorentz × factor de contextura). Permite a la UI mostrar la
+ *   línea de metodología sin tener que recibir el cliente completo.
  */
 export interface MetricEvaluation {
   key: MetricKey
-  provided: boolean
-  value: number | null
+  value: number
   status: MetricStatus
   idealRange: string | null
   messageKey: string
+  contexture?: WristContexture
 }

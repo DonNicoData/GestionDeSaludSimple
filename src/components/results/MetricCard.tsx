@@ -30,13 +30,20 @@ function formatValue(value: number): string {
 /**
  * Tarjeta individual de métrica. Muestra:
  * - Etiqueta de la métrica
- * - Valor (o "no medida" si no fue proporcionada)
+ * - Valor (las 7 son requeridas, siempre hay valor)
  * - Badge de semáforo
  * - Rango ideal como pie informativo
+ *
+ * El mensaje inferior (debajo del rango ideal) viene de una clave i18n
+ * específica para la métrica cuando existe (`results.metrics.{key}.message.{status}`),
+ * o del mensaje genérico de estado (`results.status.{status}`) en caso
+ * contrario. Esto permite mensajes contexture-aware en el peso (la única
+ * métrica que actualmente usa contextura para la evaluación) sin obligar
+ * a traducir mensajes métrica por métrica.
  */
 export function MetricCard({ evaluation }: MetricCardProps) {
   const { t } = useTranslation()
-  const { key, value, status, provided, idealRange } = evaluation
+  const { key, value, status, idealRange } = evaluation
 
   return (
     <div
@@ -55,28 +62,35 @@ export function MetricCard({ evaluation }: MetricCardProps) {
       </div>
 
       <div className="flex items-baseline gap-1.5 mb-2">
-        {provided && value !== null ? (
-          <>
-            <span className="text-2xl sm:text-3xl font-bold text-graphite tabular-nums">
-              {formatValue(value)}
-            </span>
-            <span className="text-sm text-graphite/60">
-              {t(`results.metrics.${key}.suffix` as `results.metrics.${MetricKey}.suffix`)}
-            </span>
-          </>
-        ) : (
-          <span className="text-base text-graphite/50 italic">
-            {t('results.notMeasured')}
-          </span>
-        )}
+        <span className="text-2xl sm:text-3xl font-bold text-graphite tabular-nums">
+          {formatValue(value)}
+        </span>
+        <span className="text-sm text-graphite/60">
+          {t(`results.metrics.${key}.suffix` as `results.metrics.${MetricKey}.suffix`)}
+        </span>
       </div>
 
-      {provided && idealRange && (
+      {idealRange && (
         <p className="text-xs text-graphite/60 leading-relaxed">
           <span className="font-medium text-graphite/80">
             {t(`results.metrics.${key}.idealLabel` as `results.metrics.${MetricKey}.idealLabel`)}:{' '}
           </span>
           {idealRange}
+        </p>
+      )}
+
+      {key === 'weight' && evaluation.contexture && (
+        <p className="text-xs text-graphite/50 italic leading-relaxed mt-0.5">
+          ↳{' '}
+          {t(
+            `results.metrics.weight.methodologyWithValue` as 'results.metrics.weight.methodologyWithValue',
+            {
+              contexture: t(
+                `basicForm.fields.wristContexture.options.${evaluation.contexture}`,
+              ),
+              defaultValue: t('results.metrics.weight.methodology'),
+            },
+          )}
         </p>
       )}
 
@@ -90,7 +104,10 @@ export function MetricCard({ evaluation }: MetricCardProps) {
           .filter(Boolean)
           .join(' ')}
       >
-        {t(`results.status.${status}`)}
+        {t(
+          `results.metrics.${key}.message.${status}` as `results.metrics.${MetricKey}.message.normal | warning | alert`,
+          { defaultValue: t(`results.status.${status}`) },
+        )}
       </p>
     </div>
   )

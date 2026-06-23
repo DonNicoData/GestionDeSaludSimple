@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
+import { ClientProfileBanner } from '@/components/results/ClientProfileBanner'
 import { MetricCard } from '@/components/results/MetricCard'
 import { ResultsSummary } from '@/components/results/ResultsSummary'
 import { evaluate } from '@/lib/evaluator'
@@ -42,12 +43,8 @@ export function ResultsPage({
     [record, client],
   )
 
-  const alerts = evaluations.filter(
-    (e) => e.provided && e.status === 'alert',
-  ).length
-  const warnings = evaluations.filter(
-    (e) => e.provided && e.status === 'warning',
-  ).length
+  const alerts = evaluations.filter((e) => e.status === 'alert').length
+  const warnings = evaluations.filter((e) => e.status === 'warning').length
 
   const modalSubtitleKey =
     alerts > 0
@@ -66,6 +63,8 @@ export function ResultsPage({
           {t('results.subtitle')}
         </p>
       </header>
+
+      <ClientProfileBanner client={client} currentWeight={record.weight} />
 
       <div className="mb-6">
         <ResultsSummary evaluations={evaluations} />

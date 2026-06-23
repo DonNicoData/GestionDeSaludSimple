@@ -6,26 +6,21 @@ interface ResultsSummaryProps {
 }
 
 /**
- * Resume el estado global de las métricas provistas y devuelve la clave
- * i18n del mensaje cálido correspondiente (PLAN §7.4).
+ * Resume el estado global de las 7 métricas y devuelve la clave i18n
+ * del mensaje cálido correspondiente (PLAN §7.4).
  *
- * Reglas (sobre métricas con `provided=true`):
+ * Reglas (las 7 métricas son siempre requeridas):
  *  - 0 alert + 0 warning             → 'allNormal'
  *  - ≥1 alert                        → 'hasAlerts' (con count)
  *  - 1–2 warning sin alert           → 'fewWarnings'
  *  - ≥3 warning sin alert            → 'manyWarnings'
- *  - mixto (alerts + warnings o ambos) → 'hasAlerts' si hay alert, si no 'mixed'
- *
- * Las métricas no provistas no cuentan para el resumen (no son malas ni
- * buenas, simplemente no se midieron).
  */
 function pickSummaryKey(evaluations: MetricEvaluation[]): {
   key: string
   count?: number
 } {
-  const provided = evaluations.filter((e) => e.provided)
-  const alerts = provided.filter((e) => e.status === 'alert').length
-  const warnings = provided.filter((e) => e.status === 'warning').length
+  const alerts = evaluations.filter((e) => e.status === 'alert').length
+  const warnings = evaluations.filter((e) => e.status === 'warning').length
 
   if (alerts > 0) {
     return { key: 'results.summary.hasAlerts', count: alerts }
@@ -50,12 +45,10 @@ export function ResultsSummary({ evaluations }: ResultsSummaryProps) {
   const { t } = useTranslation()
   const { key, count } = pickSummaryKey(evaluations)
 
-  const message =
-    count !== undefined ? t(key, { count }) : t(key)
+  const message = count !== undefined ? t(key, { count }) : t(key)
 
-  const provided = evaluations.filter((e) => e.provided)
-  const alerts = provided.filter((e) => e.status === 'alert').length
-  const warnings = provided.filter((e) => e.status === 'warning').length
+  const alerts = evaluations.filter((e) => e.status === 'alert').length
+  const warnings = evaluations.filter((e) => e.status === 'warning').length
 
   const bannerClasses =
     alerts > 0

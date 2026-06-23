@@ -231,6 +231,28 @@ TMB (Tasa Metabólica Basal):
 
 Evaluación: ingesta del usuario vs TMB ±300 kcal = normal.
 
+### 6.10 Ajustes por contextura de muñeca
+
+> **Estado:** ajustes ±1-2% implementados en `evaluator.ts`. Sujetos a revisión clínica futura.
+
+La contextura de muñeca (thin / normal / thick) influye en la evaluación de las siguientes métricas:
+
+| Métrica | Ajuste | Justificación | Constante |
+|---|---|---|---|
+| Peso | Lorentz × {0.95, 1.00, 1.05} | Fórmula estándar,PLAN §6.8 | `idealWeightKg` |
+| % Grasa | `acceptableUpper` y `alertLower` +1% (thick); `lower` −1% (thin) | Constitución ósea = más tejido magro. Una persona thick puede tener +1% grasa sin riesgo adicional | `adjustBodyFatRange` |
+| % Músculo | `lower` +2% (thick); `lower` −2% (thin) | Hueso grueso = +masa muscular por constitución, el "normal" mínimo es más alto | `adjustMuscleRange` |
+
+**Las demás métricas (IMC, calorías, grasa visceral, edad biológica) usan rangos universales** que no se ajustan por contextura.
+
+**Nota para mantenimiento futuro:**
+estos ajustes son aproximaciones clínicas documentadas. Si encontrás guías más actualizadas o querés calibrar basado en feedback de profesionales:
+
+1. Identificar la métrica a tocar en `src/lib/evaluator.ts` (helpers `adjustBodyFatRange` / `adjustMuscleRange`).
+2. Modificar la constante correspondiente (ej: `acceptableUpper + 1` → `acceptableUpper + 2`).
+3. Correr `bash scripts/run.sh test` — los tests marcados con `// CONTEXTURE` en `__tests__/evaluator.test.ts` te dirán exactamente qué evaluaciones cambiaron.
+4. Si querés, actualizar esta sección con la nueva justificación.
+
 ---
 
 ## 7. Mensajes cálidos y profesionales
