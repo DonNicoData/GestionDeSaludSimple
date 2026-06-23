@@ -23,11 +23,11 @@ interface MetricsFormProps {
 
 const FIELD_RANGES: Record<MetricsField, { min: number; max: number; step: number }> = {
   weight: { min: 20, max: 300, step: 0.1 },
-  bmi: { min: 0, max: 60, step: 0.1 },
-  bodyFatPct: { min: 0, max: 50, step: 0.1 },
-  muscleMassPct: { min: 0, max: 70, step: 0.1 },
+  bmi: { min: 10, max: 60, step: 0.1 },
+  bodyFatPct: { min: 3, max: 50, step: 0.1 },
+  muscleMassPct: { min: 10, max: 70, step: 0.1 },
   calories: { min: 800, max: 6000, step: 1 },
-  bioAge: { min: 0, max: 100, step: 1 },
+  bioAge: { min: 10, max: 100, step: 1 },
   visceralFat: { min: 1, max: 30, step: 1 },
 }
 

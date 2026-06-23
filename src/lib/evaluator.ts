@@ -2,8 +2,8 @@ import type {
   Client,
   Gender,
   MetricEvaluation,
-  MetricKey,
   MetricStatus,
+  WristContexture,
 } from '@/types'
 
 /**
@@ -13,6 +13,10 @@ import type {
  * por métrica con el estado (`normal` | `warning` | `alert`) y metadatos
  * (rango ideal formateado, clave de mensaje i18n) para que la UI los pinte.
  *
+ * Las 7 métricas son REQUERIDAS: los valores los trae el profesional de
+ * su equipo de medición (báscula inteligente, examen de composición
+ * corporal). No se contempla el caso "no medido".
+ *
  * Fuentes (PLAN.md §6):
  * - IMC: OMS (universal)
  * - % Grasa y % Músculo: American Council on Exercise (rangos por edad × género)
@@ -20,6 +24,11 @@ import type {
  * - Edad biológica: comparación con edad cronológica ±5 años
  * - Peso ideal: Lorentz ajustado por contextura de muñeca
  * - Calorías: Mifflin-St Jeor (TMB) ±300 kcal
+ *
+ * La contextura de muñeca (thin/normal/thick) ajusta:
+ *   - Peso ideal (Lorentz × factor 0.95/1.00/1.05) — estándar.
+ *   - % Grasa y % Músculo (±1-2%) — ver bloque "PARÁMETROS SUJETOS A
+ *     AJUSTE FUTURO" más abajo.
  */
 
 type AgeBracket = '20-29' | '30-39' | '40-49' | '50-59' | '60+'
@@ -94,6 +103,71 @@ const MUSCLE_TABLE: Record<Gender, Record<AgeBracket, {
   },
 }
 
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║  ⚠️  PARÁMETROS SUJETOS A AJUSTE FUTURO                          ║
+// ║                                                                  ║
+// ║  Los ajustes aplicados por contextura de muñeca (±1-2%) son       ║
+// ║  aproximaciones clínicas documentadas en PLAN.md §6. Si el        ║
+// ║  producto final requiere calibración fina (feedback de            ║
+// ║  profesionales, papers, guías actualizadas), modificar las        ║
+// ║  constantes siguientes y verificar con los tests marcados con    ║
+// ║  "// CONTEXTURE" en __tests__/evaluator.test.ts.                 ║
+// ║                                                                  ║
+// ║  Ver MILESTONES.md → "⚠️ PUNTO DE CALIBRACIÓN FUTURO"            ║
+// ╚════════════════════════════════════════════════════════════════════╝
+
+/**
+ * Ajusta los rangos de % grasa corporal según la contextura de muñeca
+ * del cliente. Constitución ósea explica parte del % graso: una persona
+ * con contextura gruesa tiene más tejido magro, por lo que puede tolerar
+ * un % graso ligeramente mayor sin riesgo clínico.
+ *
+ * Ajuste: ±1% en `acceptableUpper`+`alertLower` (thick) o `lower` (thin).
+ * ⚠️ Sujeto a calibración futura.
+ */
+function adjustBodyFatRange(
+  table: { lower: number; upper: number; acceptableUpper: number; alertLower: number },
+  contexture: WristContexture,
+): { lower: number; upper: number; acceptableUpper: number; alertLower: number } {
+  if (contexture === 'thick') {
+    return {
+      ...table,
+      acceptableUpper: table.acceptableUpper + 1,
+      alertLower: table.alertLower + 1,
+    }
+  }
+  if (contexture === 'thin') {
+    return {
+      ...table,
+      lower: Math.max(3, table.lower - 1),
+    }
+  }
+  return table
+}
+
+/**
+ * Ajusta el límite inferior del rango "normal" de % masa muscular según
+ * la contextura de muñeca. Una persona con contextura gruesa tiene +masa
+ * ósea y +masa muscular por constitución, por lo que el "normal" mínimo
+ * es más alto. Una persona con contextura delgada tiene menos hueso, y
+ * por lo tanto el mínimo sano es más bajo.
+ *
+ * Ajuste: ±2% en `lower`.
+ * ⚠️ Sujeto a calibración futura.
+ */
+function adjustMuscleRange(
+  table: { lower: number; upper: number },
+  contexture: WristContexture,
+): { lower: number; upper: number } {
+  if (contexture === 'thick') {
+    return { ...table, lower: table.lower + 2 }
+  }
+  if (contexture === 'thin') {
+    return { ...table, lower: Math.max(10, table.lower - 2) }
+  }
+  return table
+}
+
 /**
  * Calcula el peso ideal con la fórmula de Lorentz ajustada por contextura
  * de muñeca (PLAN §6.8).
@@ -128,27 +202,6 @@ export function basalMetabolicRate(client: Client, weightKg: number): number {
 }
 
 /**
- * Calcula el IMC (peso / altura²). Devuelve 0 si no se puede calcular.
- */
-export function calculateBmi(weightKg: number, heightCm: number): number {
-  if (!weightKg || !heightCm) return 0
-  const heightM = heightCm / 100
-  return weightKg / (heightM * heightM)
-}
-
-/**
- * Devuelve el IMC efectivo del registro: el provisto por el usuario, o
- * el calculado a partir de peso y altura si quedó en 0.
- */
-function effectiveBmi(
-  record: { bmi: number; weight: number },
-  client: { heightCm: number },
-): number {
-  if (record.bmi > 0) return record.bmi
-  return calculateBmi(record.weight, client.heightCm)
-}
-
-/**
  * Marca el IMC contra los rangos OMS (PLAN §6.1).
  *  - < 18.5  → warning (bajo peso)
  *  - 18.5-24.9 → normal
@@ -163,36 +216,32 @@ function evaluateBmi(value: number): MetricStatus {
 }
 
 /**
- * Marca % grasa contra la tabla por edad × género (PLAN §6.2/§6.3).
+ * Marca % grasa contra una tabla (ya ajustada por contextura si corresponde).
  *  - < lower → warning (demasiado bajo)
  *  - lower..upper → normal
  *  - upper..acceptableUpper → warning (aceptable)
  *  - ≥ alertLower → alert
  */
-function evaluateBodyFat(
+function evaluateBodyFatWithRange(
   value: number,
-  gender: Gender,
-  bracket: AgeBracket,
+  range: { lower: number; upper: number; acceptableUpper: number; alertLower: number },
 ): MetricStatus {
-  const t = BODY_FAT_TABLE[gender][bracket]
-  if (value < t.lower) return 'warning'
-  if (value <= t.upper) return 'normal'
-  if (value < t.alertLower) return 'warning'
+  if (value < range.lower) return 'warning'
+  if (value <= range.upper) return 'normal'
+  if (value < range.alertLower) return 'warning'
   return 'alert'
 }
 
 /**
- * Marca % masa muscular contra la tabla por edad × género (PLAN §6.4/§6.5).
+ * Marca % masa muscular contra una tabla (ya ajustada por contextura si corresponde).
  * Solo se penaliza el lado bajo: < lower → warning. Valores altos se
  * consideran normales (no son clínicamente problemáticos).
  */
-function evaluateMuscle(
+function evaluateMuscleWithRange(
   value: number,
-  gender: Gender,
-  bracket: AgeBracket,
+  range: { lower: number; upper: number },
 ): MetricStatus {
-  const t = MUSCLE_TABLE[gender][bracket]
-  if (value < t.lower) return 'warning'
+  if (value < range.lower) return 'warning'
   return 'normal'
 }
 
@@ -262,22 +311,6 @@ function formatRange(min: number, max: number, decimals = 1): string {
 }
 
 /**
- * Construye el `MetricEvaluation` para una métrica NO provista
- * (campo opcional en 0). La UI la muestra como "no medida" y no la
- * incluye en el semáforo global.
- */
-function notProvided(key: MetricKey): MetricEvaluation {
-  return {
-    key,
-    provided: false,
-    value: null,
-    status: 'normal',
-    idealRange: null,
-    messageKey: 'results.status.normal',
-  }
-}
-
-/**
  * Devuelve la clave i18n genérica según el estado de la métrica.
  * El texto concreto se carga desde `results.status.{normal|warning|alert}`.
  */
@@ -286,10 +319,23 @@ function statusMessageKey(status: MetricStatus): string {
 }
 
 /**
+ * Construye el `idealRange` para el peso en formato expandido
+ * "min – max kg (Lorentz × contextura {thin|normal|thick})".
+ */
+function formatWeightIdealRange(
+  idealKg: number,
+  contexture: WristContexture,
+): string {
+  const min = idealKg * 0.9
+  const max = idealKg * 1.1
+  return `${min.toFixed(1)} – ${max.toFixed(1)} kg (×${contexture})`
+}
+
+/**
  * API principal: evalúa un registro contra los rangos médicos para un
  * cliente dado. Devuelve SIEMPRE 7 entradas, una por métrica, en el
- * orden de `MetricKey`. Las métricas no provistas llegan con
- * `provided: false`.
+ * orden de `MetricKey`. Las 7 métricas son requeridas, así que siempre
+ * llegan con `value` numérico.
  */
 export function evaluate(
   record: {
@@ -306,107 +352,86 @@ export function evaluate(
   const bracket = ageBracket(client.age)
   const ideal = idealWeightKg(client)
   const tmb = basalMetabolicRate(client, record.weight)
-  const bmi = effectiveBmi(record, client)
+  const bodyFatRange = adjustBodyFatRange(
+    BODY_FAT_TABLE[client.gender][bracket],
+    client.wristContexture,
+  )
+  const muscleRange = adjustMuscleRange(
+    MUSCLE_TABLE[client.gender][bracket],
+    client.wristContexture,
+  )
 
   const evaluations: MetricEvaluation[] = []
 
   // 1. Peso
+  const weightStatus = evaluateWeight(record.weight, ideal)
   evaluations.push({
     key: 'weight',
-    provided: record.weight > 0,
-    value: record.weight > 0 ? record.weight : null,
-    status: record.weight > 0 ? evaluateWeight(record.weight, ideal) : 'normal',
-    idealRange: `${ideal.toFixed(1)} kg (±10%)`,
-    messageKey: statusMessageKey(
-      record.weight > 0 ? evaluateWeight(record.weight, ideal) : 'normal',
-    ),
+    value: record.weight,
+    status: weightStatus,
+    idealRange: formatWeightIdealRange(ideal, client.wristContexture),
+    messageKey: statusMessageKey(weightStatus),
+    contexture: client.wristContexture,
   })
 
   // 2. IMC
+  const bmiStatus = evaluateBmi(record.bmi)
   evaluations.push({
     key: 'bmi',
-    provided: bmi > 0,
-    value: bmi > 0 ? bmi : null,
-    status: bmi > 0 ? evaluateBmi(bmi) : 'normal',
+    value: record.bmi,
+    status: bmiStatus,
     idealRange: '18.5 – 24.9',
-    messageKey: statusMessageKey(bmi > 0 ? evaluateBmi(bmi) : 'normal'),
+    messageKey: statusMessageKey(bmiStatus),
   })
 
-  // 3. % Grasa
-  if (record.bodyFatPct > 0) {
-    const status = evaluateBodyFat(record.bodyFatPct, client.gender, bracket)
-    const range = BODY_FAT_TABLE[client.gender][bracket]
-    evaluations.push({
-      key: 'bodyFatPct',
-      provided: true,
-      value: record.bodyFatPct,
-      status,
-      idealRange: formatRange(range.lower, range.upper),
-      messageKey: statusMessageKey(status),
-    })
-  } else {
-    evaluations.push(notProvided('bodyFatPct'))
-  }
+  // 3. % Grasa (ajustado por contextura)
+  const bodyFatStatus = evaluateBodyFatWithRange(record.bodyFatPct, bodyFatRange)
+  evaluations.push({
+    key: 'bodyFatPct',
+    value: record.bodyFatPct,
+    status: bodyFatStatus,
+    idealRange: formatRange(bodyFatRange.lower, bodyFatRange.upper),
+    messageKey: statusMessageKey(bodyFatStatus),
+  })
 
-  // 4. % Masa muscular
-  if (record.muscleMassPct > 0) {
-    const status = evaluateMuscle(record.muscleMassPct, client.gender, bracket)
-    const range = MUSCLE_TABLE[client.gender][bracket]
-    evaluations.push({
-      key: 'muscleMassPct',
-      provided: true,
-      value: record.muscleMassPct,
-      status,
-      idealRange: `≥ ${range.lower}%`,
-      messageKey: statusMessageKey(status),
-    })
-  } else {
-    evaluations.push(notProvided('muscleMassPct'))
-  }
+  // 4. % Masa muscular (ajustado por contextura)
+  const muscleStatus = evaluateMuscleWithRange(record.muscleMassPct, muscleRange)
+  evaluations.push({
+    key: 'muscleMassPct',
+    value: record.muscleMassPct,
+    status: muscleStatus,
+    idealRange: `≥ ${muscleRange.lower}%`,
+    messageKey: statusMessageKey(muscleStatus),
+  })
 
   // 5. Calorías
+  const caloriesStatus = evaluateCalories(record.calories, tmb)
   evaluations.push({
     key: 'calories',
-    provided: record.calories > 0,
-    value: record.calories > 0 ? record.calories : null,
-    status:
-      record.calories > 0 ? evaluateCalories(record.calories, tmb) : 'normal',
+    value: record.calories,
+    status: caloriesStatus,
     idealRange: `${Math.round(tmb - 300)} – ${Math.round(tmb + 300)} kcal`,
-    messageKey: statusMessageKey(
-      record.calories > 0 ? evaluateCalories(record.calories, tmb) : 'normal',
-    ),
+    messageKey: statusMessageKey(caloriesStatus),
   })
 
   // 6. Edad biológica
-  if (record.bioAge > 0) {
-    const status = evaluateBioAge(record.bioAge, client.age)
-    evaluations.push({
-      key: 'bioAge',
-      provided: true,
-      value: record.bioAge,
-      status,
-      idealRange: `${client.age - 5} – ${client.age + 5} años`,
-      messageKey: statusMessageKey(status),
-    })
-  } else {
-    evaluations.push(notProvided('bioAge'))
-  }
+  const bioAgeStatus = evaluateBioAge(record.bioAge, client.age)
+  evaluations.push({
+    key: 'bioAge',
+    value: record.bioAge,
+    status: bioAgeStatus,
+    idealRange: `${client.age - 5} – ${client.age + 5} años`,
+    messageKey: statusMessageKey(bioAgeStatus),
+  })
 
   // 7. Grasa visceral
+  const visceralStatus = evaluateVisceralFat(record.visceralFat)
   evaluations.push({
     key: 'visceralFat',
-    provided: record.visceralFat > 0,
-    value: record.visceralFat > 0 ? record.visceralFat : null,
-    status:
-      record.visceralFat > 0
-        ? evaluateVisceralFat(record.visceralFat)
-        : 'normal',
+    value: record.visceralFat,
+    status: visceralStatus,
     idealRange: '1 – 9',
-    messageKey: statusMessageKey(
-      record.visceralFat > 0
-        ? evaluateVisceralFat(record.visceralFat)
-        : 'normal',
-    ),
+    messageKey: statusMessageKey(visceralStatus),
   })
 
   return evaluations

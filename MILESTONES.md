@@ -231,6 +231,26 @@ bash scripts/run.sh dev   # http://localhost:5173
 | **Fase 10** | APK Android con Capacitor | Pendiente |
 | **Fase 11** | Pulido visual y de tono | Pendiente |
 
+---
+
+### Fix post-Fase 4 — Política "7 métricas requeridas"
+
+- El plan original (PLAN §7.3) trataba bmi, % grasa, % músculo, edad biológica como opcionales, aceptando "déjalo en 0 si no lo tienes".
+- En pruebas manuales se detectó que llegar a la pantalla de resultados con tarjetas en estado "No medido" generaba la sensación de flujo incompleto.
+- Decisión del product owner: los 7 valores vienen del equipo de medición del profesional (báscula inteligente, examen de composición corporal), por lo que deben ingresarse manualmente en todos los casos.
+- Cambios:
+  - `validation.ts`: `optionalNumberField` eliminado. Los 4 campos antes opcionales ahora usan `requiredNumberField` con `min` realista (bmi 10, grasa 3, músculo 10, bioAge 10).
+  - `MetricsForm.tsx`: `FIELD_RANGES` con `min` para todos los campos. `isOptional = range.min === 0` ya marca los 7 como required.
+  - `evaluator.ts`: eliminado `notProvided()` y todas las ramas `provided=false`. `calculateBmi`/`effectiveBmi` removidas (BMI siempre viene del usuario).
+  - `MetricCard.tsx`: rama "No medido" eliminada. Las 7 tarjetas siempre muestran valor + rango ideal.
+  - `types/index.ts`: `MetricEvaluation` simplificado (sin `provided`, `value: number` en vez de `number | null`).
+  - `ResultsSummary.tsx` + `ResultsPage.tsx`: filtros sobre `e.provided` eliminados (siempre true).
+  - i18n: help texts cambiaron de "déjalo en 0 si no lo tienes" a "lo marca tu báscula o examen". `results.notMeasured` removido.
+  - `PLAN.md` §7.3 actualizado con la nueva política y rangos de validación.
+- Tests: 8 tests de "no provisto" y cálculo automático de BMI eliminados. **53 tests pasando** (antes 59).
+- Typecheck: 0 errores. Build: 83 módulos, 303 kB.
+
+---
 
 ## v0.4.0-fase4 — Lógica de evaluación + Pantalla de Resultados con semáforo
 **Fecha:** Junio 2026

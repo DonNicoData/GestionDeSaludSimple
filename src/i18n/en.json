@@ -115,19 +115,19 @@
         "label": "Your BMI",
         "placeholder": "22.5",
         "suffix": "kg/m²",
-        "help": "If you don't have it calculated, we figure it out when showing the results. Leave empty if you don't know it."
+        "help": "Shown by your scale or health app. Write down the exact value your device gives you."
       },
       "bodyFatPct": {
         "label": "Body fat percentage",
         "placeholder": "20",
         "suffix": "%",
-        "help": "Usually measured by smart scales or calipers. Leave empty if you don't have it."
+        "help": "Shown by your smart scale or body composition exam."
       },
       "muscleMassPct": {
         "label": "Muscle mass percentage",
         "placeholder": "35",
         "suffix": "%",
-        "help": "Same as body fat, from your scale or exam. Leave empty if you don't have it."
+        "help": "Shown by your scale or body composition exam."
       },
       "calories": {
         "label": "Calories you consume per day",
@@ -139,7 +139,7 @@
         "label": "Your biological age",
         "placeholder": "30",
         "suffix": "years",
-        "help": "What your body indicates, not your ID. Leave empty if you don't know it."
+        "help": "What your body indicates based on your latest analysis. Not your ID age."
       },
       "visceralFat": {
         "label": "Visceral fat level",
@@ -174,11 +174,24 @@
   "results": {
     "title": "Your results",
     "subtitle": "We compare your values with the healthy ranges for your age and gender. Green is fine, yellow asks for attention, and red is worth checking soon.",
-    "notMeasured": "Not measured",
     "status": {
       "normal": "All good here",
       "warning": "Soft attention: review this value",
       "alert": "Important: check with a professional"
+    },
+    "statusShort": {
+      "normal": "Normal",
+      "warning": "Attention",
+      "alert": "Alert"
+    },
+    "profile": {
+      "title": "Your profile",
+      "contexture": "Wrist frame",
+      "contextureHint": "Influences your estimated ideal weight.",
+      "idealWeight": "Estimated ideal weight",
+      "idealWeightHint": "You're {{diff}}% from your ideal.",
+      "bmr": "Basal metabolic rate (BMR)",
+      "bmrHint": "Minimum calories your body burns at rest."
     },
     "summary": {
       "allNormal": "Excellent, all your parameters are within the healthy ranges. Keep taking such good care of yourself.",
@@ -193,7 +206,14 @@
       "weight": {
         "label": "Weight",
         "suffix": "kg",
-        "idealLabel": "Estimated ideal weight"
+        "idealLabel": "Estimated ideal weight",
+        "methodology": "Calculated with Lorentz × your frame",
+        "methodologyWithValue": "Calculated with Lorentz × your {{contexture}} frame",
+        "message": {
+          "normal": "Your weight is within the healthy range for your wrist frame.",
+          "warning": "Your weight is a bit outside the ideal range for your wrist frame.",
+          "alert": "Your weight is well outside the range for your wrist frame."
+        }
       },
       "bmi": {
         "label": "BMI",

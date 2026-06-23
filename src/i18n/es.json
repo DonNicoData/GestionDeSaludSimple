@@ -115,19 +115,19 @@
         "label": "Tu IMC",
         "placeholder": "22.5",
         "suffix": "kg/m²",
-        "help": "Si no lo tienes calculado, lo encontramos por ti al ver los resultados. Déjalo vacío si no lo sabes."
+        "help": "Lo marca tu báscula o tu app de salud. Anota el valor exacto que te da el equipo."
       },
       "bodyFatPct": {
         "label": "Porcentaje de grasa corporal",
         "placeholder": "20",
         "suffix": "%",
-        "help": "Lo suelen medir básculas inteligentes o calibradores. Déjalo vacío si no lo tienes."
+        "help": "Lo marca tu báscula inteligente o tu examen de composición corporal."
       },
       "muscleMassPct": {
         "label": "Porcentaje de masa muscular",
         "placeholder": "35",
         "suffix": "%",
-        "help": "Igual que la grasa, viene de tu báscula o examen. Déjalo vacío si no lo tienes."
+        "help": "Lo marca tu báscula o tu examen de composición corporal."
       },
       "calories": {
         "label": "Calorías que consumes al día",
@@ -139,7 +139,7 @@
         "label": "Tu edad biológica",
         "placeholder": "30",
         "suffix": "años",
-        "help": "La que indica tu cuerpo, no tu DNI. Déjalo vacío si no la conoces."
+        "help": "La que indica tu cuerpo según tu último análisis. No es tu DNI."
       },
       "visceralFat": {
         "label": "Nivel de grasa visceral",
@@ -174,11 +174,24 @@
   "results": {
     "title": "Tus resultados",
     "subtitle": "Comparamos tus valores con los rangos saludables para tu edad y género. Lo verde está bien, lo amarillo pide atención y lo rojo conviene revisarlo pronto.",
-    "notMeasured": "No medido",
     "status": {
       "normal": "Todo bien por aquí",
       "warning": "Atención suave: revisa este valor",
       "alert": "Importante: consulta con un profesional"
+    },
+    "statusShort": {
+      "normal": "Normal",
+      "warning": "Atención",
+      "alert": "Alerta"
+    },
+    "profile": {
+      "title": "Tu perfil",
+      "contexture": "Contextura de muñeca",
+      "contextureHint": "Influye en tu peso ideal estimado.",
+      "idealWeight": "Peso ideal estimado",
+      "idealWeightHint": "Estás {{diff}}% respecto a tu ideal.",
+      "bmr": "Metabolismo basal (TMB)",
+      "bmrHint": "Calorías mínimas que tu cuerpo gasta en reposo."
     },
     "summary": {
       "allNormal": "Excelente, todos tus parámetros están dentro de los rangos saludables. Sigue cuidándote así de bien.",
@@ -193,7 +206,14 @@
       "weight": {
         "label": "Peso",
         "suffix": "kg",
-        "idealLabel": "Peso ideal estimado"
+        "idealLabel": "Peso ideal estimado",
+        "methodology": "Calculado con Lorentz × tu contextura",
+        "methodologyWithValue": "Calculado con Lorentz × tu contextura {{contexture}}",
+        "message": {
+          "normal": "Tu peso está dentro del rango saludable para tu contextura de muñeca.",
+          "warning": "Tu peso se aleja un poco del rango ideal para tu contextura de muñeca.",
+          "alert": "Tu peso está bastante por fuera del rango para tu contextura de muñeca."
+        }
       },
       "bmi": {
         "label": "IMC",

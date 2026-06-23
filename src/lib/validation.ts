@@ -57,30 +57,6 @@ function requiredNumberField(min: number, max: number, rangeErrorKey: string) {
 }
 
 /**
- * Campo numérico OPCIONAL: string → transform → number (vacío = 0 = "no medido").
- * Mismas claves de error que requiredNumberField.
- */
-function optionalNumberField(max: number, rangeErrorKey: string) {
-  return z
-    .string()
-    .transform((s, ctx) => {
-      if (s.trim() === '') return 0
-      const n = Number(s)
-      if (Number.isNaN(n)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'invalidNumber' })
-        return z.NEVER
-      }
-      return n
-    })
-    .pipe(
-      z
-        .number()
-        .min(0, rangeErrorKey)
-        .max(max, rangeErrorKey),
-    )
-}
-
-/**
  * Schema de los datos básicos del cliente.
  */
 export const basicDataSchema = z.object({
@@ -120,16 +96,17 @@ export function validateField(
 
 /**
  * Schema de las 7 métricas corporales.
- * - Requeridos: weight, calories, visceralFat
- * - Opcionales (0 = no medido): bmi, bodyFatPct, muscleMassPct, bioAge
+ * - Las 7 son REQUERIDAS: los valores vienen del equipo de medición del
+ *   profesional (báscula inteligente, examen de composición corporal).
+ *   No se acepta "no medido" en esta app.
  */
 export const metricsSchema = z.object({
   weight: requiredNumberField(20, 300, 'weightOutOfRange'),
-  bmi: optionalNumberField(60, 'bmiOutOfRange'),
-  bodyFatPct: optionalNumberField(50, 'bodyFatOutOfRange'),
-  muscleMassPct: optionalNumberField(70, 'muscleOutOfRange'),
+  bmi: requiredNumberField(10, 60, 'bmiOutOfRange'),
+  bodyFatPct: requiredNumberField(3, 50, 'bodyFatOutOfRange'),
+  muscleMassPct: requiredNumberField(10, 70, 'muscleOutOfRange'),
   calories: requiredNumberField(800, 6000, 'caloriesOutOfRange'),
-  bioAge: optionalNumberField(100, 'bioAgeOutOfRange'),
+  bioAge: requiredNumberField(10, 100, 'bioAgeOutOfRange'),
   visceralFat: requiredNumberField(1, 30, 'visceralOutOfRange'),
 })
 
