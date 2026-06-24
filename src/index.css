@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ocultar las flechitas nativas (spinners) de los inputs numéricos.
+   El valor se sigue pudiendo cambiar con teclado (↑/↓), typing,
+   y teclado numérico del móvil. No aparecen los triángulos ↑↓. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

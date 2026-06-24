@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef, ReactNode } from 'react'
+import { InputHTMLAttributes, forwardRef, ReactNode, useEffect } from 'react'
 
 export type InputState = 'neutral' | 'error' | 'valid'
 
@@ -36,6 +36,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
+    useEffect(() => {
+      if (type !== 'number' || typeof ref === 'function' || !ref) return
+      const el = ref.current
+      if (!el) return
+
+      const handleWheel = (e: WheelEvent) => {
+        e.preventDefault()
+      }
+
+      el.addEventListener('wheel', handleWheel, { passive: false })
+      return () => el.removeEventListener('wheel', handleWheel)
+    }, [type, ref])
+
     return (
       <div className="relative">
         <input
