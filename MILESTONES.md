@@ -8,13 +8,52 @@ Convenciones de tags:
 
 ---
 
-## v0.2.0-fase2 — Formulario de datos básicos (versión pulida)
+## 🟢 Punto de Control — Dónde estamos
+
+**Estado al cierre de este hito:** v0.2.0-fase2
+
+**Última fase completada:** ✅ Fase 2 — Formulario de datos básicos + persistencia de borradores
+
+**Próxima fase por hacer:** ⏭️ Fase 4 — Lógica de evaluación con rangos médicos (pinta los resultados con semáforo 🟢🟡🔴)
+
+**Atajos para retomar en otro momento:**
+
+| Si quieres decir... | Di o pide... |
+|---|---|
+| ¿En qué fase vamos? | *"¿Dónde quedamos?"* o *"estado del proyecto"* |
+| Continuar con la siguiente fase | *"Sigamos con la fase N"* |
+| Volver a un hito específico | *"Volvamos a `v0.2.0-fase2`"* |
+| Ver qué falta | *"¿Qué falta para terminar?"* |
+
+**Tags disponibles:**
+- `v0.0.0-plan` — planificación aprobada
+- `v0.1.0-fase1` — setup base, i18n, Home
+- `v0.2.0-fase2` — formulario datos básicos + persistencia *(ESTAMOS AQUÍ)*
+- `v0.3.0-fase3` — formulario de métricas
+
+**Para volver a este punto exacto en cualquier momento:**
+```bash
+git checkout v0.2.0-fase2
+```
+
+---
+
+## v0.2.0-fase2 — Formulario de datos básicos + métricas + persistencia (versión definitiva)
 **Fecha:** Junio 2026
-**Estado:** ✅ Completa y validada
+**Estado:** ✅ Completa y validada (incluye persistencia de borradores)
 
 ### Descripción general
 
-Fase 2 entrega el primer formulario real de la app: la pantalla de datos básicos donde el cliente se identifica. Reemplaza el placeholder "Próximamente" del botón principal de Home e introduce la arquitectura completa de navegación, validación con Zod, componentes de formulario reutilizables, estados visuales, accesibilidad WCAG 2.1 y manejo robusto del nombre en tres componentes (Nombre + Primer apellido + Segundo apellido). La misma arquitectura se reutilizará en Fase 3 (métricas).
+Fase 2 entrega dos formularios reales (datos básicos + 7 métricas), reemplazando los placeholders "Próximamente". Introduce la arquitectura completa de:
+
+- Navegación entre páginas
+- Validación con Zod (schemas separados con mensajes cálidos traducidos)
+- Componentes de formulario reutilizables con estados visuales
+- Accesibilidad WCAG 2.1
+- Manejo robusto del nombre en 3 componentes (Nombre + Primer apellido + Segundo apellido)
+- Persistencia de borradores con sessionStorage (sobrevive a refresh y navegación)
+
+La misma arquitectura se reutilizará en las siguientes fases.
 
 ### Stack adicional
 
@@ -22,172 +61,174 @@ Fase 2 entrega el primer formulario real de la app: la pantalla de datos básico
 |---|---|---|
 | zod | 3.23.x | Validación runtime con schemas |
 
-### Archivos nuevos
-
-```
-src/
-├── components/
-│   ├── form/
-│   │   ├── BasicDataForm.tsx       # Formulario completo con 8 campos
-│   │   ├── FormField.tsx           # Wrapper label + input + error + counter + a11y
-│   │   ├── RadioGroup.tsx          # Radio buttons en formato cards
-│   │   └── SegmentedControl.tsx    # Selector iOS para género
-│   └── shared/
-│       └── Input.tsx               # Input con state visual (neutral/error/valid)
-├── lib/
-│   ├── age.ts                      # Cálculo de edad desde birthDate
-│   ├── name.ts                     # combineName, normalizeName, fullNameOf
-│   └── validation.ts               # Zod schemas + validador por campo
-└── pages/
-    └── FormPage.tsx                # Wrapper de página para BasicDataForm
-```
-
-### Archivos modificados
-
-| Archivo | Cambio |
-|---|---|
-| `package.json` | + `zod@^3.23.8` |
-| `src/types/index.ts` | `Client.name` → `firstName`, `lastName1`, `lastName2` |
-| `src/App.tsx` | State-based router (`home` \| `form` \| `metrics`); alert muestra `fullName` concatenado |
-| `src/pages/HomePage.tsx` | Acepta `onRegister` prop y navega al form |
-| `src/i18n/es.json` + `en.json` | Sección `basicForm` con 8 campos, 8 errores específicos, banner `summary.*` |
-
 ### Funcionalidad visible
 
-**Pantalla inicial (Home):**
-- Botón "Registrar mis datos" navega al formulario real (ya no muestra alert).
+**Home (3 estados):**
+1. Sin borrador: saludo cálido + botón "Registrar mis datos"
+2. Con borrador: banner cálido *"Tienes una medición a medio terminar"* + 2 botones ("Continuar mi medición" / "Empezar de nuevo")
+3. Tras completar: alert informativo (placeholder para Fase 4/5/6)
 
-**Pantalla de formulario — 8 campos:**
+**Form de datos básicos (8 campos):**
 
 | # | Campo | Tipo | Validación |
 |---|---|---|---|
-| 1 | Tu nombre | Texto (autocomplete given-name) | 2-50 chars, letras/espacios/guiones/apóstrofes |
-| 2 | Primer apellido | Texto (autocomplete family-name) | Mismo regex estricto |
-| 3 | Segundo apellido | Texto (autocomplete additional-name) | Mismo regex estricto |
-| 4 | Fecha de nacimiento | Date picker nativo (max=hoy) | ISO YYYY-MM-DD, no futuro, edad 10-120 |
+| 1 | Tu nombre | Texto (given-name) | 2-50 chars, letras/espacios/guiones/apóstrofes |
+| 2 | Primer apellido | Texto (family-name) | Mismo regex estricto |
+| 3 | Segundo apellido | Texto (additional-name) | Mismo regex estricto |
+| 4 | Fecha de nacimiento | Date picker (max=hoy) | ISO YYYY-MM-DD, no futuro, edad 10-120 |
 | 5 | Edad | Display auto-calculado | Derivada de birthDate |
-| 6 | Altura | Numérico con sufijo "cm" | Entero 100-230 |
+| 6 | Altura | Numérico (cm) | 100-230 cm |
 | 7 | Género | Segmented control | 'F' o 'M' |
 | 8 | Contextura de muñeca | Radio cards | 'thin' / 'normal' / 'thick' |
 
-Botones: **Volver** (al Home) y **Continuar →** (al submit).
+**Form de métricas (7 campos):**
 
-### Estados visuales de input (cumplimiento UX pedido)
+| # | Métrica | Tipo | Requerido | Rango |
+|---|---|---|---|---|
+| 1 | Peso | decimal | ✅ Sí | 20-300 kg |
+| 2 | IMC | decimal | ❌ Opcional (0 = no medido) | 0-60 |
+| 3 | % Grasa corporal | decimal | ❌ Opcional | 0-50% |
+| 4 | % Masa muscular | decimal | ❌ Opcional | 0-70% |
+| 5 | Calorías | entero | ✅ Sí | 800-6000 kcal |
+| 6 | Edad biológica | entero | ❌ Opcional | 0-100 años |
+| 7 | Grasa visceral | entero | ✅ Sí | 1-30 |
 
-| Estado | Borde | Cuándo aparece |
+### Estados visuales de input (neutral/error/valid)
+
+| Estado | Borde | Cuándo |
 |---|---|---|
-| Neutral | Gris (`border-divider`) | Nunca tocado |
-| Error | Rojo (`border-alert`) | Inválido tras onBlur o submit |
-| Válido | Verde (`border-primary`) | Tocado y ahora válido |
+| Neutral | Gris | Nunca tocado |
+| Error | Rojo | Inválido tras onBlur o submit |
+| Válido | Verde | Tocado y válido |
 
-**Comportamiento exacto:**
-- Al abrir el form → todos los campos en **gris**
-- onBlur con campo vacío → **rojo** + mensaje específico
-- Escribir valor válido → **verde**
-- Cambiar un valor inválido a válido → **verde**
-- Cambiar un valor válido a inválido → **rojo** otra vez
-- Click "Continuar" con errores → banner rojo arriba + scroll + focus al primer error + NO navega
+### Validación robusta (Zod)
 
-### Validaciones (Zod) — mensajes cálidos
+- **Helpers compartidos** en `validation.ts`: `requiredNumberField(min, max, rangeErrorKey)` y `optionalNumberField(max, rangeErrorKey)`
+- **Patrón string→transform→number**: acepta strings del form, transforma a números con parse, usa claves i18n cálidas para errores de rango
+- **Bugfix crítico**: selectField helper para radio/segmented (evita stale closure)
+- **Mensajes cálidos ES/EN**: "Ups, parece que este dato se nos olvidó. ¿Me lo compartes?"
 
-| Clave i18n | Mensaje ES |
-|---|---|
-| `required` | *"Ups, parece que este dato se nos olvidó. ¿Me lo compartes?"* |
-| `tooShort` | *"Es muy cortito. ¿Puedes escribirlo completo?"* |
-| `tooLong` | *"Es muy largo. ¿Puedes acortarlo un poco?"* |
-| `invalidChars` | *"Solo letras, espacios y guiones, por favor."* |
-| `needsLetters` | *"Debe contener al menos una letra."* |
-| `invalidDate` | *"Mmm, esa fecha no me cuadra. ¿Puedes revisarla?"* |
-| `futureDate` | *"La fecha de nacimiento no puede ser en el futuro."* |
-| `heightOutOfRange` | *"Esa altura está fuera de lo que esperaba (100–230 cm). ¿La revisamos?"* |
+### Persistencia de borradores (sessionStorage)
 
-**Banner summary al fallar submit:**
-- ES: *"Antes de continuar, revisemos algunos datos. Los marqué en rojo para ti. Cuando estén bien, se pondrán en verde."*
-- EN: *"Before we continue, let's review some details. I've marked them in red for you. When they're correct, they'll turn green."*
+- **Hook genérico `useFormDraft<T>(key)`**: lee al montar, escribe con debounce 300ms, hace flush al desmontar
+- **Auto-guardado**: cada cambio en los forms persiste automáticamente
+- **Sobrevive a**: refresh (F5), navegación Form ↔ Metrics, cerrar y reabrir pestaña
+- **Se limpia**: al volver al Home (per requerimiento del usuario)
+- **Prefix `salud_draft_`** para identificación
 
-### Decisiones técnicas cerradas en esta fase
+### Inputs numéricos blindados
+
+- Internamente `type="text"` + `inputMode="decimal"` (sin comportamiento nativo de número)
+- Filtro regex `/^[\d]*([.,][\d]*)?$/` en onChange (solo dígitos y un separador decimal)
+- Bloqueado: mouse wheel, flechas ↑/↓, spinners nativos, pegado de letras
+- Permitido: typing manual, borrado, navegación con ← →, teclado numérico del móvil
+
+### Decisiones técnicas cerradas
 
 | Decisión | Valor |
 |---|---|
-| Validación | Zod 3.x, schemas centralizados en `lib/validation.ts` |
-| Estructura del nombre | 3 campos separados (firstName, lastName1, lastName2) |
-| Display del nombre | Concatenado: `Juan Pérez González` |
+| Validación | Zod 3.x, schemas centralizados |
+| Estructura del nombre | firstName + lastName1 + lastName2 (separados, no string único) |
+| Display del nombre | Concatenado: "Juan Pérez González" |
 | Normalización para matching | Lowercase + sin tildes + trim (Fase 6) |
 | Layout de los 3 nombres | 3 filas separadas verticales |
 | Terminología | "Primer apellido" / "Segundo apellido" (neutral) |
 | Estricto | Los 3 campos de nombre son obligatorios |
-| Id de errores | Claves traducibles (no strings), se traducen en FormField |
-| Estado del form | useState local + useMemo para edad |
-| Edad | Derivada de `birthDate`, no se persiste como input |
-| Validación onChange | Solo después de `touched` o primer submit |
-| Estados visuales | 3 estados (neutral/error/valid) propagados via prop `state` |
-| Validación onBlur | Sí — feedback inmediato al usuario |
-| Hidden field | `normalizeName(combined)` para futuro match DB |
-| Routing | State-based simple en App.tsx, sin react-router aún |
-| Mensajes | Tono cálido, segunda persona, sin culpabilizar |
-| Counter visible | Solo en los 3 campos de nombre (X/50) |
-| Sanitización al pegar | Colapsa saltos de línea y espacios múltiples |
+| Validación visual | onBlur + re-validación onChange post-touched |
+| Persistencia | sessionStorage con debounce 300ms |
+| Limpieza de borrador | Automática al volver al Home |
+| Routing | State-based simple en App.tsx |
+| Accesibilidad | WCAG 2.1 (aria-required, aria-invalid, aria-live, focus on error) |
+| Idioma | i18next (ES default + EN, persistido en localStorage) |
+
+### Archivos entregados (Fase 2 completa)
+
+```
+src/
+├── hooks/
+│   └── useFormDraft.ts                     # Persistencia sessionStorage
+├── components/
+│   ├── form/
+│   │   ├── BasicDataForm.tsx               # 8 campos con persistencia
+│   │   ├── FormField.tsx                   # Wrapper label + help + error + a11y
+│   │   ├── RadioGroup.tsx                  # Radio cards
+│   │   ├── SegmentedControl.tsx            # iOS-style selector
+│   │   └── MetricsForm.tsx                 # 7 campos con persistencia
+│   ├── layout/
+│   │   └── Header.tsx                      # Logo + ES/EN + Admin (placeholder)
+│   └── shared/
+│       ├── Button.tsx                      # 4 variants × 3 sizes
+│       └── Input.tsx                       # type=text + inputMode + filtro regex
+├── lib/
+│   ├── age.ts                              # calculateAge desde birthDate
+│   ├── name.ts                             # combineName, normalizeName, fullNameOf
+│   └── validation.ts                       # Zod schemas (básico + métricas) + helpers
+├── pages/
+│   ├── HomePage.tsx                        # Con banner de borrador
+│   ├── FormPage.tsx                        # Wrapper BasicDataForm
+│   └── MetricsPage.tsx                     # Wrapper MetricsForm
+└── App.tsx                                 # Routing + hasDraft tracking
+
+scripts/run.sh                              # WSL wrapper (install, dev, build, typecheck)
+index.html                                  # HTML raíz con Plus Jakarta Sans + theme-color
+tailwind.config.js                          # Paleta salud
+postcss.config.js
+tsconfig.json / tsconfig.node.json
+vite.config.ts                              # Vite + React + alias @/
+package.json
+PLAN.md / README.md / MILESTONES.md
+```
 
 ### Accesibilidad (WCAG 2.1)
 
 - `aria-required="true"` en todos los campos requeridos
 - `aria-invalid="true"` en inputs con error
-- `aria-live="polite"` en mensajes de error y contador
-- `aria-live="assertive"` en el banner summary (interrumpe al usuario)
-- `aria-describedby` vincula input con su help y error
+- `aria-live="polite"` en mensajes de error y contadores
+- `aria-live="assertive"` en banner summary (interrumpe al usuario)
+- `aria-describedby` vincula input con help y error
 - Focus automático al primer campo con error al fallar submit
 - Scroll suave al campo con error
 - Labels asociados con `htmlFor`
+
+### Métricas de build
+
+- **78 módulos transformados** (era 56 en Fase 1)
+- HTML: 0.95 kB
+- CSS: 15.52 kB (gzip 3.70 kB)
+- JS: ~290 kB (gzip ~87 kB)
 
 ### Cómo probar
 
 ```bash
 cd /home/nico/projects/GestionDeSaludSimple
-bash scripts/run.sh dev   # abre http://localhost:5173
+bash scripts/run.sh dev   # http://localhost:5173
 ```
 
-**Estados visuales:**
-- [ ] Abrir form → 8 campos en gris (neutral)
-- [ ] Tocar "Tu nombre" y salir vacío → borde **rojo** + "Te falta tu nombre."
-- [ ] Escribir "Juan" → borde **verde**
-- [ ] Borrar todo → vuelve a **rojo**
-- [ ] El contador "X/50" se actualiza y se pone **rojo** si pasa de 50
+**Tests críticos:**
 
-**Validaciones de nombre:**
-- [ ] Pegar `  María    José  ` → se colapsa a `María José`
-- [ ] `Juan123` → error "Solo letras, espacios y guiones"
-- [ ] `María-José` (con guión) → válido
-- [ ] `--` → error "Debe contener al menos una letra"
-- [ ] 51 caracteres → "Es muy largo"
+1. ✅ **Persistencia**: llena form → F5 → datos intactos
+2. ✅ **Volver al Home**: navega Form → Metrics → Home → banner aparece
+3. ✅ **Continuar borrador**: click "Continuar mi medición" → form con datos
+4. ✅ **Empezar de nuevo**: click "Empezar de nuevo" → form vacío
+5. ✅ **Validación tiempo real**: campos numéricos cambian a verde instantáneo
+6. ✅ **Wheel bloqueado**: scroll de mouse sobre input numérico no cambia valor
+7. ✅ **Solo números**: escribir "abc" → rechazado en tiempo real
+8. ✅ **Toggle ES/EN**: cambia toda la UI al instante
+9. ✅ **Mobile (DevTools)**: responsive, teclado numérico aparece
 
-**Submit y banner:**
-- [ ] Click "Continuar" con form vacío → banner rojo + scroll + focus al primero
-- [ ] Corregir uno por uno → cada corrección se pone verde
-- [ ] Cuando todos verdes → banner desaparece + "Continuar" navega
-- [ ] Alert muestra: `Datos básicos OK: Juan Pérez González. Próximamente...`
+### Pendiente (orden de ejecución)
 
-**Concatenación:**
-- [ ] El alert final muestra `Juan Pérez González` (un solo espacio entre componentes)
-
-**i18n:**
-- [ ] Toggle ES/EN en cualquier campo → labels, helps, placeholders, errores y banner traducen al instante
-
-**Móvil (DevTools):**
-- [ ] Campos no se cortan, scroll suave
-- [ ] Banner summary legible y no tapa campos
-
-### Métricas de build
-
-- 75 módulos transformados (era 56 en Fase 1)
-- HTML: 0.95 kB (gzip 0.51 kB)
-- CSS: 15.26 kB (gzip 3.66 kB)
-- JS: ~278 kB (gzip ~84 kB) — incremento de ~70 kB por Zod + componentes de form + name utilities
-
-### Pendiente
-
-- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral) con mismas validaciones visuales y cross-checks (BMI vs peso/altura)
-- **Fase 4:** Lógica de evaluación con rangos médicos por edad y género
-- **Fase 5:** Pantalla de resultados con semáforo + tooltips
+| Fase | Descripción | Estado |
+|---|---|---|
+| **Fase 3** | Formulario de 7 métricas | ✅ **COMPLETADA** (parte de v0.3.0-fase3) |
+| **Fase 4** | Lógica de evaluación con rangos médicos por edad/género + Pantalla de Resultados con semáforo 🟢🟡🔴 | ⏭️ **SIGUIENTE** |
+| **Fase 5** | Tooltips explicativos en cada métrica + mensajes contextuales | Pendiente |
+| **Fase 6** | Persistencia con Dexie (IndexedDB) + detección de duplicados | Pendiente |
+| **Fase 7** | Exportación a Excel (.xlsx) y PDF | Pendiente |
+| **Fase 8** | Panel admin con login + CRUD + filtro por nombre | Pendiente |
+| **Fase 9** | PWA instalable + service worker | Pendiente |
+| **Fase 10** | APK Android con Capacitor | Pendiente |
+| **Fase 11** | Pulido visual y de tono | Pendiente |
 
 ---
 
@@ -304,15 +345,6 @@ Checklist:
 - CSS: 11.56 kB (gzip 3.06 kB)
 - JS: ~208 kB (gzip ~66 kB)
 
-### Pendiente (cerrado en hito v0.2.0-fase2)
-
-- ✅ **Fase 2:** Formulario de datos básicos (3 nombres + fecha + edad auto + altura + género + contextura con radio cards) + validaciones con Zod + estados visuales + a11y WCAG 2.1 — **completada y pulida**
-
-### Pendiente activo
-
-- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral)
-- **Fase 4:** Lógica de evaluación con rangos médicos por edad y género
-
 ---
 
 ## v0.0.0-plan — Plan aprobado
@@ -342,4 +374,4 @@ Checklist:
 - `.gitignore` — exclusiones de Git
 
 ### Pendiente (al momento de este hito)
-- Iniciar Fase 1: Setup del proyecto + Tailwind + Header + i18n + Home
+- ✅ Iniciar Fase 1: Setup del proyecto + Tailwind + Header + i18n + Home
