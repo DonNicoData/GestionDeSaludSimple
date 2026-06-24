@@ -1,20 +1,26 @@
 import { InputHTMLAttributes, forwardRef, ReactNode } from 'react'
 
+export type InputState = 'neutral' | 'error' | 'valid'
+
 interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'type'> {
   value: string | number
   onChange: (value: string) => void
   type?: 'text' | 'number' | 'date' | 'email'
   suffix?: ReactNode
-  error?: boolean
+  state?: InputState
 }
 
 const baseClasses =
-  'w-full h-12 px-4 text-base bg-white border-2 rounded-2xl transition-colors focus:outline-none focus:border-primary disabled:bg-divider disabled:text-graphite/50'
+  'w-full h-12 px-4 text-base bg-white border-2 rounded-2xl transition-colors focus:outline-none disabled:bg-divider disabled:text-graphite/50'
 
-const stateClasses = {
-  normal: 'border-divider focus:border-primary',
-  error: 'border-alert focus:border-alert',
+const stateClasses: Record<InputState, string> = {
+  neutral:
+    'border-divider focus:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bone',
+  error:
+    'border-alert focus:border-alert focus-visible:ring-2 focus-visible:ring-alert focus-visible:ring-offset-2 focus-visible:ring-offset-bone',
+  valid:
+    'border-primary focus:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bone',
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -24,7 +30,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       onChange,
       type = 'text',
       suffix,
-      error = false,
+      state = 'neutral',
       className = '',
       ...props
     },
@@ -37,14 +43,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={[
-            baseClasses,
-            error ? stateClasses.error : stateClasses.normal,
-            suffix ? 'pr-12' : '',
-            className,
-          ]
+          className={[baseClasses, stateClasses[state], suffix ? 'pr-12' : '', className]
             .filter(Boolean)
             .join(' ')}
+          aria-invalid={state === 'error' ? true : undefined}
           {...props}
         />
         {suffix && (

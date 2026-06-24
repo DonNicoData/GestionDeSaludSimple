@@ -8,7 +8,9 @@ export type Language = 'es' | 'en'
 
 export interface Client {
   id?: number
-  name: string
+  firstName: string
+  lastName1: string
+  lastName2: string
   birthDate: string
   age: number
   gender: Gender

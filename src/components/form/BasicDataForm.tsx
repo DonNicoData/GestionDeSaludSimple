@@ -1,26 +1,29 @@
-import { useMemo, useState } from 'react'
+import { ClipboardEvent, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormField } from '@/components/form/FormField'
 import { GenderField } from '@/components/form/SegmentedControl'
 import { RadioGroup } from '@/components/form/RadioGroup'
-import { Input } from '@/components/shared/Input'
+import { Input, type InputState } from '@/components/shared/Input'
 import { Button } from '@/components/shared/Button'
 import {
   basicDataSchema,
-  normalizeName,
   validateField,
+  type BasicDataField,
   type BasicDataInput,
 } from '@/lib/validation'
 import { calculateAge, todayIso } from '@/lib/age'
+import { combineName, normalizeName } from '@/lib/name'
 import type { Gender, WristContexture } from '@/types'
 
 interface BasicDataFormProps {
-  onSubmit: (data: BasicDataInput & { age: number }) => void
+  onSubmit: (data: BasicDataInput & { age: number; fullName: string }) => void
   onBack?: () => void
 }
 
 interface FormState {
-  name: string
+  firstName: string
+  lastName1: string
+  lastName2: string
   birthDate: string
   heightCm: string
   gender: Gender | undefined
@@ -28,12 +31,17 @@ interface FormState {
 }
 
 type ErrorState = Partial<Record<keyof FormState, string>>
+type TouchedState = Partial<Record<keyof FormState, boolean>>
+
+const NAME_FIELDS_MAX = 50
 
 export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   const { t } = useTranslation()
 
   const [form, setForm] = useState<FormState>({
-    name: '',
+    firstName: '',
+    lastName1: '',
+    lastName2: '',
     birthDate: '',
     heightCm: '',
     gender: undefined,
@@ -41,24 +49,68 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   })
 
   const [errors, setErrors] = useState<ErrorState>({})
+  const [touched, setTouched] = useState<TouchedState>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
 
   const age = useMemo(() => calculateAge(form.birthDate), [form.birthDate])
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+  const formRef = useRef<HTMLDivElement>(null)
+
+  const computeState = (field: keyof FormState): InputState => {
+    if (!touched[field] && !submitAttempted) return 'neutral'
+    return errors[field] ? 'error' : 'valid'
+  }
+
+  const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
-    if (submitAttempted) {
-      const errorKey = validateField(key as keyof BasicDataInput, value as never)
+    if (touched[key] || submitAttempted) {
+      const errorKey = validateField(key as BasicDataField, value as never)
       setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
     }
+  }
+
+  const handleBlur = <K extends keyof FormState>(key: K) => {
+    setTouched((prev) => ({ ...prev, [key]: true }))
+    const errorKey = validateField(key as BasicDataField, form[key] as never)
+    setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
+  }
+
+  const handlePasteClean = (
+    e: ClipboardEvent<HTMLInputElement>,
+    key: 'firstName' | 'lastName1' | 'lastName2',
+  ) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text')
+    const cleaned = pasted.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim()
+    const inputEl = e.currentTarget
+    const start = inputEl.selectionStart ?? form[key].length
+    const end = inputEl.selectionEnd ?? start
+    const current = form[key]
+    const next = (current.slice(0, start) + cleaned + current.slice(end)).slice(0, NAME_FIELDS_MAX)
+    updateField(key, next)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitAttempted(true)
+    setShowSummary(true)
+
+    const allTouched: TouchedState = {
+      firstName: true,
+      lastName1: true,
+      lastName2: true,
+      birthDate: true,
+      heightCm: true,
+      gender: true,
+      wristContexture: true,
+    }
+    setTouched(allTouched)
 
     const parsed = basicDataSchema.safeParse({
-      name: form.name,
+      firstName: form.firstName,
+      lastName1: form.lastName1,
+      lastName2: form.lastName2,
       birthDate: form.birthDate,
       heightCm: form.heightCm === '' ? undefined : Number(form.heightCm),
       gender: form.gender,
@@ -74,17 +126,23 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
         }
       }
       setErrors(next)
+
       const firstErrorField = Object.keys(next)[0]
       if (firstErrorField) {
-        document
-          .getElementById(firstErrorField)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const el = document.getElementById(firstErrorField)
+        el?.focus()
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
       return
     }
 
     setErrors({})
-    onSubmit({ ...parsed.data, age })
+    setShowSummary(false)
+    onSubmit({
+      ...parsed.data,
+      age,
+      fullName: combineName(parsed.data.firstName, parsed.data.lastName1, parsed.data.lastName2),
+    })
   }
 
   const wristOptions = [
@@ -93,6 +151,20 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
     { value: 'thick' as const, label: t('basicForm.fields.wristContexture.options.thick') },
   ]
 
+  const nameFieldProps = (key: 'firstName' | 'lastName1' | 'lastName2') => ({
+    id: key,
+    type: 'text' as const,
+    autoComplete:
+      key === 'firstName' ? 'given-name' : key === 'lastName1' ? 'family-name' : 'additional-name',
+    value: form[key],
+    onChange: (v: string) => updateField(key, v),
+    onBlur: () => handleBlur(key),
+    onPaste: (e: ClipboardEvent<HTMLInputElement>) => handlePasteClean(e, key),
+    placeholder: t(`basicForm.fields.${key}.placeholder`),
+    maxLength: NAME_FIELDS_MAX,
+    state: computeState(key),
+  })
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -100,32 +172,64 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       className="flex flex-col gap-7"
       aria-label={t('basicForm.title')}
     >
-      <header className="flex flex-col gap-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-graphite">
-          {t('basicForm.title')}
-        </h1>
-        <p className="text-sm sm:text-base text-graphite/70 leading-relaxed">
-          {t('basicForm.subtitle')}
-        </p>
-      </header>
+      <div ref={formRef}>
+        {showSummary && Object.keys(errors).length > 0 && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-2 rounded-2xl border-2 border-alert bg-alert/10 p-4"
+          >
+            <p className="font-semibold text-alert">{t('basicForm.summary.title')}</p>
+            <p className="text-sm text-graphite/80 mt-1 leading-relaxed">
+              {t('basicForm.summary.body')}
+            </p>
+          </div>
+        )}
+
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-graphite">
+            {t('basicForm.title')}
+          </h1>
+          <p className="text-sm sm:text-base text-graphite/70 leading-relaxed">
+            {t('basicForm.subtitle')}
+          </p>
+        </header>
+      </div>
 
       <FormField
-        id="name"
-        label={t('basicForm.fields.name.label')}
-        help={t('basicForm.fields.name.help')}
-        errorKey={errors.name ?? null}
+        id="firstName"
+        label={t('basicForm.fields.firstName.label')}
+        help={t('basicForm.fields.firstName.help')}
+        errorKey={errors.firstName ?? null}
         required
+        showCounter
+        counter={{ current: form.firstName.length, max: NAME_FIELDS_MAX }}
       >
-        <Input
-          id="name"
-          type="text"
-          autoComplete="name"
-          value={form.name}
-          onChange={(v) => update('name', v)}
-          placeholder={t('basicForm.fields.name.placeholder')}
-          maxLength={100}
-          error={Boolean(errors.name)}
-        />
+        <Input {...nameFieldProps('firstName')} />
+      </FormField>
+
+      <FormField
+        id="lastName1"
+        label={t('basicForm.fields.lastName1.label')}
+        help={t('basicForm.fields.lastName1.help')}
+        errorKey={errors.lastName1 ?? null}
+        required
+        showCounter
+        counter={{ current: form.lastName1.length, max: NAME_FIELDS_MAX }}
+      >
+        <Input {...nameFieldProps('lastName1')} />
+      </FormField>
+
+      <FormField
+        id="lastName2"
+        label={t('basicForm.fields.lastName2.label')}
+        help={t('basicForm.fields.lastName2.help')}
+        errorKey={errors.lastName2 ?? null}
+        required
+        showCounter
+        counter={{ current: form.lastName2.length, max: NAME_FIELDS_MAX }}
+      >
+        <Input {...nameFieldProps('lastName2')} />
       </FormField>
 
       <FormField
@@ -139,9 +243,10 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
           id="birthDate"
           type="date"
           value={form.birthDate}
-          onChange={(v) => update('birthDate', v)}
+          onChange={(v) => updateField('birthDate', v)}
+          onBlur={() => handleBlur('birthDate')}
           max={todayIso()}
-          error={Boolean(errors.birthDate)}
+          state={computeState('birthDate')}
         />
       </FormField>
 
@@ -173,13 +278,14 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
           type="number"
           inputMode="numeric"
           value={form.heightCm}
-          onChange={(v) => update('heightCm', v)}
+          onChange={(v) => updateField('heightCm', v)}
+          onBlur={() => handleBlur('heightCm')}
           placeholder={t('basicForm.fields.heightCm.placeholder')}
           suffix={t('basicForm.fields.heightCm.suffix')}
           min={100}
           max={230}
           step={1}
-          error={Boolean(errors.heightCm)}
+          state={computeState('heightCm')}
         />
       </FormField>
 
@@ -191,7 +297,10 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       >
         <GenderField
           value={form.gender}
-          onChange={(v) => update('gender', v)}
+          onChange={(v) => {
+            updateField('gender', v)
+            handleBlur('gender')
+          }}
           error={Boolean(errors.gender)}
         />
       </FormField>
@@ -207,7 +316,10 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
           name="wristContexture"
           options={wristOptions}
           value={form.wristContexture}
-          onChange={(v) => update('wristContexture', v)}
+          onChange={(v) => {
+            updateField('wristContexture', v)
+            handleBlur('wristContexture')
+          }}
           ariaLabel={t('basicForm.fields.wristContexture.label')}
           error={Boolean(errors.wristContexture)}
         />
@@ -237,7 +349,14 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
         </Button>
       </div>
 
-      <input type="hidden" value={normalizeName(form.name)} readOnly aria-hidden />
+      <input
+        type="hidden"
+        value={normalizeName(
+          combineName(form.firstName, form.lastName1, form.lastName2),
+        )}
+        readOnly
+        aria-hidden
+      />
     </form>
   )
 }
