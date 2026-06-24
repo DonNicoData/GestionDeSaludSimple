@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
 
-export function HomePage() {
-  const { t } = useTranslation()
+interface HomePageProps {
+  onRegister: () => void
+}
 
-  const handleRegister = () => {
-    window.alert(t('home.comingSoon'))
-  }
+export function HomePage({ onRegister }: HomePageProps) {
+  const { t } = useTranslation()
 
   return (
     <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-16 flex flex-col items-center text-center">
@@ -31,7 +31,7 @@ export function HomePage() {
 
       <Button
         size="lg"
-        onClick={handleRegister}
+        onClick={onRegister}
         title={t('home.ctaHint')}
       >
         {t('home.ctaRegister')}
