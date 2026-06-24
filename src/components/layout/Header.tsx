@@ -23,7 +23,7 @@ export function Header() {
         <div className="flex items-center gap-2 min-w-0">
           <div
             aria-hidden="true"
-            className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white shrink-0"
+            className="h-9 w-9 rounded-full bg-primary-dark flex items-center justify-center text-white shrink-0"
           >
             <svg
               viewBox="0 0 24 24"
