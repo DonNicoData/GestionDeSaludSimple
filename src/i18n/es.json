@@ -207,8 +207,6 @@
         "label": "Peso",
         "suffix": "kg",
         "idealLabel": "Peso ideal estimado",
-        "methodology": "Calculado con Lorentz × tu contextura",
-        "methodologyWithValue": "Calculado con Lorentz × tu contextura {{contexture}}",
         "message": {
           "normal": "Tu peso está dentro del rango saludable para tu contextura de muñeca.",
           "warning": "Tu peso se aleja un poco del rango ideal para tu contextura de muñeca.",

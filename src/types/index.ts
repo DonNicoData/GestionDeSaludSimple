@@ -55,9 +55,6 @@ export type MetricKey =
  *   correspondiente en la UI.
  * - `idealRange`: rango saludable como texto (ej. "18.5 – 24.9") que se
  *   muestra como referencia informativa en la tarjeta.
- * - `contexture`: solo presente en la métrica `weight` (es la única que
- *   usa Lorentz × factor de contextura). Permite a la UI mostrar la
- *   línea de metodología sin tener que recibir el cliente completo.
  */
 export interface MetricEvaluation {
   key: MetricKey
@@ -65,5 +62,4 @@ export interface MetricEvaluation {
   status: MetricStatus
   idealRange: string | null
   messageKey: string
-  contexture?: WristContexture
 }

@@ -79,21 +79,6 @@ export function MetricCard({ evaluation }: MetricCardProps) {
         </p>
       )}
 
-      {key === 'weight' && evaluation.contexture && (
-        <p className="text-xs text-graphite/50 italic leading-relaxed mt-0.5">
-          ↳{' '}
-          {t(
-            `results.metrics.weight.methodologyWithValue` as 'results.metrics.weight.methodologyWithValue',
-            {
-              contexture: t(
-                `basicForm.fields.wristContexture.options.${evaluation.contexture}`,
-              ),
-              defaultValue: t('results.metrics.weight.methodology'),
-            },
-          )}
-        </p>
-      )}
-
       <p
         className={[
           'text-xs mt-2 leading-relaxed font-medium',

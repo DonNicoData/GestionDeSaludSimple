@@ -261,6 +261,103 @@ bash scripts/run.sh dev   # http://localhost:5173
   y `t(\`results.statusShort.${status}\`)` tanto para `aria-label`
   como para el texto visible.
 
+### Fix post-Fase 4 — Contextura de muñeca enlazada a resultados
+
+- La contextura de muñeca ya influía en el cálculo del peso ideal
+  (Lorentz × factor 0.95/1.00/1.05), pero el impacto era invisible
+  para el usuario.
+- Mejoras implementadas:
+  - **ClientProfileBanner** (nuevo componente) siempre visible arriba
+    de la pantalla de resultados: muestra contextura, peso ideal
+    estimado (Lorentz × contextura), TMB (Mifflin-St Jeor) y desvío
+    del peso actual vs ideal.
+  - **Mensajes contexture-aware en card de peso**: el mensaje bajo el
+    rango ideal menciona explícitamente que la evaluación consideró
+    la contextura de muñeca (ES/EN).
+  - **Ajustes médicos ±1-2% en % grasa y % músculo**: las tablas ACE
+    universales se ajustan ahora por contextura (thick +1% en grasa,
+    thin -1% en grasa; thick +2% en músculo lower, thin -2% en músculo
+    lower). Implementado en helpers `adjustBodyFatRange` y
+    `adjustMuscleRange` con un bloque de comentario destacado
+    "PARÁMETROS SUJETOS A AJUSTE FUTURO".
+  - **i18n**: nuevas claves `results.profile.*` (título, contextura,
+    peso ideal, TMB) y `results.metrics.weight.message.{normal|
+    warning|alert}` contexture-aware.
+  - **PLAN.md §6.10** nuevo: documenta formalmente los ajustes y cómo
+    calibrarlos.
+  - **Tests nuevos (6)**: bloque `// CONTEXTURE` al final de
+    `evaluator.test.ts` que cubre las 3 contexturas × 2 métricas
+    ajustadas.
+- 53 tests originales + 6 nuevos = **59 tests pasando**.
+- Typecheck: 0 errores. Build: 83 módulos, 304 kB.
+
+---
+
+## ⚠️ PUNTO DE CALIBRACIÓN FUTURO — Ajustes por contextura de muñeca
+
+> **¿Qué es esto?** Los ajustes ±1-2% aplicados al % grasa y % músculo
+> según la contextura de muñeca son **parámetros sujetos a revisión
+> clínica futura**. El producto final puede requerir ajustes finos
+> basados en:
+> - Feedback de usuarios profesionales
+> - Guías clínicas actualizadas (OMS, ACE, NIH, etc.)
+> - Papers o estudios específicos de composición corporal por contextura
+
+### 📍 Dónde tocar
+
+| Archivo | Qué buscar | Líneas aproximadas |
+|---|---|---|
+| `src/lib/evaluator.ts` | Helpers `adjustBodyFatRange` y `adjustMuscleRange` | ~155-205 |
+| `src/lib/evaluator.ts` | Constantes `BODY_FAT_TABLE` y `MUSCLE_TABLE` | ~70-115 |
+| `src/lib/evaluator.ts` | Factor de Lorentz (0.95 / 1.00 / 1.05) en `idealWeightKg` | ~210-230 |
+| `src/lib/__tests__/evaluator.test.ts` | Tests marcados como `// CONTEXTURE` | al final del archivo |
+| `PLAN.md` §6.10 | Documentación formal de los ajustes | ~234-265 |
+
+### 🔧 Cómo ajustar un valor
+
+1. Identificar la métrica a tocar (ej: % grasa con contextura gruesa).
+2. Modificar la constante en `evaluator.ts` (ej: `acceptableUpper + 1`
+   → `acceptableUpper + 2`).
+3. Correr `bash scripts/run.sh test` — los tests `// CONTEXTURE` te
+   dicen qué evaluaciones cambiaron de status.
+4. Si querés, actualizar `PLAN.md` §6.10 con la nueva justificación
+   clínica.
+
+### ⚡ Tests de calibración
+
+Si rompes alguno de estos tests, sabés que el ajuste por contextura
+cambió:
+
+```
+// CONTEXTURE
+- evaluate - % grasa con contextura
+  ✓ thick frame amplía acceptableUpper +1%
+  ✓ thin frame reduce lower -1%
+  ✓ normal frame mantiene rangos ACE base
+- evaluate - % músculo con contextura
+  ✓ thick frame sube lower +2%
+  ✓ thin frame baja lower -2%
+  ✓ thin frame respeta piso mínimo de lower
+```
+
+### 📐 Tabla resumen de ajustes actuales
+
+| Contextura | % Grasa (ajuste) | % Músculo (lower) |
+|---|---|---|
+| `thin` | `lower - 1%` (mínimo 3%) | `lower - 2%` (mínimo 10%) |
+| `normal` | sin ajuste | sin ajuste |
+| `thick` | `acceptableUpper + 1%` Y `alertLower + 1%` | `lower + 2%` |
+
+### 🎯 Ejemplo concreto del impacto
+
+Hombre 35 años, contextura gruesa, 28% grasa:
+- Sin ajuste (normal/thin): **alert** (≥28% es alta)
+- Con ajuste thick: **warning** (28% cae en aceptable 22-28)
+
+Esto refleja que una persona con contextura gruesa puede tener +1%
+grasa sin riesgo clínico adicional (más hueso = más tejido magro =
+más reserva estructural).
+
 ---
 
 ## v0.4.0-fase4 — Lógica de evaluación + Pantalla de Resultados con semáforo
