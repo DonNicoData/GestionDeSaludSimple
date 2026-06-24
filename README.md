@@ -31,14 +31,31 @@ Aplicación local (PWA + APK Android) para que profesionales de la salud registr
 
 Todos los datos se guardan **únicamente en el dispositivo**. Nada se envía a internet. La exportación a Excel/PDF es siempre una acción manual del usuario.
 
-## Desarrollo (cuando se implemente)
+## Desarrollo
+
+### Entorno estándar (Linux/macOS)
 
 ```bash
 npm install
 npm run dev          # desarrollo
 npm run build        # build de producción
+npm run typecheck    # verificación de tipos
 npm run preview      # preview local
 ```
+
+### Entorno WSL (este equipo)
+
+Este equipo usa WSL2 con node de Windows. `npm` falla con rutas UNC. Usa el wrapper:
+
+```bash
+bash scripts/run.sh install     # instalar dependencias
+bash scripts/run.sh dev         # servidor de desarrollo
+bash scripts/run.sh build       # build de producción
+bash scripts/run.sh typecheck   # verificación de tipos
+bash scripts/run.sh preview     # preview local
+```
+
+El wrapper sincroniza las fuentes a `/mnt/c/Users/User/projects_tmp/salud` (filesystem nativo de Windows) antes de ejecutar vite/esbuild.
 
 ## Licencia
 

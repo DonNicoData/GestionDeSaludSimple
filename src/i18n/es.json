@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Salud en 7 Parámetros"
+  },
+  "header": {
+    "admin": "Admin",
+    "languageToggle": "Cambiar idioma",
+    "languageEs": "ES",
+    "languageEn": "EN"
+  },
+  "home": {
+    "welcomeFirst": "Hola, qué bueno tenerte aquí. Hoy vamos a revisar cómo está tu salud, con calma y sin prisas.",
+    "welcomeReturning": "Hola otra vez. Tu última visita fue hace {{days}} días. ¿Quieres registrar nuevos datos?",
+    "welcomeReturningToday": "Hola otra vez. Tu última visita fue hoy. ¿Quieres registrar nuevos datos?",
+    "ctaRegister": "Registrar mis datos",
+    "ctaHint": "Comencemos cuando estés listo/a",
+    "privacyNotice": "Tus datos se guardan solo en este dispositivo. Nada se envía a internet.",
+    "comingSoon": "Próximamente"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "close": "Cerrar",
+    "back": "Volver"
+  }
+}
