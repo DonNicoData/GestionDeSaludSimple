@@ -4,6 +4,27 @@ Registro histórico de los hitos importantes del proyecto. Cada hito corresponde
 
 ---
 
+## v0.1.0-fase1 — Setup base, i18n y Home
+**Fecha:** Junio 2026
+
+### Logros
+- Proyecto scaffolded con Vite + React 18 + TypeScript estricto
+- Tailwind CSS configurado con paleta de salud personalizada (primary `#4CAF7C`, bone `#FAF8F5`, warning, alert)
+- Tipografía Plus Jakarta Sans cargada
+- i18n con i18next (ES por defecto + EN), detección con localStorage
+- Componente `Header` con logo + toggle ES/EN + botón Admin (placeholder)
+- Página `Home` con bienvenida cálida y CTA "Registrar mis datos"
+- Componente `Button` reutilizable con 4 variantes y 3 tamaños
+- Tipos base (`Client`, `Record`, etc.) definidos
+- Script wrapper para WSL (`scripts/run.sh`)
+- Build verificado: 56 módulos, ~208 KB JS (66 KB gzip)
+
+### Pendiente
+- **Fase 2:** Formulario de datos básicos (con radio buttons de contextura y fecha de nacimiento)
+- **Fase 3:** Formulario de 7 métricas
+
+---
+
 ## v0.0.0-plan — Plan aprobado
 **Fecha:** Junio 2026
 

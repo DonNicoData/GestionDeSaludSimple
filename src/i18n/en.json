@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Health in 7 Parameters"
+  },
+  "header": {
+    "admin": "Admin",
+    "languageToggle": "Change language",
+    "languageEs": "ES",
+    "languageEn": "EN"
+  },
+  "home": {
+    "welcomeFirst": "Hello, it's great to have you here. Today we'll review how your health is doing, calmly and without rush.",
+    "welcomeReturning": "Hello again. Your last visit was {{days}} days ago. Would you like to record new data?",
+    "welcomeReturningToday": "Hello again. Your last visit was today. Would you like to record new data?",
+    "ctaRegister": "Record my data",
+    "ctaHint": "Let's begin whenever you're ready",
+    "privacyNotice": "Your data is stored only on this device. Nothing is sent to the internet.",
+    "comingSoon": "Coming soon"
+  },
+  "common": {
+    "loading": "Loading...",
+    "close": "Close",
+    "back": "Back"
+  }
+}
