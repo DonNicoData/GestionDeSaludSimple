@@ -75,6 +75,20 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
     setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
   }
 
+  /**
+   * Para campos de selección (radio, segmented).
+   * Actualiza form + touched + errors atómicamente con el NUEVO valor,
+   * evitando el bug de stale closure que ocurre al llamar updateField +
+   * handleBlur por separado en el mismo evento (el closure quedaba con
+   * el valor anterior y la validación fallaba falsamente).
+   */
+  const selectField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setTouched((prev) => ({ ...prev, [key]: true }))
+    const errorKey = validateField(key, value)
+    setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
+  }
+
   const handlePasteClean = (
     e: ClipboardEvent<HTMLInputElement>,
     key: 'firstName' | 'lastName1' | 'lastName2',
@@ -296,10 +310,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       >
         <GenderField
           value={form.gender}
-          onChange={(v) => {
-            updateField('gender', v)
-            handleBlur('gender')
-          }}
+          onChange={(v) => selectField('gender', v)}
           error={Boolean(errors.gender)}
         />
       </FormField>
@@ -315,10 +326,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
           name="wristContexture"
           options={wristOptions}
           value={form.wristContexture}
-          onChange={(v) => {
-            updateField('wristContexture', v)
-            handleBlur('wristContexture')
-          }}
+          onChange={(v) => selectField('wristContexture', v)}
           ariaLabel={t('basicForm.fields.wristContexture.label')}
           error={Boolean(errors.wristContexture)}
         />
