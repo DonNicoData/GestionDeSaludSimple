@@ -89,6 +89,75 @@
       "back": "Volver"
     }
   },
+  "metricsForm": {
+    "title": "Ahora, las mediciones de hoy",
+    "subtitle": "Si no tienes algún valor exacto, no te preocupes. Déjalo vacío y seguimos adelante con los que sí tengas.",
+    "summary": {
+      "title": "Antes de continuar, revisemos algunas mediciones.",
+      "body": "Los marqué en rojo para ti. Cuando estén bien, se pondrán en verde."
+    },
+    "notMeasured": "No medido",
+    "fields": {
+      "weight": {
+        "label": "Tu peso actual",
+        "placeholder": "72.5",
+        "suffix": "kg",
+        "help": "En kilogramos, lo más preciso posible."
+      },
+      "bmi": {
+        "label": "Tu IMC",
+        "placeholder": "22.5",
+        "suffix": "kg/m²",
+        "help": "Si no lo tienes calculado, lo encontramos por ti al ver los resultados. Déjalo vacío si no lo sabes."
+      },
+      "bodyFatPct": {
+        "label": "Porcentaje de grasa corporal",
+        "placeholder": "20",
+        "suffix": "%",
+        "help": "Lo suelen medir básculas inteligentes o calibradores. Déjalo vacío si no lo tienes."
+      },
+      "muscleMassPct": {
+        "label": "Porcentaje de masa muscular",
+        "placeholder": "35",
+        "suffix": "%",
+        "help": "Igual que la grasa, viene de tu báscula o examen. Déjalo vacío si no lo tienes."
+      },
+      "calories": {
+        "label": "Calorías que consumes al día",
+        "placeholder": "2000",
+        "suffix": "kcal",
+        "help": "Una estimación está bien, no tiene que ser exacta."
+      },
+      "bioAge": {
+        "label": "Tu edad biológica",
+        "placeholder": "30",
+        "suffix": "años",
+        "help": "La que indica tu cuerpo, no tu DNI. Déjalo vacío si no la conoces."
+      },
+      "visceralFat": {
+        "label": "Nivel de grasa visceral",
+        "placeholder": "8",
+        "suffix": "nivel",
+        "help": "Viene en tu báscula o bioimpedancia. Número entero."
+      }
+    },
+    "errors": {
+      "required": "Ups, parece que este dato se nos olvidó. ¿Me lo compartes?",
+      "invalidNumber": "Mmm, ese número no me cuadra. ¿Puedes revisarlo?",
+      "outOfRange": "Ese valor está fuera de lo que esperaba ({{min}}–{{max}}). ¿Es correcto?",
+      "weightOutOfRange": "El peso suele estar entre 20 y 300 kg. ¿Es correcto?",
+      "bmiOutOfRange": "El IMC suele estar entre 10 y 60. ¿Es correcto?",
+      "bodyFatOutOfRange": "El % de grasa suele estar entre 3 y 50%. ¿Es correcto?",
+      "muscleOutOfRange": "El % de músculo suele estar entre 10 y 70%. ¿Es correcto?",
+      "caloriesOutOfRange": "Las calorías diarias suelen estar entre 800 y 6000. ¿Es correcto?",
+      "bioAgeOutOfRange": "La edad biológica suele estar entre 10 y 100 años. ¿Es correcto?",
+      "visceralOutOfRange": "La grasa visceral va del 1 al 30. ¿Es correcto?"
+    },
+    "buttons": {
+      "continue": "Ver mis resultados",
+      "back": "Volver"
+    }
+  },
   "common": {
     "loading": "Cargando...",
     "close": "Cerrar",

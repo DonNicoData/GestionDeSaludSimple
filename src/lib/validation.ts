@@ -67,3 +67,79 @@ export function validateField(
   if (result.success) return null
   return result.error.issues[0]?.message ?? 'required'
 }
+
+/**
+ * Schema para un campo numérico requerido.
+ * Acepta string vacío como `0` y transforma a número.
+ */
+function requiredNumberField(min: number, max: number) {
+  return z
+    .string({ required_error: 'required' })
+    .transform((s, ctx) => {
+      if (s.trim() === '') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'required' })
+        return z.NEVER
+      }
+      const n = Number(s)
+      if (Number.isNaN(n)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'invalidNumber' })
+        return z.NEVER
+      }
+      return n
+    })
+    .pipe(z.number().min(min).max(max))
+}
+
+/**
+ * Schema para un campo numérico opcional.
+ * Acepta string vacío como `0` (interpretado como "no medido").
+ * Acepta cualquier valor dentro del rango [0, max].
+ */
+function optionalNumberField(max: number) {
+  return z
+    .string()
+    .transform((s, ctx) => {
+      if (s.trim() === '') return 0
+      const n = Number(s)
+      if (Number.isNaN(n)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'invalidNumber' })
+        return z.NEVER
+      }
+      return n
+    })
+    .pipe(z.number().min(0).max(max))
+}
+
+/**
+ * Schema de las 7 métricas corporales.
+ * - Campos requeridos: weight, calories, visceralFat
+ * - Campos opcionales (0 = no medido): bmi, bodyFatPct, muscleMassPct, bioAge
+ */
+export const metricsSchema = z.object({
+  weight: requiredNumberField(20, 300),
+  bmi: optionalNumberField(60),
+  bodyFatPct: optionalNumberField(50),
+  muscleMassPct: optionalNumberField(70),
+  calories: requiredNumberField(800, 6000),
+  bioAge: optionalNumberField(100),
+  visceralFat: requiredNumberField(1, 30),
+})
+
+export type MetricsInput = z.input<typeof metricsSchema>
+export type MetricsOutput = z.output<typeof metricsSchema>
+
+export type MetricsField = keyof MetricsInput
+
+/**
+ * Valida un campo individual de métricas.
+ * Devuelve la clave de error o null si pasa.
+ */
+export function validateMetricField(
+  field: MetricsField,
+  value: MetricsInput[MetricsField],
+): string | null {
+  const fieldSchema = metricsSchema.shape[field]
+  const result = fieldSchema.safeParse(value)
+  if (result.success) return null
+  return result.error.issues[0]?.message ?? 'required'
+}
