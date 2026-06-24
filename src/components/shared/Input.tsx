@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef, ReactNode, useEffect } from 'react'
+import { InputHTMLAttributes, forwardRef, ReactNode } from 'react'
 
 export type InputState = 'neutral' | 'error' | 'valid'
 
@@ -23,6 +23,13 @@ const stateClasses: Record<InputState, string> = {
     'border-primary focus:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bone',
 }
 
+/**
+ * Whitelist para campos numéricos: solo dígitos + un separador decimal
+ * (punto o coma) están permitidos. Acepta también estados parciales
+ * como "12.", ".5", "" mientras se está escribiendo.
+ */
+const NUMERIC_REGEX = /^[\d]*([.,][\d]*)?$/
+
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
@@ -36,33 +43,24 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
-    useEffect(() => {
-      if (type !== 'number' || typeof ref === 'function' || !ref) return
-      const el = ref.current
-      if (!el) return
-
-      const handleWheel = (e: WheelEvent) => {
-        e.preventDefault()
-      }
-
-      el.addEventListener('wheel', handleWheel, { passive: false })
-      return () => el.removeEventListener('wheel', handleWheel)
-    }, [type, ref])
+    const isNumeric = type === 'number'
 
     return (
       <div className="relative">
         <input
           ref={ref}
-          type={type}
+          type={isNumeric ? 'text' : type}
+          inputMode={isNumeric ? 'decimal' : undefined}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (
-              type === 'number' &&
-              (e.key === 'ArrowUp' || e.key === 'ArrowDown')
-            ) {
-              e.preventDefault()
+          onChange={(e) => {
+            const raw = e.target.value
+            // Para campos numéricos: silenciosamente rechazar caracteres no permitidos.
+            // Esto elimina cualquier comportamiento nativo del navegador
+            // (wheel, flechas, etc.) que pudiera cambiar el valor.
+            if (isNumeric && raw !== '' && !NUMERIC_REGEX.test(raw)) {
+              return
             }
+            onChange(raw)
           }}
           className={[baseClasses, stateClasses[state], suffix ? 'pr-12' : '', className]
             .filter(Boolean)
