@@ -79,6 +79,7 @@
       "tooLong": "Es muy largo. ¿Puedes acortarlo un poco?",
       "invalidChars": "Solo letras, espacios y guiones, por favor.",
       "needsLetters": "Debe contener al menos una letra.",
+      "invalidNumber": "Mmm, ese número no me cuadra. ¿Puedes revisarlo?",
       "invalidDate": "Mmm, esa fecha no me cuadra. ¿Puedes revisarla?",
       "ageOutOfRange": "Para usar esta app necesitas tener entre 10 y 120 años. ¿Es correcta la fecha?",
       "heightOutOfRange": "Esa altura está fuera de lo que esperaba (100–230 cm). ¿La revisamos?",

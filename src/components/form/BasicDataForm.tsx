@@ -8,15 +8,14 @@ import { Button } from '@/components/shared/Button'
 import {
   basicDataSchema,
   validateField,
-  type BasicDataField,
-  type BasicDataInput,
+  type BasicDataOutput,
 } from '@/lib/validation'
 import { calculateAge, todayIso } from '@/lib/age'
 import { combineName, normalizeName } from '@/lib/name'
 import type { Gender, WristContexture } from '@/types'
 
 interface BasicDataFormProps {
-  onSubmit: (data: BasicDataInput & { age: number; fullName: string }) => void
+  onSubmit: (data: BasicDataOutput & { age: number; fullName: string }) => void
   onBack?: () => void
 }
 
@@ -65,14 +64,14 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (touched[key] || submitAttempted) {
-      const errorKey = validateField(key as BasicDataField, value as never)
+      const errorKey = validateField(key, value)
       setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
     }
   }
 
   const handleBlur = <K extends keyof FormState>(key: K) => {
     setTouched((prev) => ({ ...prev, [key]: true }))
-    const errorKey = validateField(key as BasicDataField, form[key] as never)
+    const errorKey = validateField(key, form[key])
     setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
   }
 
@@ -112,7 +111,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       lastName1: form.lastName1,
       lastName2: form.lastName2,
       birthDate: form.birthDate,
-      heightCm: form.heightCm === '' ? undefined : Number(form.heightCm),
+      heightCm: form.heightCm,
       gender: form.gender,
       wristContexture: form.wristContexture,
     })

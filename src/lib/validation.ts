@@ -28,51 +28,12 @@ const nameFieldSchema = z
   )
 
 /**
- * Schema de los datos básicos del cliente.
+ * Campo numérico REQUERIDO: string → transform → number.
+ * - Vacío → 'required'
+ * - No numérico → 'invalidNumber'
+ * - Fuera de [min, max] → clave traducible pasada por parámetro
  */
-export const basicDataSchema = z.object({
-  firstName: nameFieldSchema,
-  lastName1: nameFieldSchema,
-  lastName2: nameFieldSchema,
-  birthDate: z
-    .string({ required_error: 'required' })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'invalidDate')
-    .refine((v) => v <= todayIso(), 'futureDate'),
-  heightCm: z
-    .number({ required_error: 'required', invalid_type_error: 'required' })
-    .int('heightOutOfRange')
-    .min(100, 'heightOutOfRange')
-    .max(230, 'heightOutOfRange'),
-  gender: z.enum(['F', 'M'], { required_error: 'required' }),
-  wristContexture: z.enum(['thin', 'normal', 'thick'], {
-    required_error: 'required',
-  }),
-})
-
-export type BasicDataInput = z.input<typeof basicDataSchema>
-export type BasicDataOutput = z.output<typeof basicDataSchema>
-
-export type BasicDataField = keyof BasicDataInput
-
-/**
- * Valida un campo individual por nombre y devuelve la clave de error
- * (que se traduce con i18n) o null si pasa.
- */
-export function validateField(
-  field: BasicDataField,
-  value: BasicDataInput[BasicDataField],
-): string | null {
-  const fieldSchema = basicDataSchema.shape[field]
-  const result = fieldSchema.safeParse(value)
-  if (result.success) return null
-  return result.error.issues[0]?.message ?? 'required'
-}
-
-/**
- * Schema para un campo numérico requerido.
- * Acepta string vacío como `0` y transforma a número.
- */
-function requiredNumberField(min: number, max: number) {
+function requiredNumberField(min: number, max: number, rangeErrorKey: string) {
   return z
     .string({ required_error: 'required' })
     .transform((s, ctx) => {
@@ -87,15 +48,19 @@ function requiredNumberField(min: number, max: number) {
       }
       return n
     })
-    .pipe(z.number().min(min).max(max))
+    .pipe(
+      z
+        .number()
+        .min(min, rangeErrorKey)
+        .max(max, rangeErrorKey),
+    )
 }
 
 /**
- * Schema para un campo numérico opcional.
- * Acepta string vacío como `0` (interpretado como "no medido").
- * Acepta cualquier valor dentro del rango [0, max].
+ * Campo numérico OPCIONAL: string → transform → number (vacío = 0 = "no medido").
+ * Mismas claves de error que requiredNumberField.
  */
-function optionalNumberField(max: number) {
+function optionalNumberField(max: number, rangeErrorKey: string) {
   return z
     .string()
     .transform((s, ctx) => {
@@ -107,22 +72,65 @@ function optionalNumberField(max: number) {
       }
       return n
     })
-    .pipe(z.number().min(0).max(max))
+    .pipe(
+      z
+        .number()
+        .min(0, rangeErrorKey)
+        .max(max, rangeErrorKey),
+    )
+}
+
+/**
+ * Schema de los datos básicos del cliente.
+ */
+export const basicDataSchema = z.object({
+  firstName: nameFieldSchema,
+  lastName1: nameFieldSchema,
+  lastName2: nameFieldSchema,
+  birthDate: z
+    .string({ required_error: 'required' })
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'invalidDate')
+    .refine((v) => v <= todayIso(), 'futureDate'),
+  heightCm: requiredNumberField(100, 230, 'heightOutOfRange'),
+  gender: z.enum(['F', 'M'], { required_error: 'required' }),
+  wristContexture: z.enum(['thin', 'normal', 'thick'], {
+    required_error: 'required',
+  }),
+})
+
+export type BasicDataInput = z.input<typeof basicDataSchema>
+export type BasicDataOutput = z.output<typeof basicDataSchema>
+
+export type BasicDataField = keyof BasicDataInput
+
+/**
+ * Valida un campo individual por nombre y devuelve la clave de error
+ * (que se traduce con i18n) o null si pasa.
+ * Acepta `undefined` para campos opcionales no seleccionados.
+ */
+export function validateField(
+  field: BasicDataField,
+  value: BasicDataInput[BasicDataField] | undefined,
+): string | null {
+  const fieldSchema = basicDataSchema.shape[field]
+  const result = fieldSchema.safeParse(value)
+  if (result.success) return null
+  return result.error.issues[0]?.message ?? 'required'
 }
 
 /**
  * Schema de las 7 métricas corporales.
- * - Campos requeridos: weight, calories, visceralFat
- * - Campos opcionales (0 = no medido): bmi, bodyFatPct, muscleMassPct, bioAge
+ * - Requeridos: weight, calories, visceralFat
+ * - Opcionales (0 = no medido): bmi, bodyFatPct, muscleMassPct, bioAge
  */
 export const metricsSchema = z.object({
-  weight: requiredNumberField(20, 300),
-  bmi: optionalNumberField(60),
-  bodyFatPct: optionalNumberField(50),
-  muscleMassPct: optionalNumberField(70),
-  calories: requiredNumberField(800, 6000),
-  bioAge: optionalNumberField(100),
-  visceralFat: requiredNumberField(1, 30),
+  weight: requiredNumberField(20, 300, 'weightOutOfRange'),
+  bmi: optionalNumberField(60, 'bmiOutOfRange'),
+  bodyFatPct: optionalNumberField(50, 'bodyFatOutOfRange'),
+  muscleMassPct: optionalNumberField(70, 'muscleOutOfRange'),
+  calories: requiredNumberField(800, 6000, 'caloriesOutOfRange'),
+  bioAge: optionalNumberField(100, 'bioAgeOutOfRange'),
+  visceralFat: requiredNumberField(1, 30, 'visceralOutOfRange'),
 })
 
 export type MetricsInput = z.input<typeof metricsSchema>
@@ -132,7 +140,6 @@ export type MetricsField = keyof MetricsInput
 
 /**
  * Valida un campo individual de métricas.
- * Devuelve la clave de error o null si pasa.
  */
 export function validateMetricField(
   field: MetricsField,

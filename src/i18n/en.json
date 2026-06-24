@@ -79,6 +79,7 @@
       "tooLong": "It's too long. Could you shorten it a little?",
       "invalidChars": "Only letters, spaces and hyphens, please.",
       "needsLetters": "It needs to contain at least one letter.",
+      "invalidNumber": "Hmm, that number doesn't add up. Could you double-check it?",
       "invalidDate": "Hmm, that date doesn't add up. Could you double-check it?",
       "ageOutOfRange": "To use this app you need to be between 10 and 120 years old. Is the date correct?",
       "heightOutOfRange": "That height is outside what I expected (100–230 cm). Could we double-check it?",
