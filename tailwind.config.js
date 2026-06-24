@@ -5,16 +5,15 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#87A878',
-          soft: '#D4E2C8',
-          dark: '#6B8A5C',
-          darker: '#4D6A42',
+          DEFAULT: '#4CAF7C',
+          soft: '#A8E6C9',
+          dark: '#3E8E63',
         },
-        warning: '#E8B568',
-        alert: '#B07853',
-        bone: '#FAF7F2',
-        graphite: '#3D3A35',
-        divider: '#E8E4DC',
+        warning: '#F4B860',
+        alert: '#E57373',
+        bone: '#FAF8F5',
+        graphite: '#3A4A4F',
+        divider: '#E8ECEC',
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
