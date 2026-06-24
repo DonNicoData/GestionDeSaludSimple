@@ -89,6 +89,75 @@
       "back": "Back"
     }
   },
+  "metricsForm": {
+    "title": "Now, today's measurements",
+    "subtitle": "If you don't have an exact value for any of them, don't worry. Leave it empty and we'll go on with the ones you do have.",
+    "summary": {
+      "title": "Before we continue, let's review some measurements.",
+      "body": "I've marked them in red for you. When they're correct, they'll turn green."
+    },
+    "notMeasured": "Not measured",
+    "fields": {
+      "weight": {
+        "label": "Your current weight",
+        "placeholder": "72.5",
+        "suffix": "kg",
+        "help": "In kilograms, as accurate as possible."
+      },
+      "bmi": {
+        "label": "Your BMI",
+        "placeholder": "22.5",
+        "suffix": "kg/m²",
+        "help": "If you don't have it calculated, we figure it out when showing the results. Leave empty if you don't know it."
+      },
+      "bodyFatPct": {
+        "label": "Body fat percentage",
+        "placeholder": "20",
+        "suffix": "%",
+        "help": "Usually measured by smart scales or calipers. Leave empty if you don't have it."
+      },
+      "muscleMassPct": {
+        "label": "Muscle mass percentage",
+        "placeholder": "35",
+        "suffix": "%",
+        "help": "Same as body fat, from your scale or exam. Leave empty if you don't have it."
+      },
+      "calories": {
+        "label": "Calories you consume per day",
+        "placeholder": "2000",
+        "suffix": "kcal",
+        "help": "An estimate is fine, it doesn't need to be exact."
+      },
+      "bioAge": {
+        "label": "Your biological age",
+        "placeholder": "30",
+        "suffix": "years",
+        "help": "What your body indicates, not your ID. Leave empty if you don't know it."
+      },
+      "visceralFat": {
+        "label": "Visceral fat level",
+        "placeholder": "8",
+        "suffix": "level",
+        "help": "From your scale or bioimpedance. Integer number."
+      }
+    },
+    "errors": {
+      "required": "Oops, it looks like this detail slipped by. Would you share it with me?",
+      "invalidNumber": "Hmm, that number doesn't add up. Could you double-check it?",
+      "outOfRange": "That value is outside what I expected ({{min}}–{{max}}). Is it correct?",
+      "weightOutOfRange": "Weight is usually between 20 and 300 kg. Is it correct?",
+      "bmiOutOfRange": "BMI is usually between 10 and 60. Is it correct?",
+      "bodyFatOutOfRange": "Body fat % is usually between 3 and 50%. Is it correct?",
+      "muscleOutOfRange": "Muscle % is usually between 10 and 70%. Is it correct?",
+      "caloriesOutOfRange": "Daily calories are usually between 800 and 6000. Is it correct?",
+      "bioAgeOutOfRange": "Biological age is usually between 10 and 100 years. Is it correct?",
+      "visceralOutOfRange": "Visceral fat goes from 1 to 30. Is it correct?"
+    },
+    "buttons": {
+      "continue": "See my results",
+      "back": "Back"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "close": "Close",
