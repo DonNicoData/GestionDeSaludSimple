@@ -8,13 +8,13 @@ Convenciones de tags:
 
 ---
 
-## v0.2.0-fase2 — Formulario de datos básicos
+## v0.2.0-fase2 — Formulario de datos básicos (versión pulida)
 **Fecha:** Junio 2026
 **Estado:** ✅ Completa y validada
 
 ### Descripción general
 
-Fase 2 entrega el primer formulario de la app: la pantalla de datos básicos donde el cliente identifica quién es. Esto reemplaza el placeholder "Próximamente" del botón principal de Home, e introduce el patrón de navegación, validación con Zod, y arquitectura de componentes de formulario que se reutilizará en Fase 3.
+Fase 2 entrega el primer formulario real de la app: la pantalla de datos básicos donde el cliente se identifica. Reemplaza el placeholder "Próximamente" del botón principal de Home e introduce la arquitectura completa de navegación, validación con Zod, componentes de formulario reutilizables, estados visuales, accesibilidad WCAG 2.1 y manejo robusto del nombre en tres componentes (Nombre + Primer apellido + Segundo apellido). La misma arquitectura se reutilizará en Fase 3 (métricas).
 
 ### Stack adicional
 
@@ -28,14 +28,15 @@ Fase 2 entrega el primer formulario de la app: la pantalla de datos básicos don
 src/
 ├── components/
 │   ├── form/
-│   │   ├── BasicDataForm.tsx       # Formulario completo (lógica + UI)
-│   │   ├── FormField.tsx           # Wrapper label + input + error
+│   │   ├── BasicDataForm.tsx       # Formulario completo con 8 campos
+│   │   ├── FormField.tsx           # Wrapper label + input + error + counter + a11y
 │   │   ├── RadioGroup.tsx          # Radio buttons en formato cards
 │   │   └── SegmentedControl.tsx    # Selector iOS para género
 │   └── shared/
-│       └── Input.tsx               # Input con suffix y estados error/normal
+│       └── Input.tsx               # Input con state visual (neutral/error/valid)
 ├── lib/
 │   ├── age.ts                      # Cálculo de edad desde birthDate
+│   ├── name.ts                     # combineName, normalizeName, fullNameOf
 │   └── validation.ts               # Zod schemas + validador por campo
 └── pages/
     └── FormPage.tsx                # Wrapper de página para BasicDataForm
@@ -46,55 +47,97 @@ src/
 | Archivo | Cambio |
 |---|---|
 | `package.json` | + `zod@^3.23.8` |
-| `src/App.tsx` | State-based router con páginas `home` y `form` |
+| `src/types/index.ts` | `Client.name` → `firstName`, `lastName1`, `lastName2` |
+| `src/App.tsx` | State-based router (`home` \| `form` \| `metrics`); alert muestra `fullName` concatenado |
 | `src/pages/HomePage.tsx` | Acepta `onRegister` prop y navega al form |
-| `src/i18n/es.json` + `en.json` | Sección `basicForm` completa (título, 6 campos, 7 errores, botones) |
+| `src/i18n/es.json` + `en.json` | Sección `basicForm` con 8 campos, 8 errores específicos, banner `summary.*` |
 
 ### Funcionalidad visible
 
 **Pantalla inicial (Home):**
-- Botón "Registrar mis datos" ahora navega al formulario (ya no muestra alert)
+- Botón "Registrar mis datos" navega al formulario real (ya no muestra alert).
 
-**Pantalla de formulario:**
-- Título cálido: *"Primero, cuéntame un poco sobre ti"*
-- Subtítulo explicativo
-- 6 campos con label + help + input:
-  1. **Nombre** (texto, autocomplete)
-  2. **Fecha de nacimiento** (date picker nativo, max=hoy)
-  3. **Edad** (auto-calculada, gris, no editable)
-  4. **Altura** (numérico con sufijo "cm")
-  5. **Género** (segmented control: Mujer / Hombre)
-  6. **Contextura de muñeca** (radio cards: Delgada / Normal / Gruesa)
-- Botones "Volver" (al Home) y "Continuar →" (al submit)
-- Scroll automático al primer campo con error
-- Mensajes de error cálidos (tono de la app, no fríos)
+**Pantalla de formulario — 8 campos:**
 
-### Validaciones (Zod)
+| # | Campo | Tipo | Validación |
+|---|---|---|---|
+| 1 | Tu nombre | Texto (autocomplete given-name) | 2-50 chars, letras/espacios/guiones/apóstrofes |
+| 2 | Primer apellido | Texto (autocomplete family-name) | Mismo regex estricto |
+| 3 | Segundo apellido | Texto (autocomplete additional-name) | Mismo regex estricto |
+| 4 | Fecha de nacimiento | Date picker nativo (max=hoy) | ISO YYYY-MM-DD, no futuro, edad 10-120 |
+| 5 | Edad | Display auto-calculado | Derivada de birthDate |
+| 6 | Altura | Numérico con sufijo "cm" | Entero 100-230 |
+| 7 | Género | Segmented control | 'F' o 'M' |
+| 8 | Contextura de muñeca | Radio cards | 'thin' / 'normal' / 'thick' |
 
-| Campo | Reglas |
+Botones: **Volver** (al Home) y **Continuar →** (al submit).
+
+### Estados visuales de input (cumplimiento UX pedido)
+
+| Estado | Borde | Cuándo aparece |
+|---|---|---|
+| Neutral | Gris (`border-divider`) | Nunca tocado |
+| Error | Rojo (`border-alert`) | Inválido tras onBlur o submit |
+| Válido | Verde (`border-primary`) | Tocado y ahora válido |
+
+**Comportamiento exacto:**
+- Al abrir el form → todos los campos en **gris**
+- onBlur con campo vacío → **rojo** + mensaje específico
+- Escribir valor válido → **verde**
+- Cambiar un valor inválido a válido → **verde**
+- Cambiar un valor válido a inválido → **rojo** otra vez
+- Click "Continuar" con errores → banner rojo arriba + scroll + focus al primer error + NO navega
+
+### Validaciones (Zod) — mensajes cálidos
+
+| Clave i18n | Mensaje ES |
 |---|---|
-| name | requerido, 2-100 caracteres, trim |
-| birthDate | requerido, ISO YYYY-MM-DD, no futuro |
-| age (derivado) | entre 10 y 120 años (validación vía fecha) |
-| heightCm | requerido, entero, 100-230 |
-| gender | requerido, 'F' o 'M' |
-| wristContexture | requerido, 'thin' \| 'normal' \| 'thick' |
+| `required` | *"Ups, parece que este dato se nos olvidó. ¿Me lo compartes?"* |
+| `tooShort` | *"Es muy cortito. ¿Puedes escribirlo completo?"* |
+| `tooLong` | *"Es muy largo. ¿Puedes acortarlo un poco?"* |
+| `invalidChars` | *"Solo letras, espacios y guiones, por favor."* |
+| `needsLetters` | *"Debe contener al menos una letra."* |
+| `invalidDate` | *"Mmm, esa fecha no me cuadra. ¿Puedes revisarla?"* |
+| `futureDate` | *"La fecha de nacimiento no puede ser en el futuro."* |
+| `heightOutOfRange` | *"Esa altura está fuera de lo que esperaba (100–230 cm). ¿La revisamos?"* |
 
-Mensajes de error en `i18n/basicForm.errors.*` con clave traducible.
+**Banner summary al fallar submit:**
+- ES: *"Antes de continuar, revisemos algunos datos. Los marqué en rojo para ti. Cuando estén bien, se pondrán en verde."*
+- EN: *"Before we continue, let's review some details. I've marked them in red for you. When they're correct, they'll turn green."*
 
 ### Decisiones técnicas cerradas en esta fase
 
 | Decisión | Valor |
 |---|---|
 | Validación | Zod 3.x, schemas centralizados en `lib/validation.ts` |
+| Estructura del nombre | 3 campos separados (firstName, lastName1, lastName2) |
+| Display del nombre | Concatenado: `Juan Pérez González` |
+| Normalización para matching | Lowercase + sin tildes + trim (Fase 6) |
+| Layout de los 3 nombres | 3 filas separadas verticales |
+| Terminología | "Primer apellido" / "Segundo apellido" (neutral) |
+| Estricto | Los 3 campos de nombre son obligatorios |
 | Id de errores | Claves traducibles (no strings), se traducen en FormField |
 | Estado del form | useState local + useMemo para edad |
-| Validación onChange | Solo después del primer submit (menos ruido) |
 | Edad | Derivada de `birthDate`, no se persiste como input |
-| Normalización de nombre | Función `normalizeName()` lista para Fase 6 (match DB) |
+| Validación onChange | Solo después de `touched` o primer submit |
+| Estados visuales | 3 estados (neutral/error/valid) propagados via prop `state` |
+| Validación onBlur | Sí — feedback inmediato al usuario |
+| Hidden field | `normalizeName(combined)` para futuro match DB |
 | Routing | State-based simple en App.tsx, sin react-router aún |
-| Mensajes de error | Tono cálido, segunda persona, sin culpabilizar |
-| Hidden field | `normalizeName` se incluye hidden para futuro match con DB |
+| Mensajes | Tono cálido, segunda persona, sin culpabilizar |
+| Counter visible | Solo en los 3 campos de nombre (X/50) |
+| Sanitización al pegar | Colapsa saltos de línea y espacios múltiples |
+
+### Accesibilidad (WCAG 2.1)
+
+- `aria-required="true"` en todos los campos requeridos
+- `aria-invalid="true"` en inputs con error
+- `aria-live="polite"` en mensajes de error y contador
+- `aria-live="assertive"` en el banner summary (interrumpe al usuario)
+- `aria-describedby` vincula input con su help y error
+- Focus automático al primer campo con error al fallar submit
+- Scroll suave al campo con error
+- Labels asociados con `htmlFor`
 
 ### Cómo probar
 
@@ -103,28 +146,46 @@ cd /home/nico/projects/GestionDeSaludSimple
 bash scripts/run.sh dev   # abre http://localhost:5173
 ```
 
-Checklist:
-- [ ] Click "Registrar mis datos" desde Home → llega al formulario
-- [ ] Todos los campos se ven con label + ayuda + input
-- [ ] Click "Continuar" sin llenar nada → 6 errores cálidos aparecen, scroll al primero
-- [ ] Llenar fecha futura → error "La fecha de nacimiento no puede ser en el futuro"
-- [ ] Llenar fecha con edad <10 o >120 → error de rango
-- [ ] Altura 50 o 300 → error "fuera de lo que esperaba"
-- [ ] Género y contextura → selects visuales con feedback de selección
-- [ ] Al elegir fecha válida → la edad se calcula automáticamente
-- [ ] Llenar todo correctamente → alert "Próximamente: métricas (Fase 3)"
-- [ ] Toggle ES/EN en cualquier campo → todo se traduce en caliente
+**Estados visuales:**
+- [ ] Abrir form → 8 campos en gris (neutral)
+- [ ] Tocar "Tu nombre" y salir vacío → borde **rojo** + "Te falta tu nombre."
+- [ ] Escribir "Juan" → borde **verde**
+- [ ] Borrar todo → vuelve a **rojo**
+- [ ] El contador "X/50" se actualiza y se pone **rojo** si pasa de 50
+
+**Validaciones de nombre:**
+- [ ] Pegar `  María    José  ` → se colapsa a `María José`
+- [ ] `Juan123` → error "Solo letras, espacios y guiones"
+- [ ] `María-José` (con guión) → válido
+- [ ] `--` → error "Debe contener al menos una letra"
+- [ ] 51 caracteres → "Es muy largo"
+
+**Submit y banner:**
+- [ ] Click "Continuar" con form vacío → banner rojo + scroll + focus al primero
+- [ ] Corregir uno por uno → cada corrección se pone verde
+- [ ] Cuando todos verdes → banner desaparece + "Continuar" navega
+- [ ] Alert muestra: `Datos básicos OK: Juan Pérez González. Próximamente...`
+
+**Concatenación:**
+- [ ] El alert final muestra `Juan Pérez González` (un solo espacio entre componentes)
+
+**i18n:**
+- [ ] Toggle ES/EN en cualquier campo → labels, helps, placeholders, errores y banner traducen al instante
+
+**Móvil (DevTools):**
+- [ ] Campos no se cortan, scroll suave
+- [ ] Banner summary legible y no tapa campos
 
 ### Métricas de build
 
-- 74 módulos transformados (era 56 en Fase 1)
-- HTML: 0.95 kB
-- CSS: 14.66 kB (gzip 3.58 kB)
-- JS: ~274 kB (gzip ~83 kB) — incremento de ~66 kB por Zod + componentes de form
+- 75 módulos transformados (era 56 en Fase 1)
+- HTML: 0.95 kB (gzip 0.51 kB)
+- CSS: 15.26 kB (gzip 3.66 kB)
+- JS: ~278 kB (gzip ~84 kB) — incremento de ~70 kB por Zod + componentes de form + name utilities
 
 ### Pendiente
 
-- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral)
+- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral) con mismas validaciones visuales y cross-checks (BMI vs peso/altura)
 - **Fase 4:** Lógica de evaluación con rangos médicos por edad y género
 - **Fase 5:** Pantalla de resultados con semáforo + tooltips
 
@@ -243,10 +304,13 @@ Checklist:
 - CSS: 11.56 kB (gzip 3.06 kB)
 - JS: ~208 kB (gzip ~66 kB)
 
-### Pendiente
+### Pendiente (cerrado en hito v0.2.0-fase2)
 
-- **Fase 2:** Formulario de datos básicos (nombre, fecha de nacimiento, edad auto, altura, género, contextura de muñeca con radio buttons) + validaciones con Zod
-- **Fase 3:** Formulario de 7 métricas
+- ✅ **Fase 2:** Formulario de datos básicos (3 nombres + fecha + edad auto + altura + género + contextura con radio cards) + validaciones con Zod + estados visuales + a11y WCAG 2.1 — **completada y pulida**
+
+### Pendiente activo
+
+- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral)
 - **Fase 4:** Lógica de evaluación con rangos médicos por edad y género
 
 ---
