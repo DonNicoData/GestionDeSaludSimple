@@ -15,7 +15,13 @@
     "ctaRegister": "Registrar mis datos",
     "ctaHint": "Comencemos cuando estés listo/a",
     "privacyNotice": "Tus datos se guardan solo en este dispositivo. Nada se envía a internet.",
-    "comingSoon": "Próximamente"
+    "comingSoon": "Próximamente",
+    "hasDraft": {
+      "title": "Tienes una medición a medio terminar",
+      "subtitle": "Puedes continuarla donde la dejaste o empezar de nuevo.",
+      "continue": "Continuar mi medición",
+      "startNew": "Empezar de nuevo"
+    }
   },
   "basicForm": {
     "title": "Primero, cuéntame un poco sobre ti",

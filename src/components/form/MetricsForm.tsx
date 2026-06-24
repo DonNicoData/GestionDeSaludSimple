@@ -9,6 +9,7 @@ import {
   type MetricsField,
   type MetricsOutput,
 } from '@/lib/validation'
+import { useFormDraft } from '@/hooks/useFormDraft'
 
 type MetricsFormState = Record<MetricsField, string>
 
@@ -20,7 +21,6 @@ interface MetricsFormProps {
   onBack?: () => void
 }
 
-// Rango visible para el usuario en errores "outOfRange"
 const FIELD_RANGES: Record<MetricsField, { min: number; max: number; step: number }> = {
   weight: { min: 20, max: 300, step: 0.1 },
   bmi: { min: 0, max: 60, step: 0.1 },
@@ -41,9 +41,13 @@ const EMPTY_FORM: MetricsFormState = {
   visceralFat: '',
 }
 
+const DRAFT_KEY = 'salud_draft_metrics_form_v1'
+
 export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
   const { t } = useTranslation()
-  const [form, setForm] = useState<MetricsFormState>(EMPTY_FORM)
+  const draft = useFormDraft<MetricsFormState>(DRAFT_KEY)
+
+  const [form, setForm] = useState<MetricsFormState>(() => draft.value ?? EMPTY_FORM)
   const [errors, setErrors] = useState<ErrorState>({})
   const [touched, setTouched] = useState<TouchedState>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -55,7 +59,11 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
   }
 
   const updateField = (key: MetricsField, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      draft.setValue(next)
+      return next
+    })
     if (touched[key] || submitAttempted) {
       const errorKey = validateMetricField(key, value)
       setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
