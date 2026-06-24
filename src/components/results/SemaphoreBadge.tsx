@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { MetricStatus } from '@/types'
 
 interface SemaphoreBadgeProps {
@@ -11,6 +12,10 @@ interface SemaphoreBadgeProps {
  * Estado normal → verde salud (primary).
  * Estado warning → ámbar cálido.
  * Estado alert   → coral suave.
+ *
+ * Las etiquetas cortas ("Normal", "Atención", "Alerta" en ES;
+ * "Normal", "Attention", "Alert" en EN) vienen de i18n
+ * (`results.statusShort.{status}`) para que respondan al toggle de idioma.
  */
 const statusClasses: Record<MetricStatus, string> = {
   normal: 'border-primary bg-primary-soft/40 text-primary-dark',
@@ -30,17 +35,14 @@ const labelClasses: Record<MetricStatus, string> = {
   alert: 'text-alert',
 }
 
-const ariaLabels: Record<MetricStatus, string> = {
-  normal: 'Normal',
-  warning: 'Atención',
-  alert: 'Alerta',
-}
-
 export function SemaphoreBadge({ status }: SemaphoreBadgeProps) {
+  const { t } = useTranslation()
+  const label = t(`results.statusShort.${status}`)
+
   return (
     <span
       role="status"
-      aria-label={ariaLabels[status]}
+      aria-label={label}
       className={[
         'inline-flex items-center gap-1.5 px-2.5 h-7 rounded-full border-2 text-xs font-semibold',
         statusClasses[status],
@@ -50,9 +52,7 @@ export function SemaphoreBadge({ status }: SemaphoreBadgeProps) {
         aria-hidden="true"
         className={['h-2 w-2 rounded-full', dotClasses[status]].join(' ')}
       />
-      <span className={labelClasses[status]}>
-        {ariaLabels[status]}
-      </span>
+      <span className={labelClasses[status]}>{label}</span>
     </span>
   )
 }
