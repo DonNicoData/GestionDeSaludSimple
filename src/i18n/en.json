@@ -17,9 +17,66 @@
     "privacyNotice": "Your data is stored only on this device. Nothing is sent to the internet.",
     "comingSoon": "Coming soon"
   },
+  "basicForm": {
+    "title": "First, tell me a little about yourself",
+    "subtitle": "These details help me understand your body and personalize your results.",
+    "fields": {
+      "name": {
+        "label": "Your full name",
+        "placeholder": "Your full name, please",
+        "help": "We'll use it to recognize you every time you come back."
+      },
+      "birthDate": {
+        "label": "When did you arrive in the world? Your birth date",
+        "placeholder": "DD / MM / YYYY",
+        "help": "We use this to calculate your age, no need to type it."
+      },
+      "age": {
+        "label": "Age",
+        "help": "We calculate it from your birth date, so you don't have to worry.",
+        "autoCalculated": "{{years}} years old"
+      },
+      "heightCm": {
+        "label": "How tall are you?",
+        "placeholder": "170",
+        "suffix": "cm",
+        "help": "An approximate measurement is fine."
+      },
+      "gender": {
+        "label": "You are...",
+        "options": {
+          "F": "Woman",
+          "M": "Man"
+        }
+      },
+      "wristContexture": {
+        "label": "Your wrist frame",
+        "help": "Measure your wrist just above the bone. This helps us calculate your ideal weight more precisely.",
+        "options": {
+          "thin": "Thin",
+          "normal": "Medium",
+          "thick": "Thick"
+        }
+      }
+    },
+    "errors": {
+      "required": "Oops, it looks like this detail slipped by. Would you share it with me?",
+      "nameMin": "The name is a bit too short. Could you write it in full?",
+      "nameMax": "The name is too long. Could you shorten it?",
+      "invalidDate": "Hmm, that date doesn't add up. Could you double-check it?",
+      "ageOutOfRange": "To use this app you need to be between 10 and 120 years old. Is the date correct?",
+      "heightOutOfRange": "That height is outside what I expected (100–230 cm). Could we double-check it?",
+      "futureDate": "The birth date cannot be in the future."
+    },
+    "buttons": {
+      "continue": "Continue",
+      "back": "Back"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "close": "Close",
-    "back": "Back"
+    "back": "Back",
+    "optional": "optional"
   }
 }

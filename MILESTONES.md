@@ -8,6 +8,128 @@ Convenciones de tags:
 
 ---
 
+## v0.2.0-fase2 — Formulario de datos básicos
+**Fecha:** Junio 2026
+**Estado:** ✅ Completa y validada
+
+### Descripción general
+
+Fase 2 entrega el primer formulario de la app: la pantalla de datos básicos donde el cliente identifica quién es. Esto reemplaza el placeholder "Próximamente" del botón principal de Home, e introduce el patrón de navegación, validación con Zod, y arquitectura de componentes de formulario que se reutilizará en Fase 3.
+
+### Stack adicional
+
+| Paquete | Versión | Propósito |
+|---|---|---|
+| zod | 3.23.x | Validación runtime con schemas |
+
+### Archivos nuevos
+
+```
+src/
+├── components/
+│   ├── form/
+│   │   ├── BasicDataForm.tsx       # Formulario completo (lógica + UI)
+│   │   ├── FormField.tsx           # Wrapper label + input + error
+│   │   ├── RadioGroup.tsx          # Radio buttons en formato cards
+│   │   └── SegmentedControl.tsx    # Selector iOS para género
+│   └── shared/
+│       └── Input.tsx               # Input con suffix y estados error/normal
+├── lib/
+│   ├── age.ts                      # Cálculo de edad desde birthDate
+│   └── validation.ts               # Zod schemas + validador por campo
+└── pages/
+    └── FormPage.tsx                # Wrapper de página para BasicDataForm
+```
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `package.json` | + `zod@^3.23.8` |
+| `src/App.tsx` | State-based router con páginas `home` y `form` |
+| `src/pages/HomePage.tsx` | Acepta `onRegister` prop y navega al form |
+| `src/i18n/es.json` + `en.json` | Sección `basicForm` completa (título, 6 campos, 7 errores, botones) |
+
+### Funcionalidad visible
+
+**Pantalla inicial (Home):**
+- Botón "Registrar mis datos" ahora navega al formulario (ya no muestra alert)
+
+**Pantalla de formulario:**
+- Título cálido: *"Primero, cuéntame un poco sobre ti"*
+- Subtítulo explicativo
+- 6 campos con label + help + input:
+  1. **Nombre** (texto, autocomplete)
+  2. **Fecha de nacimiento** (date picker nativo, max=hoy)
+  3. **Edad** (auto-calculada, gris, no editable)
+  4. **Altura** (numérico con sufijo "cm")
+  5. **Género** (segmented control: Mujer / Hombre)
+  6. **Contextura de muñeca** (radio cards: Delgada / Normal / Gruesa)
+- Botones "Volver" (al Home) y "Continuar →" (al submit)
+- Scroll automático al primer campo con error
+- Mensajes de error cálidos (tono de la app, no fríos)
+
+### Validaciones (Zod)
+
+| Campo | Reglas |
+|---|---|
+| name | requerido, 2-100 caracteres, trim |
+| birthDate | requerido, ISO YYYY-MM-DD, no futuro |
+| age (derivado) | entre 10 y 120 años (validación vía fecha) |
+| heightCm | requerido, entero, 100-230 |
+| gender | requerido, 'F' o 'M' |
+| wristContexture | requerido, 'thin' \| 'normal' \| 'thick' |
+
+Mensajes de error en `i18n/basicForm.errors.*` con clave traducible.
+
+### Decisiones técnicas cerradas en esta fase
+
+| Decisión | Valor |
+|---|---|
+| Validación | Zod 3.x, schemas centralizados en `lib/validation.ts` |
+| Id de errores | Claves traducibles (no strings), se traducen en FormField |
+| Estado del form | useState local + useMemo para edad |
+| Validación onChange | Solo después del primer submit (menos ruido) |
+| Edad | Derivada de `birthDate`, no se persiste como input |
+| Normalización de nombre | Función `normalizeName()` lista para Fase 6 (match DB) |
+| Routing | State-based simple en App.tsx, sin react-router aún |
+| Mensajes de error | Tono cálido, segunda persona, sin culpabilizar |
+| Hidden field | `normalizeName` se incluye hidden para futuro match con DB |
+
+### Cómo probar
+
+```bash
+cd /home/nico/projects/GestionDeSaludSimple
+bash scripts/run.sh dev   # abre http://localhost:5173
+```
+
+Checklist:
+- [ ] Click "Registrar mis datos" desde Home → llega al formulario
+- [ ] Todos los campos se ven con label + ayuda + input
+- [ ] Click "Continuar" sin llenar nada → 6 errores cálidos aparecen, scroll al primero
+- [ ] Llenar fecha futura → error "La fecha de nacimiento no puede ser en el futuro"
+- [ ] Llenar fecha con edad <10 o >120 → error de rango
+- [ ] Altura 50 o 300 → error "fuera de lo que esperaba"
+- [ ] Género y contextura → selects visuales con feedback de selección
+- [ ] Al elegir fecha válida → la edad se calcula automáticamente
+- [ ] Llenar todo correctamente → alert "Próximamente: métricas (Fase 3)"
+- [ ] Toggle ES/EN en cualquier campo → todo se traduce en caliente
+
+### Métricas de build
+
+- 74 módulos transformados (era 56 en Fase 1)
+- HTML: 0.95 kB
+- CSS: 14.66 kB (gzip 3.58 kB)
+- JS: ~274 kB (gzip ~83 kB) — incremento de ~66 kB por Zod + componentes de form
+
+### Pendiente
+
+- **Fase 3:** Formulario de 7 métricas (peso, IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral)
+- **Fase 4:** Lógica de evaluación con rangos médicos por edad y género
+- **Fase 5:** Pantalla de resultados con semáforo + tooltips
+
+---
+
 ## v0.1.0-fase1 — Setup base, i18n y Home
 **Fecha:** Junio 2026
 **Estado:** ✅ Completa y validada

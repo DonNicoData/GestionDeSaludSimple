@@ -17,9 +17,66 @@
     "privacyNotice": "Tus datos se guardan solo en este dispositivo. Nada se envía a internet.",
     "comingSoon": "Próximamente"
   },
+  "basicForm": {
+    "title": "Primero, cuéntame un poco sobre ti",
+    "subtitle": "Estos datos me ayudan a entender tu cuerpo y personalizar tus resultados.",
+    "fields": {
+      "name": {
+        "label": "Tu nombre completo",
+        "placeholder": "Tu nombre completo, por favor",
+        "help": "Lo usaremos para identificarte cada vez que vuelvas."
+      },
+      "birthDate": {
+        "label": "¿Cuándo llegaste al mundo? Tu fecha de nacimiento",
+        "placeholder": "DD / MM / AAAA",
+        "help": "Con esto calculamos tu edad, no tienes que escribirla."
+      },
+      "age": {
+        "label": "Edad",
+        "help": "La calculamos desde tu fecha de nacimiento, así no tienes que preocuparte.",
+        "autoCalculated": "{{years}} años"
+      },
+      "heightCm": {
+        "label": "¿Cuánto mides?",
+        "placeholder": "170",
+        "suffix": "cm",
+        "help": "Una medida aproximada está bien."
+      },
+      "gender": {
+        "label": "Eres...",
+        "options": {
+          "F": "Mujer",
+          "M": "Hombre"
+        }
+      },
+      "wristContexture": {
+        "label": "Tu contextura de muñeca",
+        "help": "Mide tu muñeca justo encima del hueso. Esto nos ayuda a calcular tu peso ideal con mayor precisión.",
+        "options": {
+          "thin": "Delgada",
+          "normal": "Normal",
+          "thick": "Gruesa"
+        }
+      }
+    },
+    "errors": {
+      "required": "Ups, parece que este dato se nos olvidó. ¿Me lo compartes?",
+      "nameMin": "El nombre es muy cortito. ¿Puedes escribirlo completo?",
+      "nameMax": "El nombre es muy largo. ¿Puedes abreviarlo?",
+      "invalidDate": "Mmm, esa fecha no me cuadra. ¿Puedes revisarla?",
+      "ageOutOfRange": "Para usar esta app necesitas tener entre 10 y 120 años. ¿Es correcta la fecha?",
+      "heightOutOfRange": "Esa altura está fuera de lo que esperaba (100–230 cm). ¿La revisamos?",
+      "futureDate": "La fecha de nacimiento no puede ser en el futuro."
+    },
+    "buttons": {
+      "continue": "Continuar",
+      "back": "Volver"
+    }
+  },
   "common": {
     "loading": "Cargando...",
     "close": "Cerrar",
-    "back": "Volver"
+    "back": "Volver",
+    "optional": "opcional"
   }
 }
