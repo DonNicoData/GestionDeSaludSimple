@@ -1,0 +1,72 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node
+node_modules
+.pnp
+.pnp.js
+
+# Build output
+dist
+dist-ssr
+build
+*.local
+
+# Vite
+.vite
+.cache
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+
+# Capacitor
+.capacitor
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/release/
+android/app/debug/
+*.keystore
+!debug.keystore
+
+# iOS (futuro, por si acaso)
+ios/App/Pods/
+ios/App/build/
+ios/App/.build/
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+
+# Datos locales del usuario (no commitear bases de datos exportadas)
+/data
+/*.db
+/*.sqlite
