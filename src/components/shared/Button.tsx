@@ -14,9 +14,9 @@ const baseClasses =
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-primary-dark text-white hover:bg-primary-darker shadow-soft hover:shadow-card',
+    'bg-primary text-white hover:bg-primary-dark shadow-soft hover:shadow-card',
   secondary:
-    'bg-primary-soft text-primary-darker hover:bg-primary-soft/80',
+    'bg-primary-soft text-primary-dark hover:bg-primary-soft/80',
   ghost:
     'bg-transparent text-graphite hover:bg-divider',
   outline:
