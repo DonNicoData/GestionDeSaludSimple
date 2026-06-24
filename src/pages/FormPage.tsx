@@ -1,9 +1,9 @@
-import type { BasicDataInput } from '@/lib/validation'
 import { BasicDataForm } from '@/components/form/BasicDataForm'
+import type { BasicDataOutput } from '@/lib/validation'
 
 interface FormPageProps {
   onBack: () => void
-  onContinue: (basicData: BasicDataInput & { age: number; fullName: string }) => void
+  onContinue: (basicData: BasicDataOutput & { age: number; fullName: string }) => void
 }
 
 export function FormPage({ onBack, onContinue }: FormPageProps) {

@@ -3,11 +3,11 @@ import { Header } from '@/components/layout/Header'
 import { HomePage } from '@/pages/HomePage'
 import { FormPage } from '@/pages/FormPage'
 import { MetricsPage } from '@/pages/MetricsPage'
-import type { BasicDataInput, MetricsOutput } from '@/lib/validation'
+import type { BasicDataOutput, MetricsOutput } from '@/lib/validation'
 
 type Page = 'home' | 'form' | 'metrics'
 
-export interface BasicData extends BasicDataInput {
+export interface BasicData extends BasicDataOutput {
   age: number
   fullName: string
 }
