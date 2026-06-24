@@ -1,4 +1,4 @@
-import { ClipboardEvent, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormField } from '@/components/form/FormField'
 import { GenderField } from '@/components/form/SegmentedControl'
@@ -12,6 +12,7 @@ import {
 } from '@/lib/validation'
 import { calculateAge, todayIso } from '@/lib/age'
 import { combineName, normalizeName } from '@/lib/name'
+import { useFormDraft } from '@/hooks/useFormDraft'
 import type { Gender, WristContexture } from '@/types'
 
 interface BasicDataFormProps {
@@ -34,19 +35,23 @@ type TouchedState = Partial<Record<keyof FormState, boolean>>
 
 const NAME_FIELDS_MAX = 50
 
+const EMPTY_FORM: FormState = {
+  firstName: '',
+  lastName1: '',
+  lastName2: '',
+  birthDate: '',
+  heightCm: '',
+  gender: undefined,
+  wristContexture: undefined,
+}
+
+const DRAFT_KEY = 'salud_draft_basic_form_v1'
+
 export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   const { t } = useTranslation()
+  const draft = useFormDraft<FormState>(DRAFT_KEY)
 
-  const [form, setForm] = useState<FormState>({
-    firstName: '',
-    lastName1: '',
-    lastName2: '',
-    birthDate: '',
-    heightCm: '',
-    gender: undefined,
-    wristContexture: undefined,
-  })
-
+  const [form, setForm] = useState<FormState>(() => draft.value ?? EMPTY_FORM)
   const [errors, setErrors] = useState<ErrorState>({})
   const [touched, setTouched] = useState<TouchedState>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -54,15 +59,17 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
 
   const age = useMemo(() => calculateAge(form.birthDate), [form.birthDate])
 
-  const formRef = useRef<HTMLDivElement>(null)
-
   const computeState = (field: keyof FormState): InputState => {
     if (!touched[field] && !submitAttempted) return 'neutral'
     return errors[field] ? 'error' : 'valid'
   }
 
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      draft.setValue(next)
+      return next
+    })
     if (touched[key] || submitAttempted) {
       const errorKey = validateField(key, value)
       setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
@@ -75,33 +82,15 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
     setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
   }
 
-  /**
-   * Para campos de selección (radio, segmented).
-   * Actualiza form + touched + errors atómicamente con el NUEVO valor,
-   * evitando el bug de stale closure que ocurre al llamar updateField +
-   * handleBlur por separado en el mismo evento (el closure quedaba con
-   * el valor anterior y la validación fallaba falsamente).
-   */
   const selectField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [key]: value }
+      draft.setValue(next)
+      return next
+    })
     setTouched((prev) => ({ ...prev, [key]: true }))
     const errorKey = validateField(key, value)
     setErrors((prev) => ({ ...prev, [key]: errorKey ?? undefined }))
-  }
-
-  const handlePasteClean = (
-    e: ClipboardEvent<HTMLInputElement>,
-    key: 'firstName' | 'lastName1' | 'lastName2',
-  ) => {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData('text')
-    const cleaned = pasted.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim()
-    const inputEl = e.currentTarget
-    const start = inputEl.selectionStart ?? form[key].length
-    const end = inputEl.selectionEnd ?? start
-    const current = form[key]
-    const next = (current.slice(0, start) + cleaned + current.slice(end)).slice(0, NAME_FIELDS_MAX)
-    updateField(key, next)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -172,7 +161,6 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
     value: form[key],
     onChange: (v: string) => updateField(key, v),
     onBlur: () => handleBlur(key),
-    onPaste: (e: ClipboardEvent<HTMLInputElement>) => handlePasteClean(e, key),
     placeholder: t(`basicForm.fields.${key}.placeholder`),
     maxLength: NAME_FIELDS_MAX,
     state: computeState(key),
@@ -185,29 +173,27 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       className="flex flex-col gap-7"
       aria-label={t('basicForm.title')}
     >
-      <div ref={formRef}>
-        {showSummary && Object.keys(errors).length > 0 && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="mb-2 rounded-2xl border-2 border-alert bg-alert/10 p-4"
-          >
-            <p className="font-semibold text-alert">{t('basicForm.summary.title')}</p>
-            <p className="text-sm text-graphite/80 mt-1 leading-relaxed">
-              {t('basicForm.summary.body')}
-            </p>
-          </div>
-        )}
-
-        <header className="flex flex-col gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-graphite">
-            {t('basicForm.title')}
-          </h1>
-          <p className="text-sm sm:text-base text-graphite/70 leading-relaxed">
-            {t('basicForm.subtitle')}
+      {showSummary && Object.keys(errors).length > 0 && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-2xl border-2 border-alert bg-alert/10 p-4"
+        >
+          <p className="font-semibold text-alert">{t('basicForm.summary.title')}</p>
+          <p className="text-sm text-graphite/80 mt-1 leading-relaxed">
+            {t('basicForm.summary.body')}
           </p>
-        </header>
-      </div>
+        </div>
+      )}
+
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-graphite">
+          {t('basicForm.title')}
+        </h1>
+        <p className="text-sm sm:text-base text-graphite/70 leading-relaxed">
+          {t('basicForm.subtitle')}
+        </p>
+      </header>
 
       <FormField
         id="firstName"
@@ -289,7 +275,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
         <Input
           id="heightCm"
           type="number"
-          inputMode="numeric"
+          inputMode="decimal"
           value={form.heightCm}
           onChange={(v) => updateField('heightCm', v)}
           onBlur={() => handleBlur('heightCm')}

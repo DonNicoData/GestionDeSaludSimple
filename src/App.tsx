@@ -1,52 +1,76 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { HomePage } from '@/pages/HomePage'
 import { FormPage } from '@/pages/FormPage'
 import { MetricsPage } from '@/pages/MetricsPage'
-import type { BasicDataOutput, MetricsOutput } from '@/lib/validation'
+import { clearAllDrafts, hasAnyDraft } from '@/hooks/useFormDraft'
 
 type Page = 'home' | 'form' | 'metrics'
 
-export interface BasicData extends BasicDataOutput {
-  age: number
-  fullName: string
-}
-
 function App() {
   const [page, setPage] = useState<Page>('home')
-  const [basicData, setBasicData] = useState<BasicData | null>(null)
-  const [, setMetrics] = useState<MetricsOutput | null>(null)
+  const [hasDraft, setHasDraft] = useState<boolean>(() => hasAnyDraft())
 
-  const navigate = useCallback((next: Page) => {
-    setPage(next)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const navigate = useCallback(
+    (next: Page) => {
+      // Limpiar borradores al volver al Home (regla del usuario)
+      if (next === 'home') {
+        clearAllDrafts()
+        setHasDraft(false)
+      }
+      setPage(next)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    [],
+  )
+
+  const refreshHasDraft = useCallback(() => {
+    setHasDraft(hasAnyDraft())
   }, [])
 
-  const handleBasicDataSubmit = useCallback((data: BasicData) => {
-    setBasicData(data)
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshHasDraft()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [refreshHasDraft])
+
+  const handleStartNew = useCallback(() => {
+    clearAllDrafts()
+    setHasDraft(false)
+  }, [])
+
+  const handleBasicDataSubmit = useCallback(() => {
+    // El borrador persiste automáticamente al submit (Form ya lo guardó).
+    // Solo necesitamos avanzar a la siguiente pantalla.
     navigate('metrics')
   }, [navigate])
 
-  const handleMetricsSubmit = useCallback((data: MetricsOutput) => {
-    setMetrics(data)
-    const summary = [
-      `Cliente: ${basicData?.fullName ?? '—'}`,
-      `Peso: ${data.weight} kg`,
-      `IMC: ${data.bmi || '—'}`,
-      `% grasa: ${data.bodyFatPct || '—'}`,
-      `% músculo: ${data.muscleMassPct || '—'}`,
-      `Calorías: ${data.calories} kcal`,
-      `Edad biológica: ${data.bioAge || '—'}`,
-      `Grasa visceral: ${data.visceralFat}`,
-    ].join('\n')
-    window.alert(`Métricas OK. Próximamente: resultados (Fase 5).\n\n${summary}`)
-  }, [basicData])
+  const handleMetricsSubmit = useCallback(() => {
+    // Placeholder para Fase 5/6: aquí se guardará el registro en la DB.
+    // Por ahora solo informamos al usuario y limpiamos borradores.
+    clearAllDrafts()
+    setHasDraft(false)
+    window.alert(
+      'Métricas registradas. Resultados y guardado persistente llegan en próximas fases.',
+    )
+    navigate('home')
+  }, [navigate])
 
   return (
     <>
       <Header />
       <main className="flex-1">
-        {page === 'home' && <HomePage onRegister={() => navigate('form')} />}
+        {page === 'home' && (
+          <HomePage
+            onRegister={() => navigate('form')}
+            hasDraft={hasDraft}
+            onStartNew={handleStartNew}
+          />
+        )}
         {page === 'form' && (
           <FormPage
             onBack={() => navigate('home')}

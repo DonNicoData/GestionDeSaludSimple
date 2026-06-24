@@ -15,7 +15,13 @@
     "ctaRegister": "Record my data",
     "ctaHint": "Let's begin whenever you're ready",
     "privacyNotice": "Your data is stored only on this device. Nothing is sent to the internet.",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "hasDraft": {
+      "title": "You have a measurement in progress",
+      "subtitle": "You can continue where you left off or start fresh.",
+      "continue": "Continue my measurement",
+      "startNew": "Start fresh"
+    }
   },
   "basicForm": {
     "title": "First, tell me a little about yourself",
