@@ -18,7 +18,10 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      // Solo localStorage: en la primera visita no hay nada guardado,
+      // entonces i18next cae al fallbackLng ('es'). El navegador del usuario
+      // no debe forzar otro idioma. El usuario elige con el toggle ES/EN.
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'salud_lang',
     },
