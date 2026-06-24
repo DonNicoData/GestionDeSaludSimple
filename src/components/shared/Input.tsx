@@ -56,6 +56,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (
+              type === 'number' &&
+              (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+            ) {
+              e.preventDefault()
+            }
+          }}
           className={[baseClasses, stateClasses[state], suffix ? 'pr-12' : '', className]
             .filter(Boolean)
             .join(' ')}
