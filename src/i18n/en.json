@@ -20,11 +20,25 @@
   "basicForm": {
     "title": "First, tell me a little about yourself",
     "subtitle": "These details help me understand your body and personalize your results.",
+    "summary": {
+      "title": "Before we continue, let's review some details.",
+      "body": "I've marked them in red for you. When they're correct, they'll turn green."
+    },
     "fields": {
-      "name": {
-        "label": "Your full name",
-        "placeholder": "Your full name, please",
-        "help": "We'll use it to recognize you every time you come back."
+      "firstName": {
+        "label": "Your first name",
+        "placeholder": "John",
+        "help": "Just your given name, no surnames."
+      },
+      "lastName1": {
+        "label": "First surname",
+        "placeholder": "Smith",
+        "help": "The first of your surnames."
+      },
+      "lastName2": {
+        "label": "Second surname",
+        "placeholder": "Johnson",
+        "help": "The second of your surnames."
       },
       "birthDate": {
         "label": "When did you arrive in the world? Your birth date",
@@ -61,8 +75,10 @@
     },
     "errors": {
       "required": "Oops, it looks like this detail slipped by. Would you share it with me?",
-      "nameMin": "The name is a bit too short. Could you write it in full?",
-      "nameMax": "The name is too long. Could you shorten it?",
+      "tooShort": "It's a bit too short. Could you write it in full?",
+      "tooLong": "It's too long. Could you shorten it a little?",
+      "invalidChars": "Only letters, spaces and hyphens, please.",
+      "needsLetters": "It needs to contain at least one letter.",
       "invalidDate": "Hmm, that date doesn't add up. Could you double-check it?",
       "ageOutOfRange": "To use this app you need to be between 10 and 120 years old. Is the date correct?",
       "heightOutOfRange": "That height is outside what I expected (100–230 cm). Could we double-check it?",

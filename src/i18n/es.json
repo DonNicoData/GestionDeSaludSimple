@@ -20,11 +20,25 @@
   "basicForm": {
     "title": "Primero, cuéntame un poco sobre ti",
     "subtitle": "Estos datos me ayudan a entender tu cuerpo y personalizar tus resultados.",
+    "summary": {
+      "title": "Antes de continuar, revisemos algunos datos.",
+      "body": "Los marqué en rojo para ti. Cuando estén bien, se pondrán en verde."
+    },
     "fields": {
-      "name": {
-        "label": "Tu nombre completo",
-        "placeholder": "Tu nombre completo, por favor",
-        "help": "Lo usaremos para identificarte cada vez que vuelvas."
+      "firstName": {
+        "label": "Tu nombre",
+        "placeholder": "Juan",
+        "help": "Solo tu nombre de pila, sin apellidos."
+      },
+      "lastName1": {
+        "label": "Primer apellido",
+        "placeholder": "Pérez",
+        "help": "El primero de tus apellidos."
+      },
+      "lastName2": {
+        "label": "Segundo apellido",
+        "placeholder": "González",
+        "help": "El segundo de tus apellidos."
       },
       "birthDate": {
         "label": "¿Cuándo llegaste al mundo? Tu fecha de nacimiento",
@@ -61,8 +75,10 @@
     },
     "errors": {
       "required": "Ups, parece que este dato se nos olvidó. ¿Me lo compartes?",
-      "nameMin": "El nombre es muy cortito. ¿Puedes escribirlo completo?",
-      "nameMax": "El nombre es muy largo. ¿Puedes abreviarlo?",
+      "tooShort": "Es muy cortito. ¿Puedes escribirlo completo?",
+      "tooLong": "Es muy largo. ¿Puedes acortarlo un poco?",
+      "invalidChars": "Solo letras, espacios y guiones, por favor.",
+      "needsLetters": "Debe contener al menos una letra.",
       "invalidDate": "Mmm, esa fecha no me cuadra. ¿Puedes revisarla?",
       "ageOutOfRange": "Para usar esta app necesitas tener entre 10 y 120 años. ¿Es correcta la fecha?",
       "heightOutOfRange": "Esa altura está fuera de lo que esperaba (100–230 cm). ¿La revisamos?",

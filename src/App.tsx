@@ -8,6 +8,7 @@ type Page = 'home' | 'form' | 'metrics'
 
 export interface BasicData extends BasicDataInput {
   age: number
+  fullName: string
 }
 
 function App() {
@@ -21,8 +22,7 @@ function App() {
 
   const handleBasicDataSubmit = useCallback((data: BasicData) => {
     setBasicData(data)
-    // Fase 3 conectará aquí la navegación a métricas.
-    window.alert('Datos básicos OK. Próximamente: métricas (Fase 3).')
+    window.alert(`Datos básicos OK: ${data.fullName}. Próximamente: métricas (Fase 3).`)
   }, [])
 
   return (

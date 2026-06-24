@@ -1,17 +1,5 @@
 import { z } from 'zod'
 
-/**
- * Normaliza un nombre: lowercase, trim, sin tildes, espacios colapsados.
- */
-export function normalizeName(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-}
-
 const todayIso = (): string => {
   const d = new Date()
   const yyyy = d.getFullYear()
@@ -21,15 +9,31 @@ const todayIso = (): string => {
 }
 
 /**
- * Schema de los datos básicos del cliente (datos de identidad).
- * Usado en el formulario de Fase 2.
+ * Schema común para los 3 campos de nombre.
+ * - 2-50 caracteres
+ * - Solo letras Unicode, espacios, guiones y apóstrofes
+ * - Debe contener al menos una letra
+ * - Colapsa espacios múltiples
+ */
+const nameFieldSchema = z
+  .string({ required_error: 'required' })
+  .transform((s) => s.replace(/\s+/g, ' ').trim())
+  .pipe(
+    z
+      .string()
+      .min(2, 'tooShort')
+      .max(50, 'tooLong')
+      .regex(/^[\p{L}\s'-]+$/u, 'invalidChars')
+      .refine((s) => /\p{L}/u.test(s), 'needsLetters'),
+  )
+
+/**
+ * Schema de los datos básicos del cliente.
  */
 export const basicDataSchema = z.object({
-  name: z
-    .string({ required_error: 'required' })
-    .trim()
-    .min(2, 'nameMin')
-    .max(100, 'nameMax'),
+  firstName: nameFieldSchema,
+  lastName1: nameFieldSchema,
+  lastName2: nameFieldSchema,
   birthDate: z
     .string({ required_error: 'required' })
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'invalidDate')
@@ -48,13 +52,15 @@ export const basicDataSchema = z.object({
 export type BasicDataInput = z.input<typeof basicDataSchema>
 export type BasicDataOutput = z.output<typeof basicDataSchema>
 
+export type BasicDataField = keyof BasicDataInput
+
 /**
  * Valida un campo individual por nombre y devuelve la clave de error
  * (que se traduce con i18n) o null si pasa.
  */
-export function validateField<K extends keyof BasicDataInput>(
-  field: K,
-  value: BasicDataInput[K],
+export function validateField(
+  field: BasicDataField,
+  value: BasicDataInput[BasicDataField],
 ): string | null {
   const fieldSchema = basicDataSchema.shape[field]
   const result = fieldSchema.safeParse(value)

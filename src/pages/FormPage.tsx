@@ -3,7 +3,7 @@ import { BasicDataForm } from '@/components/form/BasicDataForm'
 
 interface FormPageProps {
   onBack: () => void
-  onContinue: (basicData: BasicDataInput & { age: number }) => void
+  onContinue: (basicData: BasicDataInput & { age: number; fullName: string }) => void
 }
 
 export function FormPage({ onBack, onContinue }: FormPageProps) {
