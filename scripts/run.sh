@@ -8,11 +8,13 @@ PROJECT_WIN="/mnt/c/Users/User/projects_tmp/salud"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NODE_WIN="/mnt/c/Program Files/nodejs/node.exe"
 
+# PATH debe contener el dir de node de Windows ANTES de /usr/bin para que
+# `npm` resuelva al script bash WSL-aware (no al .cmd que rompe con UNC).
+export PATH="/mnt/c/Program Files/nodejs:$PATH"
 export HOME="/mnt/c/Users/User"
 
 sync_to_win() {
   mkdir -p "$PROJECT_WIN"
-  # Excluir node_modules y dist (se reconstruye en Windows path)
   rsync -a --delete \
     --exclude='node_modules' \
     --exclude='dist' \
@@ -30,7 +32,9 @@ case "$cmd" in
       --exclude='node_modules' --exclude='dist' --exclude='.git' \
       "$PROJECT_ROOT"/ "$PROJECT_WIN"/ >/dev/null
     cd "$PROJECT_WIN"
-    "$NODE_WIN" "/mnt/c/Program Files/nodejs/npm.cmd" install "$@"
+    # Usa el script bash `npm` (WSL-aware). NO invocar npm.cmd vía node
+    # porque node.exe recibe la ruta WSL y la interpreta como C:\mnt\c\...
+    npm install "$@"
     ;;
   build)
     sync_to_win
