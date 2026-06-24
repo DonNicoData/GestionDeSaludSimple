@@ -16,8 +16,12 @@ Registro histórico de los hitos importantes del proyecto. Cada hito corresponde
 - Página `Home` con bienvenida cálida y CTA "Registrar mis datos"
 - Componente `Button` reutilizable con 4 variantes y 3 tamaños
 - Tipos base (`Client`, `Record`, etc.) definidos
-- Script wrapper para WSL (`scripts/run.sh`)
+- Script wrapper para WSL (`scripts/run.sh`) con `install`, `dev`, `build`, `preview`, `typecheck`, `sync`
 - Build verificado: 56 módulos, ~208 KB JS (66 KB gzip)
+
+### Fix aplicado post-release (en este mismo commit)
+- `scripts/run.sh`: caso `install` ahora usa el script bash `npm` (WSL-aware) en lugar de invocar `npm.cmd` vía `node.exe`. Esto evita el error `Cannot find module 'C:\mnt\c\Program Files\nodejs\npm.cmd'` que se producía al pasar rutas WSL a node de Windows.
+- PATH reordenado para que `/mnt/c/Program Files/nodejs` tenga prioridad sobre `/usr/bin` y `npm` resuelva al script correcto.
 
 ### Pendiente
 - **Fase 2:** Formulario de datos básicos (con radio buttons de contextura y fecha de nacimiento)
