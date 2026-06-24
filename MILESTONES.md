@@ -250,6 +250,17 @@ bash scripts/run.sh dev   # http://localhost:5173
 - Tests: 8 tests de "no provisto" y cálculo automático de BMI eliminados. **53 tests pasando** (antes 59).
 - Typecheck: 0 errores. Build: 83 módulos, 303 kB.
 
+### Fix post-Fase 4 — Bug i18n en SemaphoreBadge
+
+- Las etiquetas cortas del badge ("Normal", "Atención", "Alerta") estaban
+  hardcodeadas en español en `SemaphoreBadge.tsx`. Al toggle ES/EN se
+  mantenían en español en ambas lenguas.
+- Fix: agregada clave `results.statusShort.{normal|warning|alert}` en
+  `es.json` ("Normal"/"Atención"/"Alerta") y `en.json`
+  ("Normal"/"Attention"/"Alert"). Componente ahora usa `useTranslation`
+  y `t(\`results.statusShort.${status}\`)` tanto para `aria-label`
+  como para el texto visible.
+
 ---
 
 ## v0.4.0-fase4 — Lógica de evaluación + Pantalla de Resultados con semáforo
