@@ -207,6 +207,8 @@
         "label": "Weight",
         "suffix": "kg",
         "idealLabel": "Estimated ideal weight",
+        "methodology": "Calculated with Lorentz × your frame",
+        "methodologyWithValue": "Calculated with Lorentz × your {{contexture}} frame",
         "message": {
           "normal": "Your weight is within the healthy range for your wrist frame.",
           "warning": "Your weight is a bit outside the ideal range for your wrist frame.",

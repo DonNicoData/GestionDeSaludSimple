@@ -457,6 +457,26 @@ describe('evaluate - API general', () => {
       expect(e.messageKey).toMatch(/^results\.status\.(normal|warning|alert)$/)
     }
   })
+
+  it('weight.evaluation incluye contexture del cliente', () => {
+    const evals = evaluate(
+      makeRecord(),
+      makeClient({ wristContexture: 'thick' }),
+    )
+    expect(getEval(evals, 'weight').contexture).toBe('thick')
+  })
+
+  it('las métricas que no son weight no incluyen contexture', () => {
+    const evals = evaluate(
+      makeRecord(),
+      makeClient({ wristContexture: 'thin' }),
+    )
+    for (const e of evals) {
+      if (e.key !== 'weight') {
+        expect(e.contexture).toBeUndefined()
+      }
+    }
+  })
 })
 
 // ╔════════════════════════════════════════════════════════════════════╗
