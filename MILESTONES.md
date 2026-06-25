@@ -358,6 +358,70 @@ Esto refleja que una persona con contextura gruesa puede tener +1%
 grasa sin riesgo clínico adicional (más hueso = más tejido magro =
 más reserva estructural).
 
+### Fix post-Fase 4 — Línea de metodología en card de peso
+
+- La card de peso ahora muestra una línea sintética explicando el método:
+  `↳ Calculado con Lorentz × tu contextura Normal`
+- Es la única métrica con esta línea porque es la única cuya evaluación
+  usa una fórmula ajustada (Lorentz × factor de contextura). Las demás
+  usan tablas universales que no requieren explicación.
+- Implementación: `MetricEvaluation.contexture?: WristContexture`
+  (campo opcional, solo seteado en weight). UI agnóstica del cliente
+  (MetricCard no recibe el cliente, solo la evaluación).
+- Tono cálido-profesional consistente con el resto de la app.
+- i18n: 2 claves nuevas por idioma (`methodology`, `methodologyWithValue`).
+- 2 tests nuevos: verifican que solo `weight` incluye `contexture` y que
+  refleja el del cliente.
+- **59 tests originales + 2 nuevos = 61 tests pasando**.
+- Typecheck: 0 errores. Build: 84 módulos, 307 kB.
+
+---
+
+## ⚠️ PUNTO DE EVALUACIÓN FUTURA — Línea de metodología en card de peso
+
+> **¿Qué es esto?** La línea `↳ Calculado con Lorentz × tu contextura X`
+> en la card de peso es **un punto de evaluación futura**. Puede
+> requerir ajustes basados en:
+> - Si el usuario final lee esta línea y le resulta útil o confusa
+> - Si el formato (línea chiquita con `↳`) se ve bien en mobile y desktop
+> - Si conviene mostrarla siempre, solo cuando la contextura no es
+>   "Normal", o detrás de un toggle
+> - Si conviene moverla al ClientProfileBanner en vez de la card de peso
+
+### 📍 Dónde tocar
+
+| Archivo | Qué buscar |
+|---|---|
+| `src/components/results/MetricCard.tsx` | Render condicional `{key === 'weight' && evaluation.contexture && ...}` |
+| `src/i18n/es.json` | `results.metrics.weight.methodology` y `.methodologyWithValue` |
+| `src/i18n/en.json` | idem en inglés |
+| `src/lib/evaluator.ts` | Set de `evaluation.contexture` solo en weight |
+| `src/types/index.ts` | Campo opcional `contexture?: WristContexture` en `MetricEvaluation` |
+
+### 🔧 Cómo ajustar
+
+- **Cambiar el copy**: editar las claves `methodology*` en los JSON de i18n.
+- **Ocultar la línea**: comentar el bloque en `MetricCard.tsx`.
+- **Mostrar solo en Normal**: agregar `&& evaluation.contexture === 'normal'`
+  al render.
+- **Mover al ClientProfileBanner**: pasar `contexture` al banner en vez
+  de la card.
+- **Cambiar el icono `↳`**: editar la clase CSS en `MetricCard.tsx`
+  (ahora `italic text-graphite/50`).
+
+### 🎨 Mockup actual
+
+```
+┌──────────────────────────────────────────────────┐
+│ Peso                                    [Normal] │
+│ 72 kg                                             │
+│ Peso ideal estimado: 61.9 – 75.6 kg (×normal)     │
+│ ↳ Calculado con Lorentz × tu contextura Normal    │
+│ Tu peso está dentro del rango saludable          │
+│ para tu contextura de muñeca.                     │
+└──────────────────────────────────────────────────┘
+```
+
 ---
 
 ## v0.4.0-fase4 — Lógica de evaluación + Pantalla de Resultados con semáforo

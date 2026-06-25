@@ -318,7 +318,18 @@ function statusMessageKey(status: MetricStatus): string {
   return `results.status.${status}`
 }
 
-
+/**
+ * Construye el `idealRange` para el peso en formato expandido
+ * "min – max kg (Lorentz × contextura {thin|normal|thick})".
+ */
+function formatWeightIdealRange(
+  idealKg: number,
+  contexture: WristContexture,
+): string {
+  const min = idealKg * 0.9
+  const max = idealKg * 1.1
+  return `${min.toFixed(1)} – ${max.toFixed(1)} kg (×${contexture})`
+}
 
 /**
  * API principal: evalúa un registro contra los rangos médicos para un
@@ -358,8 +369,9 @@ export function evaluate(
     key: 'weight',
     value: record.weight,
     status: weightStatus,
-    idealRange: `${ideal.toFixed(1)} kg (±10%)`,
+    idealRange: formatWeightIdealRange(ideal, client.wristContexture),
     messageKey: statusMessageKey(weightStatus),
+    contexture: client.wristContexture,
   })
 
   // 2. IMC
