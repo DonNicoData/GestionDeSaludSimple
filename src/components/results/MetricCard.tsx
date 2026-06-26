@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { SemaphoreBadge } from './SemaphoreBadge'
+import { MetricInfoTip } from './MetricInfoTip'
 import type { MetricEvaluation, MetricKey } from '@/types'
 
 interface MetricCardProps {
@@ -22,17 +23,18 @@ const statusToAccent: Record<MetricEvaluation['status'], string> = {
  * Formatea un número con decimales. Sin separador de miles para mantener
  * números de salud compactos. Los enteros se muestran sin `.0`.
  */
-function formatValue(value: number): string {
+function formatValue(value: number): number | string {
   if (Number.isInteger(value)) return value.toString()
   return value.toFixed(1)
 }
 
 /**
  * Tarjeta individual de métrica. Muestra:
- * - Etiqueta de la métrica
- * - Valor (las 7 son requeridas, siempre hay valor)
+ * - Etiqueta de la métrica (+ tooltip ⓘ para métricas distintas de peso)
+ * - Valor
  * - Badge de semáforo
  * - Rango ideal como pie informativo
+ * - (Solo peso) línea de metodología con `*`
  *
  * El mensaje inferior (debajo del rango ideal) viene de una clave i18n
  * específica para la métrica cuando existe (`results.metrics.{key}.message.{status}`),
@@ -45,6 +47,9 @@ export function MetricCard({ evaluation }: MetricCardProps) {
   const { t } = useTranslation()
   const { key, value, status, idealRange } = evaluation
 
+  const tooltipKey =
+    `results.metrics.${key}.tooltip` as `results.metrics.${MetricKey}.tooltip`
+
   return (
     <div
       className={[
@@ -54,11 +59,19 @@ export function MetricCard({ evaluation }: MetricCardProps) {
         statusToAccent[status],
       ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
+      <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="text-sm sm:text-base font-semibold text-graphite leading-tight">
           {t(`results.metrics.${key}.label` as `results.metrics.${MetricKey}.label`)}
         </h3>
-        <SemaphoreBadge status={status} />
+        <div className="flex items-center gap-1.5 shrink-0">
+          {key !== 'weight' && (
+            <MetricInfoTip
+              description={t(tooltipKey)}
+              buttonLabel={t('results.infoLabel')}
+            />
+          )}
+          <SemaphoreBadge status={status} />
+        </div>
       </div>
 
       <div className="flex items-baseline gap-1.5 mb-2">
@@ -81,7 +94,7 @@ export function MetricCard({ evaluation }: MetricCardProps) {
 
       {key === 'weight' && evaluation.contexture && (
         <p className="text-xs text-graphite/50 italic leading-relaxed mt-0.5">
-          ↳{' '}
+          *{' '}
           {t(
             `results.metrics.weight.methodologyWithValue` as 'results.metrics.weight.methodologyWithValue',
             {
@@ -98,7 +111,7 @@ export function MetricCard({ evaluation }: MetricCardProps) {
         className={[
           'text-xs mt-2 leading-relaxed font-medium',
           status === 'normal' && 'text-primary-dark',
-          status === 'warning' && 'text-graphite',
+          status === 'warning' && 'text-warning-dark',
           status === 'alert' && 'text-alert',
         ]
           .filter(Boolean)
