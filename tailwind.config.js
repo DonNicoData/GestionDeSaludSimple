@@ -10,6 +10,7 @@ export default {
           dark: '#3E8E63',
         },
         warning: '#F4B860',
+        'warning-dark': '#C77F2E',
         alert: '#E57373',
         bone: '#FAF8F5',
         graphite: '#3A4A4F',
