@@ -10,11 +10,11 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.4.0-fase4
+**Estado al cierre de este hito:** v0.5.0-fase5
 
-**Última fase completada:** ✅ Fase 4 — Lógica de evaluación con rangos médicos + Pantalla de Resultados con semáforo 🟢🟡🔴
+**Última fase completada:** ✅ Fase 5 — Sección de recomendaciones (hidratación diaria basada en peso)
 
-**Próxima fase por hacer:** ⏭️ Fase 5 — Tooltips explicativos por métrica + mensajes contextuales enriquecidos
+**Próxima fase por hacer:** ⏭️ Fase 6 — Persistencia real con Dexie (IndexedDB) + historial del cliente
 
 **Atajos para retomar en otro momento:**
 
@@ -22,7 +22,7 @@ Convenciones de tags:
 |---|---|
 | ¿En qué fase vamos? | *"¿Dónde quedamos?"* o *"estado del proyecto"* |
 | Continuar con la siguiente fase | *"Sigamos con la fase N"* |
-| Volver a un hito específico | *"Volvamos a `v0.4.0-fase4`"* |
+| Volver a un hito específico | *"Volvamos a `v0.5.0-fase5`"* |
 | Ver qué falta | *"¿Qué falta para terminar?"* |
 
 **Tags disponibles:**
@@ -30,11 +30,12 @@ Convenciones de tags:
 - `v0.1.0-fase1` — setup base, i18n, Home
 - `v0.2.0-fase2` — formulario datos básicos + persistencia
 - `v0.3.0-fase3` — formulario de métricas
-- `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo *(ESTAMOS AQUÍ)*
+- `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo
+- `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso) *(ESTAMOS AQUÍ)*
 
 **Para volver a este punto exacto en cualquier momento:**
 ```bash
-git checkout v0.4.0-fase4
+git checkout v0.5.0-fase5
 ```
 
 ---
@@ -772,3 +773,137 @@ Checklist:
 
 ### Pendiente (al momento de este hito)
 - ✅ Iniciar Fase 1: Setup del proyecto + Tailwind + Header + i18n + Home
+
+---
+
+## v0.5.0-fase5 — Recomendaciones para hoy (hidratación basada en peso)
+
+**Fecha:** Junio 2026
+
+### Logros
+- Nueva sección "Recomendaciones para hoy" entre "Tu perfil" y los 7 parámetros
+- Card de hidratación con cálculo automático en litros/día basado en el peso del cliente
+- Línea de metodología al pie: explica que la fórmula es 35 ml × kg (referencia EFSA / IOM) y que es un punto de partida amable
+- 7 parámetros quedan **agrupados y juntos** debajo de las recomendaciones, como pidió el usuario
+- 67 tests pasando (61 previos + 6 nuevos `// WATER`)
+
+### Decisiones cerradas en esta fase
+
+| Decisión | Valor |
+|---|---|
+| Fórmula de hidratación | 35 ml × kg de peso corporal |
+| Fuentes citadas | EFSA (Autoridad Europea de Seguridad Alimentaria) + IOM (Instituto de Medicina, EE.UU.) |
+| Rango de referencia | 30–35 ml/kg (usamos 35 = valor más generoso y conservador del rango) |
+| Formato en pantalla | Litros con 1 decimal (`2.5 L/día`) |
+| Ubicación | Sección nueva **entre** "Tu perfil" y el banner resumen. Los 7 parámetros quedan agrupados debajo |
+| Tono del copy | Español latino neutro (tuteo, sin voseo). Sin culpabilizar, cierra con acción concreta |
+| Extensibilidad | Card full-width preparada para sumar más recomendaciones (sueño, pasos, sol) sin tocar arquitectura |
+
+### Cambios técnicos
+
+**Helper nuevo en `src/lib/evaluator.ts`:**
+```ts
+export function recommendedWaterIntakeLiters(weightKg: number): number {
+  const liters = (weightKg * 35) / 1000
+  return Math.round(liters * 10) / 10
+}
+```
+
+**Componente nuevo:** `src/components/results/RecommendationCard.tsx`
+- Estilo espejado con `ClientProfileBanner` (mismo border `border-primary-soft`, mismo `bg-primary-soft/20`)
+- Header con ícono de gota (`<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>`)
+- Card interna full-width con: valor grande, hint cálido, línea de metodología separada por divisor
+- Título del banner = nombre de la recomendación (no label interna redundante)
+
+**Renderizado en `ResultsPage.tsx`** — insertado entre `ClientProfileBanner` y `ResultsSummary`:
+```tsx
+<ClientProfileBanner client={client} currentWeight={record.weight} />
+<RecommendationCard currentWeight={record.weight} />
+<div className="mb-6"><ResultsSummary evaluations={evaluations} /></div>
+```
+
+**i18n — claves nuevas** en `src/i18n/es.json` y `en.json`:
+```json
+"recommendation": {
+  "title": "Agua recomendada",
+  "water": {
+    "value": "{{liters}} L/día",
+    "hint": "Según tu peso actual ({{weight}} kg), tomar alrededor de {{liters}} litros de agua al día ayuda a tu cuerpo a funcionar bien. Si hace calor o te mueves más de lo habitual, suma un poco más. Pequeños sorbos frecuentes funcionan mejor que mucho de golpe.",
+    "methodology": "Esta sugerencia se basa en la fórmula de 35 mililitros por cada kilogramo de peso corporal, una referencia usada por la Autoridad Europea de Seguridad Alimentaria (EFSA) y el Instituto de Medicina de los Estados Unidos (IOM). Es un punto de partida amable: si tu actividad física o el clima cambian, puedes ajustar un poco hacia arriba."
+  }
+}
+```
+
+### Tests nuevos (// WATER)
+
+| Test | Esperado |
+|---|---|
+| 70 kg → 2.5 L/día | Redondeo a 1 decimal |
+| 50 kg → 1.8 L/día | Borde bajo |
+| 100 kg → 3.5 L/día | Borde alto, valor exacto |
+| 45 kg → 1.6 L/día | Peso bajo realista |
+| Monotonía creciente | Más peso nunca da menos litros |
+| Factor 35 ml/kg | Verificable: `liters ≈ kg × 0.035` |
+
+Marcados como `// WATER` en `src/lib/__tests__/evaluator.test.ts` para que sirvan como punto de calibración futura si se cambia la fórmula.
+
+### Cómo probar
+
+```bash
+bash scripts/run.sh test      # 67 tests pasan (61 previos + 6 WATER)
+bash scripts/run.sh typecheck # 0 errores
+bash scripts/run.sh dev       # http://localhost:5173
+```
+
+**Checklist visual:**
+- [ ] Llenar datos básicos → métricas → "Ver mis resultados"
+- [ ] Verificar que entre "Tu perfil" y los 7 parámetros aparece la nueva sección "Recomendaciones para hoy"
+- [ ] Card de hidratación muestra: ícono gota + label "Agua recomendada", valor `2.5 L/día`, mensaje cálido de 3 frases, línea de metodología separada por divisor
+- [ ] Cambiar el peso en el formulario y verificar que el valor de litros se recalcula automáticamente
+- [ ] Toggle ES/EN → toda la sección se traduce (incluida la línea de metodología)
+- [ ] Probar con pesos bordes: 45 kg → 1.6 L, 100 kg → 3.5 L
+
+### Métricas de Fase 5
+
+- 1 helper nuevo + 6 tests nuevos
+- 1 componente nuevo + 1 inserción en ResultsPage
+- 1 bloque i18n nuevo (ES + EN)
+- **67 tests pasando** (era 61)
+
+### Refinamientos de Fase 5 (post-lanzamiento inicial)
+
+Aplicados tras feedback del usuario en la misma fase, sin esperar a Fase 6:
+
+| # | Cambio | Razón |
+|---|---|---|
+| 1 | Título de la sección: `"Recomendaciones para hoy"` → `"Agua recomendada"` | El nombre del banner debe ser la recomendación misma, no una categoría genérica |
+| 2 | Removida label interna redundante (`Agua recomendada`) dentro de la card | El header ya nombra la recomendación; la card arranca directo con el valor |
+| 3 | Mensaje de warning: `"Atención suave: revisa este valor"` → `"Te recomiendo revisar este valor"` | "Atención suave" podía sugerir un nivel intermedio entre normal y alerta, generando confusión. El nuevo texto es claro y profesional |
+| 4 | Color del texto warning: `text-graphite` → `text-warning-dark` (`#C77F2E`) | Mantiene coherencia cromática con el badge naranja, el borde `border-warning/60` y el accent `before:bg-warning`. Warning ahora tiene su propio tono real, no gris neutro |
+| 5 | Tooltip ⓘ en las 6 métricas no-peso (IMC, % grasa, % músculo, calorías, edad biológica, grasa visceral) | Educación sin salir del flujo: cada métrica ahora explica brevemente qué mide |
+| 6 | Carácter `↳` → `*` antes de la línea de metodología del peso | Símbolo más universal y conocido en español latino |
+| 7 | Nueva tonalidad `warning-dark` en `tailwind.config.js` | Necesaria para el texto de warning con contraste WCAG AA sobre fondo blanco |
+
+### Componentes y archivos nuevos / modificados en los refinamientos
+
+**Nuevos:**
+- `src/components/results/MetricInfoTip.tsx` — tooltip accesible vía `<details>/<summary>` nativos, sin estado
+
+**Modificados:**
+- `src/components/results/MetricCard.tsx` — color warning, integración con `MetricInfoTip`, `*` en vez de `↳`
+- `src/components/results/RecommendationCard.tsx` — sin label interna redundante
+- `tailwind.config.js` — color `warning-dark`
+- `src/i18n/es.json` + `en.json` — título actualizado, mensaje warning actualizado, 6 tooltips nuevos por métrica, label común `infoLabel`
+
+### Implementación técnica del tooltip
+
+- `<details>` + `<summary>` nativos del HTML → sin `useState`, accesible por teclado y lector de pantalla
+- Mismo comportamiento en desktop (click) y mobile (tap)
+- Panel flotante con `position: absolute`, anclado al ícono, ancho fijo de 16rem (`w-64`)
+- `aria-label` en el summary para lectores de pantalla (clave `results.infoLabel`)
+- Color del ícono: `text-graphite/50` en reposo, `text-graphite` en hover
+
+### Pendiente para Fase 6
+- Persistencia real con Dexie (IndexedDB) — `src/lib/db.ts`
+- Historial del cliente (último registro, comparación con registros previos)
+- Reemplazar el modal cálido actual por un guardado real + modal de éxito con descarga efectiva
