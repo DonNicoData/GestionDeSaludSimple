@@ -12,7 +12,7 @@ Convenciones de tags:
 
 **Estado al cierre de este hito:** v0.5.0-fase5
 
-**Última fase completada:** ✅ Fase 5 — Sección de recomendaciones (hidratación diaria basada en peso)
+**Última fase completada:** ✅ Fase 5 — Sección de recomendaciones (hidratación diaria basada en peso) + tooltips ⓘ en métricas + color warning coherente
 
 **Próxima fase por hacer:** ⏭️ Fase 6 — Persistencia real con Dexie (IndexedDB) + historial del cliente
 
@@ -33,10 +33,104 @@ Convenciones de tags:
 - `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo
 - `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso) *(ESTAMOS AQUÍ)*
 
-**Para volver a este punto exacto en cualquier momento:**
+### Comandos git para retomar en cualquier momento
+
+**Volver a este punto exacto (HEAD actual):**
+```bash
+git checkout main              # rama principal
+git pull origin main           # sincronizar cambios remotos
+```
+
+**Volver al tag exacto v0.5.0-fase5 (modo detached):**
 ```bash
 git checkout v0.5.0-fase5
 ```
+
+**Volver a cualquier hito anterior:**
+```bash
+git checkout v0.4.0-fase4      # ver el estado de Fase 4
+git checkout v0.3.0-fase3      # ver el estado de Fase 3
+# ...etc
+git checkout main              # volver al HEAD cuando termines
+```
+
+**Listar todos los tags disponibles:**
+```bash
+git tag                        # lista simple
+git tag -l --sort=-v:refname   # lista ordenada (más reciente primero)
+```
+
+**Ver los commits desde el último tag:**
+```bash
+git log v0.4.0-fase4..main --oneline
+```
+
+### Cómo levantar el proyecto después de clonar / cambiar de máquina
+
+```bash
+cd /home/nico/projects/GestionDeSaludSimple
+bash scripts/run.sh install    # instala dependencias (WSL-aware)
+bash scripts/run.sh test       # corre 67 tests
+bash scripts/run.sh typecheck  # verifica tipos (0 errores)
+bash scripts/run.sh dev        # levanta http://localhost:5173
+```
+
+**Equivalentes sin WSL (npm directo):**
+```bash
+npm install
+npm test            # = vitest run
+npm run typecheck   # = tsc --noEmit
+npm run dev         # = vite (http://localhost:5173)
+```
+
+### Si el puerto 5173 está ocupado
+
+```bash
+# Liberar puerto 5173 (matar Vite previo)
+lsof -ti:5173 | xargs -r kill -9
+pkill -9 -f vite
+# Luego volver a levantar
+bash scripts/run.sh dev
+```
+
+### Crear nuevo hito (cuando se cierra una fase)
+
+Patrón usado por commits previos:
+
+```bash
+# 1. Commits de feature mientras se trabaja
+git add <archivos>
+git commit -m "feat(faseN): descripción corta"
+
+# 2. Commit milestone al cerrar la fase (documenta en MILESTONES.md)
+git add MILESTONES.md
+git commit -m "milestone(faseN): document complete Fase N with <resumen>"
+
+# 3. Tag anotado
+git tag -a v0.X.0-faseN -m "v0.X.0-faseN — <título de la fase>
+
+<detalle de lo entregado>"
+
+# 4. Push de rama y tag
+git push origin main
+git push origin v0.X.0-faseN
+```
+
+### Si el dev server queda colgado
+
+```bash
+tail -f /tmp/vite-dev.log      # ver logs en vivo del server en background
+kill <PID>                     # detener el server (PID aparece al arrancar)
+```
+
+### Resumen del estado actual
+
+- **Rama:** `main`
+- **Último commit:** `053361c milestone(fase5): document complete Fase 5 with refinements`
+- **Tag más reciente:** `v0.5.0-fase5`
+- **Tests:** 67 pasando (61 previos + 6 `// WATER`)
+- **Typecheck:** 0 errores
+- **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
 
 ---
 
