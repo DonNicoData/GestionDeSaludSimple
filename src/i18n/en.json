@@ -176,7 +176,7 @@
     "subtitle": "We compare your values with the healthy ranges for your age and gender. Green is fine, yellow asks for attention, and red is worth checking soon.",
     "status": {
       "normal": "All good here",
-      "warning": "Soft attention: review this value",
+      "warning": "I recommend reviewing this value",
       "alert": "Important: check with a professional"
     },
     "statusShort": {
@@ -184,6 +184,7 @@
       "warning": "Attention",
       "alert": "Alert"
     },
+    "infoLabel": "What is this?",
     "profile": {
       "title": "Your profile",
       "contexture": "Wrist frame",
@@ -192,6 +193,15 @@
       "idealWeightHint": "You're {{diff}}% from your ideal.",
       "bmr": "Basal metabolic rate (BMR)",
       "bmrHint": "Minimum calories your body burns at rest."
+    },
+    "recommendation": {
+      "title": "Recommended water",
+      "water": {
+        "label": "Recommended water",
+        "value": "{{liters}} L/day",
+        "hint": "Based on your current weight ({{weight}} kg), drinking about {{liters}} liters of water a day helps your body work well. If it's hot or you move more than usual, add a little more. Small frequent sips work better than a lot at once.",
+        "methodology": "This suggestion uses the 35 milliliters per kilogram of body weight formula, a reference used by the European Food Safety Authority (EFSA) and the U.S. Institute of Medicine (IOM). It's a gentle starting point: if your physical activity or the climate change, you can adjust a bit upward."
+      }
     },
     "summary": {
       "allNormal": "Excellent, all your parameters are within the healthy ranges. Keep taking such good care of yourself.",
@@ -218,32 +228,38 @@
       "bmi": {
         "label": "BMI",
         "suffix": "kg/m²",
-        "idealLabel": "Healthy range"
+        "idealLabel": "Healthy range",
+        "tooltip": "The Body Mass Index relates your weight to your height. It's a widely used general reference, but it doesn't distinguish muscle from fat, which is why we pair it with other metrics."
       },
       "bodyFatPct": {
         "label": "Body fat %",
         "suffix": "%",
-        "idealLabel": "Healthy range"
+        "idealLabel": "Healthy range",
+        "tooltip": "It measures what proportion of your total weight is fat. A healthy percentage depends on your age and gender, which is why the reference range adjusts automatically to your case."
       },
       "muscleMassPct": {
         "label": "Muscle mass %",
         "suffix": "%",
-        "idealLabel": "Healthy range"
+        "idealLabel": "Healthy range",
+        "tooltip": "It indicates what proportion of your weight is muscle. It usually rises with strength training and falls with sedentary habits. It complements the body fat percentage."
       },
       "calories": {
         "label": "Calories",
         "suffix": "kcal",
-        "idealLabel": "Estimated BMR"
+        "idealLabel": "Estimated BMR",
+        "tooltip": "The Basal Metabolic Rate is the minimum energy your body needs at rest to keep vital functions running (breathing, circulation, thinking). It's not what you should eat in a day: it's the floor, not the ceiling."
       },
       "bioAge": {
         "label": "Biological age",
         "suffix": "years",
-        "idealLabel": "Expected for your age"
+        "idealLabel": "Expected for your age",
+        "tooltip": "An estimate of how your body is functioning compared to the average for your chronological age. It's calculated by combining several metrics, so it doesn't depend on a single value."
       },
       "visceralFat": {
         "label": "Visceral fat",
         "suffix": "level",
-        "idealLabel": "Healthy range"
+        "idealLabel": "Healthy range",
+        "tooltip": "This is the fat that accumulates around your internal organs. At high levels it's associated with greater cardiovascular risk, which is why we keep a close eye on it."
       }
     },
     "buttons": {

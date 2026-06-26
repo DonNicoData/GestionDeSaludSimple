@@ -202,6 +202,20 @@ export function basalMetabolicRate(client: Client, weightKg: number): number {
 }
 
 /**
+ * Recomendación diaria de agua en litros, basada en el peso corporal.
+ * Fórmula: 35 ml × kg (rango estándar EFSA / IOM: 30–35 ml/kg).
+ *
+ * Se redondea a 1 decimal para que la lectura en pantalla sea amable.
+ * La fórmula es conservadora a propósito: si en el futuro queremos
+ * ajustar por actividad física o clima, este helper será el punto de
+ * extensión (no la UI).
+ */
+export function recommendedWaterIntakeLiters(weightKg: number): number {
+  const liters = (weightKg * 35) / 1000
+  return Math.round(liters * 10) / 10
+}
+
+/**
  * Marca el IMC contra los rangos OMS (PLAN §6.1).
  *  - < 18.5  → warning (bajo peso)
  *  - 18.5-24.9 → normal

@@ -3,6 +3,7 @@ import {
   basalMetabolicRate,
   evaluate,
   idealWeightKg,
+  recommendedWaterIntakeLiters,
 } from '../evaluator'
 import type { Client, Gender, WristContexture } from '@/types'
 
@@ -582,5 +583,51 @@ describe('evaluate - % músculo con contextura (CONTEXTURE)', () => {
     )
     // bracket 60+ M: lower base 17, thin → 16. 4% < 16 → warning
     expect(getEval(evals, 'bodyFatPct').status).toBe('warning')
+  })
+})
+
+// ╔════════════════════════════════════════════════════════════════════╗
+// ║  💧  TESTS DE CALIBRACIÓN DE HIDRATACIÓN                          ║
+// ║                                                                  ║
+// ║  Fórmula: 35 ml × kg (rango estándar EFSA / IOM: 30–35 ml/kg).    ║
+// ║  Si rompés alguno de estos tests, la recomendación diaria de      ║
+// ║  agua cambió. Ver MILESTONES.md → "Fase 5" para el contexto.      ║
+// ╚════════════════════════════════════════════════════════════════════╝
+
+describe('recommendedWaterIntakeLiters (WATER)', () => {
+  // WATER: caso base 70 kg → 2.45 L → redondeo a 1 decimal = 2.5
+  it('70 kg → 2.5 L/día (redondeo a 1 decimal)', () => {
+    expect(recommendedWaterIntakeLiters(70)).toBe(2.5)
+  })
+
+  // WATER: borde bajo 50 kg → 1.75 L → 1.8
+  it('50 kg → 1.8 L/día', () => {
+    expect(recommendedWaterIntakeLiters(50)).toBe(1.8)
+  })
+
+  // WATER: borde alto 100 kg → 3.5 L exacto
+  it('100 kg → 3.5 L/día', () => {
+    expect(recommendedWaterIntakeLiters(100)).toBe(3.5)
+  })
+
+  // WATER: peso bajo (pero realista) 45 kg → 1.575 → 1.6
+  it('45 kg → 1.6 L/día', () => {
+    expect(recommendedWaterIntakeLiters(45)).toBe(1.6)
+  })
+
+  // WATER: monotonía — más peso nunca debe dar menos litros
+  it('es monótonamente creciente con el peso', () => {
+    const samples = [40, 55, 65, 75, 85, 95, 110, 130]
+    for (let i = 1; i < samples.length; i++) {
+      expect(recommendedWaterIntakeLiters(samples[i])).toBeGreaterThan(
+        recommendedWaterIntakeLiters(samples[i - 1]),
+      )
+    }
+  })
+
+  // WATER: el factor usado es 35 ml/kg (verificable: liters === kg * 0.035 ± redondeo)
+  it('usa factor 35 ml/kg', () => {
+    expect(recommendedWaterIntakeLiters(80)).toBeCloseTo(80 * 0.035, 1)
+    expect(recommendedWaterIntakeLiters(60)).toBeCloseTo(60 * 0.035, 1)
   })
 })
