@@ -176,7 +176,7 @@
     "subtitle": "Comparamos tus valores con los rangos saludables para tu edad y género. Lo verde está bien, lo amarillo pide atención y lo rojo conviene revisarlo pronto.",
     "status": {
       "normal": "Todo bien por aquí",
-      "warning": "Atención suave: revisa este valor",
+      "warning": "Te recomiendo revisar este valor",
       "alert": "Importante: consulta con un profesional"
     },
     "statusShort": {
@@ -184,6 +184,7 @@
       "warning": "Atención",
       "alert": "Alerta"
     },
+    "infoLabel": "¿Qué es esto?",
     "profile": {
       "title": "Tu perfil",
       "contexture": "Contextura de muñeca",
@@ -192,6 +193,15 @@
       "idealWeightHint": "Estás {{diff}}% respecto a tu ideal.",
       "bmr": "Metabolismo basal (TMB)",
       "bmrHint": "Calorías mínimas que tu cuerpo gasta en reposo."
+    },
+    "recommendation": {
+      "title": "Agua recomendada",
+      "water": {
+        "label": "Agua recomendada",
+        "value": "{{liters}} L/día",
+        "hint": "Según tu peso actual ({{weight}} kg), tomar alrededor de {{liters}} litros de agua al día ayuda a tu cuerpo a funcionar bien. Si hace calor o te mueves más de lo habitual, suma un poco más. Pequeños sorbos frecuentes funcionan mejor que mucho de golpe.",
+        "methodology": "Esta sugerencia se basa en la fórmula de 35 mililitros por cada kilogramo de peso corporal, una referencia usada por la Autoridad Europea de Seguridad Alimentaria (EFSA) y el Instituto de Medicina de los Estados Unidos (IOM). Es un punto de partida amable: si tu actividad física o el clima cambian, puedes ajustar un poco hacia arriba."
+      }
     },
     "summary": {
       "allNormal": "Excelente, todos tus parámetros están dentro de los rangos saludables. Sigue cuidándote así de bien.",
@@ -218,32 +228,38 @@
       "bmi": {
         "label": "IMC",
         "suffix": "kg/m²",
-        "idealLabel": "Rango saludable"
+        "idealLabel": "Rango saludable",
+        "tooltip": "El Índice de Masa Corporal relaciona tu peso con tu altura. Es una referencia general muy usada, pero no distingue entre masa muscular y grasa, por eso lo acompañamos con otras métricas."
       },
       "bodyFatPct": {
         "label": "% Grasa corporal",
         "suffix": "%",
-        "idealLabel": "Rango saludable"
+        "idealLabel": "Rango saludable",
+        "tooltip": "Mide qué proporción de tu peso total es grasa. Un porcentaje saludable depende de tu edad y género, por eso el rango de referencia se ajusta solo a tu caso."
       },
       "muscleMassPct": {
         "label": "% Masa muscular",
         "suffix": "%",
-        "idealLabel": "Rango saludable"
+        "idealLabel": "Rango saludable",
+        "tooltip": "Indica qué proporción de tu peso es músculo. Suele subir con el ejercicio de fuerza y bajar con el sedentarismo. Complementa al porcentaje de grasa."
       },
       "calories": {
         "label": "Calorías",
         "suffix": "kcal",
-        "idealLabel": "TMB estimada"
+        "idealLabel": "TMB estimada",
+        "tooltip": "La Tasa Metabólica Basal es la energía mínima que tu cuerpo necesita en reposo para mantener funciones vitales (respirar, circular, pensar). No es lo que deberías comer al día: es el piso, no el techo."
       },
       "bioAge": {
         "label": "Edad biológica",
         "suffix": "años",
-        "idealLabel": "Esperado para tu edad"
+        "idealLabel": "Esperado para tu edad",
+        "tooltip": "Una estimación de cómo está funcionando tu cuerpo en comparación con el promedio para tu edad cronológica. Se calcula combinando varias métricas, por eso no depende de un solo valor."
       },
       "visceralFat": {
         "label": "Grasa visceral",
         "suffix": "nivel",
-        "idealLabel": "Rango saludable"
+        "idealLabel": "Rango saludable",
+        "tooltip": "Es la grasa que se acumula alrededor de los órganos internos. En niveles altos se asocia con más riesgo cardiovascular, por eso la vigilamos con especial atención."
       }
     },
     "buttons": {

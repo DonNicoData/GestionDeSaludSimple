@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
 import { ClientProfileBanner } from '@/components/results/ClientProfileBanner'
 import { MetricCard } from '@/components/results/MetricCard'
+import { RecommendationCard } from '@/components/results/RecommendationCard'
 import { ResultsSummary } from '@/components/results/ResultsSummary'
 import { evaluate } from '@/lib/evaluator'
 import type { Client, MetricEvaluation } from '@/types'
@@ -65,6 +66,8 @@ export function ResultsPage({
       </header>
 
       <ClientProfileBanner client={client} currentWeight={record.weight} />
+
+      <RecommendationCard currentWeight={record.weight} />
 
       <div className="mb-6">
         <ResultsSummary evaluations={evaluations} />
