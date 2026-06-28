@@ -13,6 +13,7 @@ function makeClient(overrides: Partial<Client> = {}): Client {
     firstName: 'Test',
     lastName1: 'User',
     lastName2: 'Mock',
+    normalizedName: 'test user mock',
     birthDate: '1990-01-01',
     age: 35,
     gender: 'M',
