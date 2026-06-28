@@ -8,6 +8,7 @@ import {
   getClient,
   getLastRecordForClient,
   getLatestRecord,
+  getLatestRecordContext,
   getRecordsForClient,
   listAllClients,
   saveRecord,
@@ -168,6 +169,37 @@ describe('saveRecord / getRecordsForClient', () => {
     const last = await getLatestRecord()
     expect(last?.weight).toBe(80)
     expect(last?.clientId).toBe(c2)
+  })
+
+  // P2-2: getLatestRecordContext — hidrata activeClientName en mount.
+  describe('getLatestRecordContext', () => {
+    it('devuelve record + cliente asociado en una sola llamada', async () => {
+      const id = await createClient(
+        basicInput({ firstName: 'María' }),
+      )
+      await saveRecord(id, recordInput())
+      const ctx = await getLatestRecordContext()
+      expect(ctx).toBeDefined()
+      expect(ctx?.client.id).toBe(id)
+      expect(ctx?.client.firstName).toBe('María')
+      expect(ctx?.record.clientId).toBe(id)
+    })
+
+    it('devuelve undefined cuando no hay records', async () => {
+      expect(await getLatestRecordContext()).toBeUndefined()
+    })
+
+    it('puede resolver el cliente aunque haya varios clientes con records', async () => {
+      const c1 = await createClient(basicInput({ firstName: 'Ana' }))
+      const c2 = await createClient(basicInput({ firstName: 'Beto' }))
+      await saveRecord(c1, recordInput({ weight: 60 }))
+      await new Promise((r) => setTimeout(r, 5))
+      await saveRecord(c2, recordInput({ weight: 80 }))
+
+      const ctx = await getLatestRecordContext()
+      expect(ctx?.client.id).toBe(c2)
+      expect(ctx?.client.firstName).toBe('Beto')
+    })
   })
 })
 

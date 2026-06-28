@@ -28,6 +28,11 @@ interface ResultsPageProps {
   }
   onBack: () => void
   /**
+   * El usuario quiere volver al inicio SIN guardar. App.tsx decide si
+   * mostrar confirmación (si hay datos sin guardar) o ir directo.
+   */
+  onGoHome: () => void
+  /**
    * Callback al confirmar guardado exitoso: recibe el clientId creado/actualizado
    * y el nombre completo. App.tsx lo usa para refrescar el "último cliente activo".
    */
@@ -38,21 +43,17 @@ interface ResultsPageProps {
  * Pantalla de resultados: aplica el evaluador sobre (record, basicData),
  * muestra el resumen cálido y las 7 tarjetas con semáforo.
  *
- * El botón "Guardar" abre el modal cálido (PLAN §7.5) y al confirmarlo
- * persiste el registro en Dexie (Fase 6):
- * - Si basicData ya trae clientId (porque hubo match alto/parcial confirmado
- *   en FormPage), reutiliza ese cliente.
- * - Si no, crea un cliente nuevo con los datos del formulario.
- * - Luego inserta un Record nuevo vinculado al cliente.
+ * Tres salidas (P1-1):
+ * - "Volver a las mediciones" → onBack (preserva todo)
+ * - "Volver al inicio" → onGoHome (descarta; App.tsx puede mostrar confirmación)
+ * - "Guardar mis datos" → modal cálido → crea client + record en Dexie
  */
-export function ResultsPage({ basicData, record, onBack, onSaved }: ResultsPageProps) {
+export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: ResultsPageProps) {
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Adaptador mínimo a Client para que el evaluador + banner funcione sin
-  // conocer la persistencia. El id real lo determinaremos al guardar.
   const evaluationTarget = useMemo(
     () => ({
       firstName: basicData.firstName,
@@ -78,13 +79,6 @@ export function ResultsPage({ basicData, record, onBack, onSaved }: ResultsPageP
 
   const alerts = evaluations.filter((e) => e.status === 'alert').length
   const warnings = evaluations.filter((e) => e.status === 'warning').length
-
-  const modalSubtitleKey =
-    alerts > 0
-      ? 'results.modal.subtitleWithAlerts'
-      : warnings > 0
-        ? 'results.modal.subtitleWithWarnings'
-        : 'results.modal.subtitleAllNormal'
 
   const handleConfirmSave = async () => {
     setSaving(true)
@@ -171,12 +165,25 @@ export function ResultsPage({ basicData, record, onBack, onSaved }: ResultsPageP
         </Button>
       </div>
 
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={onGoHome}
+          disabled={saving}
+          className="text-sm text-graphite/60 hover:text-graphite underline-offset-4 hover:underline disabled:opacity-50"
+        >
+          {t('results.buttons.goHome')}
+        </button>
+      </div>
+
       {modalOpen && (
         <SaveModal
-          subtitleKey={modalSubtitleKey}
+          alerts={alerts}
+          warnings={warnings}
           saving={saving}
           saveError={saveError}
           onConfirm={handleConfirmSave}
+          onSkip={onGoHome}
           onClose={() => !saving && setModalOpen(false)}
         />
       )}
@@ -185,22 +192,40 @@ export function ResultsPage({ basicData, record, onBack, onSaved }: ResultsPageP
 }
 
 interface SaveModalProps {
-  subtitleKey: string
+  alerts: number
+  warnings: number
   saving: boolean
   saveError: string | null
   onConfirm: () => void
+  /** Salir sin guardar y volver al inicio. */
+  onSkip: () => void
+  /** Cancelar el modal (volver a Results sin descartar). */
   onClose: () => void
 }
 
 /**
- * Modal cálido de "guardado exitoso" (PLAN §7.5).
+ * Modal cálido de guardado (Fase 6, refinado P0-4).
  *
- * En Fase 6 este modal cierra el ciclo de persistencia: al confirmar,
- * `onConfirm` crea el cliente (si no existe) y guarda el record en Dexie.
- * Los botones de Excel/PDF siguen deshabilitados — entran en Fase 7.
+ * Tres fases visuales:
+ * - Asking: "¿Querés guardar tus datos?" — pregunta antes de hacer nada.
+ *   El CTA primario (izquierda) es "Guardar mis datos". El secundario
+ *   es "Volver al inicio sin guardar" (label explícito de la consecuencia).
+ * - Saving: durante la persistencia, botón "Guardando..." deshabilitado.
+ * - Error: si Dexie falla, alert cálido con opción de reintentar.
+ *
+ * NOTA: el copy "¡Listo! Tus datos están guardados" se movió a HomePage
+ * después del guardado exitoso (state `lastVisitDays = 0` y saludo
+ * personalizado), no aquí — evita afirmar algo que no pasó todavía.
  */
-function SaveModal({ subtitleKey, saving, saveError, onConfirm, onClose }: SaveModalProps) {
+function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onClose }: SaveModalProps) {
   const { t } = useTranslation()
+
+  const summaryKey =
+    alerts > 0
+      ? 'results.modal.subtitleWithAlerts'
+      : warnings > 0
+        ? 'results.modal.subtitleWithWarnings'
+        : 'results.modal.subtitleAllNormal'
 
   return (
     <div
@@ -238,8 +263,11 @@ function SaveModal({ subtitleKey, saving, saveError, onConfirm, onClose }: SaveM
             {t('results.modal.title')}
           </h2>
           <p className="text-sm text-graphite/70 leading-relaxed">
-            {t(subtitleKey)}
+            {t('results.modal.askBody')}
           </p>
+          {summaryKey && (alerts > 0 || warnings > 0) && (
+            <p className="text-xs text-graphite/50 italic">{t(summaryKey)}</p>
+          )}
         </div>
 
         {saveError && (
@@ -280,12 +308,15 @@ function SaveModal({ subtitleKey, saving, saveError, onConfirm, onClose }: SaveM
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        {/* Orden invertido respecto a Fase 5: primary a la izquierda.
+            Móvil (col-reverse): "Confirmar guardar" arriba, "Volver al inicio
+            sin guardar" abajo. */}
+        <div className="flex flex-col-reverse sm:flex-row gap-2">
           <Button
             type="button"
             variant="outline"
             size="md"
-            onClick={onClose}
+            onClick={onSkip}
             fullWidth
             disabled={saving}
           >
