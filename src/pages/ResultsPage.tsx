@@ -216,6 +216,10 @@ interface SaveModalProps {
  * NOTA: el copy "¡Listo! Tus datos están guardados" se movió a HomePage
  * después del guardado exitoso (state `lastVisitDays = 0` y saludo
  * personalizado), no aquí — evita afirmar algo que no pasó todavía.
+ *
+ * Skip del modal = "Volver al inicio". El detail cálido de "sin guardar"
+ * se traslada al DiscardConfirmDialog que abre App.tsx por detrás, no
+ * al texto del botón (que de otro modo sería largo y agresiva).
  */
 function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onClose }: SaveModalProps) {
   const { t } = useTranslation()
@@ -309,8 +313,9 @@ function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onC
         </div>
 
         {/* Orden invertido respecto a Fase 5: primary a la izquierda.
-            Móvil (col-reverse): "Confirmar guardar" arriba, "Volver al inicio
-            sin guardar" abajo. */}
+            Móvil (col-reverse): "Confirmar guardar" arriba, "Volver al inicio"
+            abajo. App.tsx abre DiscardConfirmDialog con el detail cálido
+            si hay datos sin guardar. */}
         <div className="flex flex-col-reverse sm:flex-row gap-2">
           <Button
             type="button"
