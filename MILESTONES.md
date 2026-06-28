@@ -32,7 +32,8 @@ Convenciones de tags:
 - `v0.3.0-fase3` — formulario de métricas
 - `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo
 - `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso)
-- `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente *(ESTAMOS AQUÍ)*
+- `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente
+- `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks *(ESTAMOS AQUÍ)*
 
 ### Comandos git para retomar en cualquier momento
 
@@ -72,7 +73,7 @@ git log v0.5.0-fase5..main --oneline
 ```bash
 cd /home/nico/projects/GestionDeSaludSimple
 bash scripts/run.sh install    # instala dependencias (WSL-aware)
-bash scripts/run.sh test       # corre 83 tests
+bash scripts/run.sh test       # corre 95 tests
 bash scripts/run.sh typecheck  # verifica tipos (0 errores)
 bash scripts/run.sh dev        # levanta http://localhost:5173
 ```
@@ -128,8 +129,9 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `d3d0bbf fix(fase6): shorten 'Volver al inicio sin guardar' to 'Volver al inicio' in SaveModal`
-- **Tag más reciente:** `v0.6.0-fase6` (con refinamientos post-validación + bugfix críticos aplicados encima)
+- **Último commit:** `c437b76 milestone(fase6): document additional refinements (hooks fix + shorter modal label)`
+- **Tag más reciente:** `v0.6.1-fase6-hotfix` (refinamientos post-validación + bugfix críticos sobre `v0.6.0-fase6`)
+- **Tags disponibles:** `v0.6.0-fase6` (cierre original de fase) y `v0.6.1-fase6-hotfix` (con refinamientos)
 - **Tests:** 95 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB + 3 hooksOrder regression)
 - **Typecheck:** 0 errores
 - **Build de producción:** OK (`dist/` generado, ~432 kB JS / 132 kB gzip)
