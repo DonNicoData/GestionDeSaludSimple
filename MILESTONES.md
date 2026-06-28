@@ -128,9 +128,9 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `7ac558b fix(fase6): preserve basic data draft across navigation (work preservation)`
-- **Tag más reciente:** `v0.6.0-fase6` (con refinamientos post-validación aplicados encima)
-- **Tests:** 92 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB)
+- **Último commit:** `d3d0bbf fix(fase6): shorten 'Volver al inicio sin guardar' to 'Volver al inicio' in SaveModal`
+- **Tag más reciente:** `v0.6.0-fase6` (con refinamientos post-validación + bugfix críticos aplicados encima)
+- **Tests:** 95 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB + 3 hooksOrder regression)
 - **Typecheck:** 0 errores
 - **Build de producción:** OK (`dist/` generado, ~432 kB JS / 132 kB gzip)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
@@ -398,6 +398,58 @@ src/pages/ResultsPage.tsx                            # +Volver al inicio, modal 
 
 - La confirmación al descartar es **siempre obligatoria** (sin toggle "no volver a preguntar"). Si te parece molesto para power users, se puede agregar en Fase 11 (pulido).
 - El indicador ámbar del Header solo se ve mientras hay datos en **memoria React** (`basicData` o `metrics`). Si el usuario tiene drafts en IndexedDB pero nunca llegó a submitear, el indicador no se muestra (porque no hay memoria). Esto es aceptable porque el banner del Home "Tienes una medición a medio terminar" ya comunica esa información.
+
+---
+
+## Refinamientos adicionales de Fase 6 (commits `e0d39f6`, `a86a087`, `d3d0bbf`)
+
+**Fecha:** Junio 2026
+**Estado:** ✅ Aplicado sobre el tag `v0.6.0-fase6`
+
+Estos son fixes y pulidos adicionales detectados en una segunda ronda de validación manual.
+
+### 1. Bug crítico de Rules of Hooks (`e0d39f6`) ⚠️
+
+**Síntoma reportado:** *"Una vez pasa al segundo formulario. Se queda en blanco y no responde."*
+
+**Causa raíz:** En el commit `7ac558b`, el conditional render del skeleton (`if (draft.loading && !hydrated) return <skeleton />`) en `MetricsForm.tsx` estaba ubicado **entre** los `useState` de errores/touched/submitAttempted/showSummary y el `return` principal del form.
+
+Esto rompe las **Rules of Hooks** de React:
+
+| Render 1 (loading=true) | Render 2 (loading=false) |
+|---|---|
+| `useFormDraftDB` | `useFormDraftDB` |
+| `useState(form)` | `useState(form)` |
+| `useState(hydrated)` | `useState(hydrated)` |
+| `useEffect(...)` | `useEffect(...)` |
+| **return early** → no llama más | `useState(errors)` ← **nuevo hook** |
+| | `useState(touched)` ← **nuevo hook** |
+
+React ve que el orden de hooks cambia entre renders → estado inconsistente → pantalla en blanco + form que no responde.
+
+**Fix:** mover los 4 `useState` problemáticos **arriba** del early return. Ahora todos los hooks van juntos al tope de la función; el conditional render queda al final, justo antes del `return (`.
+
+`BasicDataForm.tsx` no tenía este bug (sus hooks ya estaban en el orden correcto). Verificado con grep.
+
+### 2. Regression test para Rules of Hooks (`a86a087`)
+
+`src/components/form/__tests__/hooksOrder.test.ts` — test estático (regex-based) que verifica:
+
+1. El `if (draft.loading && !hydrated) return <skeleton />` está **después** del último hook en ambos archivos.
+2. No hay hooks dentro de early returns.
+
+Si alguien vuelve a romper el orden, el test falla antes de que llegue a la UI (3 tests nuevos).
+
+### 3. Shorter label en SaveModal (`d3d0bbf`)
+
+Feedback del usuario: el botón "Volver al inicio sin guardar" era largo y agresivo dentro del modal.
+
+| Antes | Ahora |
+|---|---|
+| ES: "Volver al inicio sin guardar" | ES: **"Volver al inicio"** |
+| EN: "Go to home without saving" | EN: **"Back to home"** |
+
+El detail cálido de "sin guardar" sigue presente — vive en el `DiscardConfirmDialog` que `App.tsx` abre por detrás cuando hay datos en memoria. Así el botón queda limpio y el contexto emocional se mantiene.
 
 ---
 
