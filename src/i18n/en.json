@@ -6,7 +6,8 @@
     "admin": "Admin",
     "languageToggle": "Change language",
     "languageEs": "ES",
-    "languageEn": "EN"
+    "languageEn": "EN",
+    "goHome": "Back to home"
   },
   "home": {
     "welcomeFirst": "Hello, it's great to have you here. Today we'll review how your health is doing, calmly and without rush.",
@@ -187,7 +188,14 @@
     "close": "Close",
     "back": "Back",
     "optional": "optional",
-    "locale": "en"
+    "locale": "en",
+    "discardConfirm": {
+      "title": "Leave without saving?",
+      "body": "If you leave now, the data you entered will be lost. Do you still want to return to the home screen?",
+      "stay": "Stay here",
+      "discard": "Yes, go to home"
+    },
+    "unsavedIndicator": "There is unsaved data"
   },
   "results": {
     "title": "Your results",
@@ -282,21 +290,23 @@
     },
     "buttons": {
       "save": "Save my data",
-      "back": "Back to measurements"
+      "back": "Back to measurements",
+      "goHome": "Back to home"
     },
     "modal": {
-      "title": "Done! Your data is safely stored",
-      "subtitleAllNormal": "Everything is within the expected ranges. Keep taking such good care of yourself.",
-      "subtitleWithWarnings": "Your data was saved. Remember to pay attention to the values marked in yellow.",
-      "subtitleWithAlerts": "Your data was saved, but we recommend reviewing the values in red with your health professional.",
+      "title": "Would you like to save your data?",
+      "askBody": "If you save it, we can show you your history next time. If not, you can go back to the home without saving.",
+      "savedTitle": "Done! Your data is saved",
+      "savedBody": "Your measurement is now recorded. Whenever you want, you can return to the home screen to review your history.",
+      "savedGoHome": "Go to home",
+      "skip": "Go to home without saving",
+      "confirmSave": "Save my data",
+      "saveError": "Oops, something didn't go as expected while saving. Shall we try again?",
       "exportQuestion": "In which format would you like to download your record?",
       "exportExcel": "Download Excel",
       "exportPdf": "Download PDF",
-      "skip": "Not now, thanks",
       "comingSoonTitle": "Coming soon",
-      "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases.",
-      "confirmSave": "Save my data",
-      "saveError": "Oops, something didn't go as expected while saving. Shall we try again?"
+      "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases."
     }
   },
   "history": {

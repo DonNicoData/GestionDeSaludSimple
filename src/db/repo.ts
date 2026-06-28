@@ -158,6 +158,25 @@ export async function getLatestRecord(): Promise<Record | undefined> {
   return list[0]
 }
 
+export interface LatestRecordContext {
+  record: Record
+  client: Client
+}
+
+/**
+ * Devuelve el último record + su cliente asociado en una sola llamada.
+ * Usado por App.tsx para hidratar activeClientName en el montaje y poder
+ * mostrar el saludo personalizado desde la primera visita con datos.
+ */
+export async function getLatestRecordContext(): Promise<LatestRecordContext | undefined> {
+  await ensureReady()
+  const record = await getLatestRecord()
+  if (!record) return undefined
+  const client = await db.clients.get(record.clientId)
+  if (!client) return undefined
+  return { record, client }
+}
+
 export async function deleteRecord(id: number): Promise<void> {
   await ensureReady()
   await db.records.delete(id)

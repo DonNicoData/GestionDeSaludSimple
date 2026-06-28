@@ -26,14 +26,15 @@ async function writeDraft<T>(key: string, value: T | null): Promise<void> {
 /**
  * Hook para persistir el estado de un formulario en IndexedDB (Dexie).
  *
- * A diferencia de `useFormDraft` (sessionStorage, sincrónico):
- * - **Persiste entre sesiones**: si el usuario cierra la pestaña, el borrador
- *   sigue disponible cuando vuelva.
- * - **Asíncrono**: la lectura inicial es asíncrona. Se devuelve `loading: true`
- *   hasta que el primer valor llegue. Los `setValue` se debouncean para no
- *   saturar la DB en cada keystroke.
- * - **Compatible con la misma forma**: la firma `value / setValue / clearDraft`
- *   es similar, así que migrar componentes es directo.
+ * Work-preservation invariants (P0-3):
+ * - El setValue escribe al instante en `pendingRef` (memoria) y agenda un
+ *   debounce de 300ms hacia IndexedDB.
+ * - Al desmontar o al hacer flushPending, se cancela el timeout pendiente
+ *   y se escribe `pendingRef.current` de forma inmediata, sin esperar
+ *   al debounce. Esto evita perder el último cambio cuando el usuario
+ *   escribe y navega rápido.
+ * - Si el componente ya está desmontado, NO se hace setState (chequeo
+ *   `mountedRef`) para evitar warnings de React.
  */
 export function useFormDraftDB<T>(key: string): UseFormDraftDBResult<T> {
   const [value, setInternal] = useState<T | null>(null)
@@ -57,12 +58,20 @@ export function useFormDraftDB<T>(key: string): UseFormDraftDBResult<T> {
     }
   }, [key])
 
-  const flushPending = useCallback(async () => {
+  const writeNow = useCallback(
+    async (next: T | null | undefined) => {
+      if (next === undefined) return
+      await writeDraft(key, next)
+    },
+    [key],
+  )
+
+  const flushPending = useCallback(() => {
     if (pendingRef.current === undefined) return
     const next = pendingRef.current
     pendingRef.current = undefined
-    await writeDraft(key, next)
-  }, [key])
+    void writeNow(next)
+  }, [writeNow])
 
   const setValue = useCallback(
     (next: T | null) => {
@@ -73,7 +82,7 @@ export function useFormDraftDB<T>(key: string): UseFormDraftDBResult<T> {
         window.clearTimeout(debounceRef.current)
       }
       debounceRef.current = window.setTimeout(() => {
-        void flushPending()
+        flushPending()
         debounceRef.current = null
       }, DEBOUNCE_MS)
     },
@@ -92,14 +101,18 @@ export function useFormDraftDB<T>(key: string): UseFormDraftDBResult<T> {
     }
   }, [key])
 
-  // Flush pendiente al desmontar para no perder último cambio.
+  // Flush pendiente al desmontar — P0-3: cancela timeout y escribe YA.
+  // Importante: NO es async cleanup (React ignora la promesa). Se dispara
+  // la escritura sincrónicamente pero la operación de Dexie es asíncrona;
+  // Dexie encola la operación internamente y la completa aunque el
+  // componente esté desmontado.
   useEffect(() => {
     return () => {
       if (debounceRef.current !== null) {
         window.clearTimeout(debounceRef.current)
         debounceRef.current = null
       }
-      void flushPending()
+      flushPending()
     }
   }, [flushPending])
 
@@ -130,4 +143,19 @@ export async function clearDraftByKey(key: string): Promise<void> {
 export async function hasAnyDraft(): Promise<boolean> {
   const count = await db.drafts.count()
   return count > 0
+}
+
+/**
+ * Helpers exportados para tests (P0-1 regression suite).
+ * No usar desde UI — preferir el hook `useFormDraftDB`.
+ */
+export async function readDraftForTest<T>(key: string): Promise<T | null> {
+  return readDraft<T>(key)
+}
+
+export async function writeDraftForTest<T>(
+  key: string,
+  value: T,
+): Promise<void> {
+  await writeDraft(key, value)
 }

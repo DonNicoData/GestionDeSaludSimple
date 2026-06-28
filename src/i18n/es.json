@@ -6,7 +6,8 @@
     "admin": "Admin",
     "languageToggle": "Cambiar idioma",
     "languageEs": "ES",
-    "languageEn": "EN"
+    "languageEn": "EN",
+    "goHome": "Volver al inicio"
   },
   "home": {
     "welcomeFirst": "Hola, qué bueno tenerte aquí. Hoy vamos a revisar cómo está tu salud, con calma y sin prisas.",
@@ -187,7 +188,14 @@
     "close": "Cerrar",
     "back": "Volver",
     "optional": "opcional",
-    "locale": "es"
+    "locale": "es",
+    "discardConfirm": {
+      "title": "¿Salir sin guardar?",
+      "body": "Si salís ahora, los datos que cargaste se perderán. ¿Querés volver al inicio de todos modos?",
+      "stay": "Quedarme aquí",
+      "discard": "Sí, volver al inicio"
+    },
+    "unsavedIndicator": "Hay datos sin guardar"
   },
   "results": {
     "title": "Tus resultados",
@@ -282,21 +290,23 @@
     },
     "buttons": {
       "save": "Guardar mis datos",
-      "back": "Volver a las mediciones"
+      "back": "Volver a las mediciones",
+      "goHome": "Volver al inicio"
     },
     "modal": {
-      "title": "¡Listo! Tus datos están guardados de forma segura",
-      "subtitleAllNormal": "Todo está dentro de los rangos esperados. Sigue cuidándote así de bien.",
-      "subtitleWithWarnings": "Tus datos se guardaron. Recuerda prestar atención a los valores marcados en amarillo.",
-      "subtitleWithAlerts": "Tus datos se guardaron, pero te recomendamos consultar los valores en rojo con tu profesional de salud.",
+      "title": "¿Querés guardar tus datos?",
+      "askBody": "Si los guardás, vamos a poder mostrarte tu historial la próxima vez. Si no, podés volver al inicio sin guardarlos.",
+      "savedTitle": "¡Listo! Tus datos están guardados",
+      "savedBody": "Tu medición quedó registrada. Cuando quieras, podés volver al inicio para revisitar tu historial.",
+      "savedGoHome": "Ir al inicio",
+      "skip": "Volver al inicio sin guardar",
+      "confirmSave": "Guardar mis datos",
+      "saveError": "Ups, algo no salió como esperábamos al guardar. ¿Intentamos otra vez?",
       "exportQuestion": "¿En qué formato te gustaría descargar tu registro?",
       "exportExcel": "Descargar Excel",
       "exportPdf": "Descargar PDF",
-      "skip": "Ahora no, gracias",
       "comingSoonTitle": "Pronto disponible",
-      "comingSoonBody": "La exportación a Excel y PDF se habilita en próximas fases.",
-      "confirmSave": "Guardar mis datos",
-      "saveError": "Ups, algo no salió como esperábamos al guardar. ¿Intentamos otra vez?"
+      "comingSoonBody": "La exportación a Excel y PDF se habilita en próximas fases."
     }
   },
   "history": {

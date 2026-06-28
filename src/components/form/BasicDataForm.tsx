@@ -258,6 +258,29 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
     state: computeState(key),
   })
 
+  // P1-6: mientras el draft se está hidratando desde IndexedDB por primera
+  // vez en esta sesión de montaje, mostramos un skeleton en lugar del
+  // form vacío. Una vez "hydrated" (incluso si el draft era null), el
+  // form real se renderiza para evitar parpadeo en navegaciones internas.
+  if (draft.loading && !hydrated) {
+    return (
+      <section
+        aria-busy="true"
+        aria-live="polite"
+        className="flex flex-col gap-5"
+      >
+        <div className="h-8 w-48 bg-divider rounded-2xl animate-pulse" />
+        <div className="h-3 w-full bg-divider rounded-full animate-pulse" />
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <div
+            key={i}
+            className="h-12 bg-divider/60 rounded-2xl animate-pulse"
+          />
+        ))}
+      </section>
+    )
+  }
+
   return (
     <form
       onSubmit={handleSubmit}

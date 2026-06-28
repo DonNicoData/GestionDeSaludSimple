@@ -56,6 +56,26 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
       setHydrated(true)
     }
   }, [draft.loading, draft.value, hydrated])
+
+  // P1-6: skeleton mientras se hidrata el draft por primera vez.
+  if (draft.loading && !hydrated) {
+    return (
+      <section
+        aria-busy="true"
+        aria-live="polite"
+        className="flex flex-col gap-5"
+      >
+        <div className="h-8 w-48 bg-divider rounded-2xl animate-pulse" />
+        <div className="h-3 w-full bg-divider rounded-full animate-pulse" />
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div
+            key={i}
+            className="h-12 bg-divider/60 rounded-2xl animate-pulse"
+          />
+        ))}
+      </section>
+    )
+  }
   const [errors, setErrors] = useState<ErrorState>({})
   const [touched, setTouched] = useState<TouchedState>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
