@@ -10,11 +10,11 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.5.0-fase5
+**Estado al cierre de este hito:** v0.6.0-fase6
 
-**Última fase completada:** ✅ Fase 5 — Sección de recomendaciones (hidratación diaria basada en peso) + tooltips ⓘ en métricas + color warning coherente
+**Última fase completada:** ✅ Fase 6 — Persistencia real con Dexie (IndexedDB) + detección de coincidencia por tripleta + historial del cliente + guardado real en Results
 
-**Próxima fase por hacer:** ⏭️ Fase 6 — Persistencia real con Dexie (IndexedDB) + historial del cliente
+**Próxima fase por hacer:** ⏭️ Fase 7 — Exportación a Excel (.xlsx) y PDF (jsPDF + autoTable)
 
 **Atajos para retomar en otro momento:**
 
@@ -22,7 +22,7 @@ Convenciones de tags:
 |---|---|
 | ¿En qué fase vamos? | *"¿Dónde quedamos?"* o *"estado del proyecto"* |
 | Continuar con la siguiente fase | *"Sigamos con la fase N"* |
-| Volver a un hito específico | *"Volvamos a `v0.5.0-fase5`"* |
+| Volver a un hito específico | *"Volvamos a `v0.6.0-fase6`"* |
 | Ver qué falta | *"¿Qué falta para terminar?"* |
 
 **Tags disponibles:**
@@ -31,7 +31,8 @@ Convenciones de tags:
 - `v0.2.0-fase2` — formulario datos básicos + persistencia
 - `v0.3.0-fase3` — formulario de métricas
 - `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo
-- `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso) *(ESTAMOS AQUÍ)*
+- `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso)
+- `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente *(ESTAMOS AQUÍ)*
 
 ### Comandos git para retomar en cualquier momento
 
@@ -41,13 +42,14 @@ git checkout main              # rama principal
 git pull origin main           # sincronizar cambios remotos
 ```
 
-**Volver al tag exacto v0.5.0-fase5 (modo detached):**
+**Volver al tag exacto v0.6.0-fase6 (modo detached):**
 ```bash
-git checkout v0.5.0-fase5
+git checkout v0.6.0-fase6
 ```
 
 **Volver a cualquier hito anterior:**
 ```bash
+git checkout v0.5.0-fase5      # ver el estado de Fase 5
 git checkout v0.4.0-fase4      # ver el estado de Fase 4
 git checkout v0.3.0-fase3      # ver el estado de Fase 3
 # ...etc
@@ -62,7 +64,7 @@ git tag -l --sort=-v:refname   # lista ordenada (más reciente primero)
 
 **Ver los commits desde el último tag:**
 ```bash
-git log v0.4.0-fase4..main --oneline
+git log v0.5.0-fase5..main --oneline
 ```
 
 ### Cómo levantar el proyecto después de clonar / cambiar de máquina
@@ -70,7 +72,7 @@ git log v0.4.0-fase4..main --oneline
 ```bash
 cd /home/nico/projects/GestionDeSaludSimple
 bash scripts/run.sh install    # instala dependencias (WSL-aware)
-bash scripts/run.sh test       # corre 67 tests
+bash scripts/run.sh test       # corre 83 tests
 bash scripts/run.sh typecheck  # verifica tipos (0 errores)
 bash scripts/run.sh dev        # levanta http://localhost:5173
 ```
@@ -126,11 +128,174 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `053361c milestone(fase5): document complete Fase 5 with refinements`
-- **Tag más reciente:** `v0.5.0-fase5`
-- **Tests:** 67 pasando (61 previos + 6 `// WATER`)
+- **Último commit:** `e0fc788 feat(fase6): Dexie persistence + identity matching + client history`
+- **Tag más reciente:** `v0.6.0-fase6`
+- **Tests:** 83 pasando (67 previos + 16 nuevos del repo Dexie con `fake-indexeddb`)
 - **Typecheck:** 0 errores
+- **Build de producción:** OK (`dist/` generado, ~427 kB JS / 130 kB gzip)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
+
+---
+
+## v0.6.0-fase6 — Persistencia Dexie + matching por tripleta + historial del cliente
+**Fecha:** Junio 2026
+**Estado:** ✅ Completa
+
+### Descripción general
+
+Reemplaza la persistencia volátil de Fase 2 (`sessionStorage`) por una base de datos local real con Dexie (IndexedDB). A partir de ahora **las mediciones sobreviven al cerrar la pestaña o reiniciar el dispositivo**. Esta fase habilita el guardado real desde la pantalla de resultados, la detección de coincidencia entre clientes y el historial del cliente (predecesor del panel admin de Fase 8).
+
+### Decisión arquitectónica importante
+
+Antes de implementar, validadas contigo dos preguntas que afectan toda la fase:
+
+- **¿Orden?** Fase 6 antes que Fase 7 (Excel/PDF). Sin persistencia no hay datos para exportar.
+- **¿Quién ve el historial?** Cliente (por tripleta detectada, sin login) **y** admin (Fase 8). El cliente se identifica por nombre normalizado + fecha de nacimiento + altura, lo que evita fricción sin sacrificar la curva clínica de revisión profesional.
+
+### Stack adicional
+
+| Paquete | Versión | Propósito |
+|---|---|---|
+| dexie | 4.0.x | Wrapper de IndexedDB con API reactiva y schema versionado |
+| fake-indexeddb | 6.0.x (dev) | Polyfill para correr Dexie en el entorno node de vitest |
+
+### Schema Dexie (`db/schema.ts`)
+
+```ts
+db.version(1).stores({
+  clients:  '++id, normalizedName, birthDate, heightCm, createdAt',
+  records:  '++id, clientId, date, [clientId+date]',
+  meta:     'key',
+  drafts:   'key, updatedAt',
+})
+```
+
+- **`clients`**: ficha del cliente. `normalizedName` se calcula al insertar (lowercase + sin diacríticos + trim). Indexado por separado para acelerar el matching.
+- **`records`**: cada medición. Índice compuesto `[clientId+date]` pensado para resolver "último registro del cliente" rápido (actualmente se hace con `where('clientId').equals().reverse().sortBy('date')`).
+- **`meta`**: settings internos. Hoy solo `schemaVersion`.
+- **`drafts`**: borradores de formularios (basic + metrics) en IndexedDB. Reemplazan al viejo `sessionStorage`.
+
+### Capa de repositorio (`db/repo.ts`)
+
+Funciones públicas:
+
+| Función | Propósito |
+|---|---|
+| `findClientMatch(input)` | Matching por tripleta → `{ level: 'high' \| 'partial' \| 'none', client?, candidates? }` |
+| `createClient(input)` | Inserta cliente, calcula `normalizedName`, devuelve id |
+| `getClient(id)` | Lookup por PK |
+| `listAllClients()` | Para admin (Fase 8) — ordenado por `createdAt` desc |
+| `saveRecord(clientId, input)` | Inserta medición con `date = new Date()` |
+| `getRecordsForClient(id)` | Historial del cliente, desc por fecha |
+| `getLastRecordForClient(id)` | Última medición del cliente |
+| `getLatestRecord()` | Última medición global (alimenta saludo del Home) |
+| `deleteClient(id)` | Cascade: borra cliente + todos sus records en transacción |
+| `clearAllData()` | Wipe total (clients + records + drafts + meta) — para botón "borrar DB" del admin (Fase 8) |
+
+### Matching por tripleta (PLAN §5)
+
+| Nivel | Criterio | UX mostrada |
+|---|---|---|
+| **high** | nombre + fecha + altura idénticos (normalizado) | Banner verde "¡Qué gusto verte de nuevo!" + CTA "Sí, soy yo" |
+| **partial** | nombre coincide y (fecha O altura coincide) | Banner ámbar "Encontré datos similares, ¿eres tú?" + lista candidatos + "No, soy alguien nuevo" |
+| **none** | Ningún campo coincide | Avance directo, el cliente se crea al confirmar medición |
+
+Cualquier edición de campo tras submit invalida la fase de matching para evitar decisiones sobre datos viejos.
+
+### Borradores en IndexedDB
+
+`useFormDraftDB` reemplaza a `useFormDraft`:
+- Misma forma externa (`value / setValue / clearDraft`) → migración de componentes directa.
+- Lectura inicial asíncrona (devuelve `loading: true` hasta hidratar).
+- Escritura con debounce 300ms + flush al desmontar.
+- **Sobreviven al cerrar la pestaña**: la próxima vez que el usuario vuelve, retoma donde quedó.
+
+Limpieza selectiva:
+- `DRAFT_KEY_BASIC` se borra al confirmar match → avanzando a métricas.
+- `DRAFT_KEY_METRICS` se borra al confirmar guardado del record en ResultsPage.
+
+### Pantalla de resultados — guardado real
+
+Antes (Fase 5): botón "Guardar" abría modal cálido pero no persistía.
+Ahora (Fase 6): el modal cálido gana un CTA **"Guardar mis datos"** que:
+
+1. Crea el cliente en Dexie si no venía del matching (id asignado).
+2. Inserta el record con `date = new Date()`.
+3. Cierra el modal y navega al Home.
+4. Refresca `lastVisitDays = 0` y `activeClientId` para que el saludo y el botón "Ver mi historial" aparezcan inmediatamente.
+
+Estados del modal:
+- `saving`: spinner "Guardando...", botones deshabilitados.
+- `saveError`: alert rojo traducible + reintento.
+
+### Historial del cliente (`HistoryPage`)
+
+Nueva página accesible desde el botón **"Ver mi historial"** del Home (solo si `activeClientId != null`).
+
+- Lista todas las mediciones del cliente, desc por fecha.
+- Cada tarjeta: punto de color (rojo/ámbar/verde según semáforos agregados) + fecha + peso + resumen (`{n} normales · {n} atención · {n} alerta`).
+- Click expande el detalle con las 7 evaluaciones completas.
+- Mensaje cálido superior según cantidad de registros (PLAN §7.6):
+  - 0-1 registros: *"Esta es tu primera medición con nosotros…"*
+  - 2-3: *"Mira, ya tenemos N registros tuyos…"*
+  - 4+: *"Llevas N mediciones con nosotros…"*
+
+### Home actualizado
+
+- Saludo cambia según contexto: primera vez / volvió hace N días / volvió hoy / "Hola, [nombre]".
+- Botón **"Ver mi historial"** aparece cuando ya hay datos guardados.
+- Banner de borrador se mantiene cuando hay drafts sin confirmar.
+
+### Pruebas añadidas (`db/__tests__/repo.test.ts`)
+
+16 tests nuevos con `fake-indexeddb`:
+
+- `createClient` / `getClient` — id asignado, `normalizedName` derivado, normalización de acentos y mayúsculas.
+- `findClientMatch` — los 3 niveles + caso de "ningún match aunque 2 campos coincidan".
+- `saveRecord` / `getRecordsForClient` — orden desc, getLastRecordForClient, getLatestRecord cross-cliente.
+- `listAllClients` — ordenado por createdAt desc.
+- `deleteClient` — cascade transactional.
+- `clearAllData` — limpia todo e idempotente.
+
+### Archivos entregados
+
+```
+src/
+├── db/
+│   ├── schema.ts                            # Dexie subclass + initSchema
+│   ├── repo.ts                              # CRUD + findClientMatch
+│   └── __tests__/repo.test.ts               # 16 tests con fake-indexeddb
+├── hooks/
+│   └── useFormDraftDB.ts                    # Reemplaza useFormDraft (sessionStorage)
+├── pages/
+│   └── HistoryPage.tsx                      # Nueva pantalla de historial
+└── (modificados) App.tsx, HomePage.tsx, ResultsPage.tsx,
+    BasicDataForm.tsx, MetricsForm.tsx,
+    src/types/index.ts (+normalizedName),
+    src/lib/__tests__/evaluator.test.ts (+normalizedName en fixtures)
+└── (eliminados) src/hooks/useFormDraft.ts
+```
+
+### Decisiones técnicas cerradas en esta fase
+
+| Decisión | Valor |
+|---|---|
+| Persistencia | Dexie (IndexedDB) |
+| Borradores | IndexedDB (sobreviven entre sesiones) |
+| Identidad del cliente | Tripleta normalizada (nombre + fecha + altura) |
+| Matching | 3 niveles (high/partial/none) — PLAN §5 |
+| Quien ve historial | Cliente (sin login) + admin (Fase 8) |
+| Borrado de DB | Solo botón explícito en admin (Fase 8); no auto-cleanup |
+| Drafts | Auto-limpieza al confirmar guardado; si el usuario sale, persisten para retomar |
+| Esquema | Versionado desde día 1 (`schemaVersion` en meta) |
+| Tests de DB | `fake-indexeddb` para no requerir navegador |
+
+### Limitaciones conocidas
+
+- Sin UI de admin para listar/eliminar clientes: entra en Fase 8.
+- Sin exportación Excel/PDF: entra en Fase 7.
+- Sin sincronización entre pestañas: si el usuario abre 2 pestañas, la última escritura gana (Dexie no resuelve conflictos).
+- `deleteClient` borra en cascada sin confirmación UI: la confirmación queda para Fase 8.
 
 ---
 
