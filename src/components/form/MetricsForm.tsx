@@ -43,12 +43,26 @@ const EMPTY_FORM: MetricsFormState = {
 
 const DRAFT_KEY = 'salud_draft_metrics_v1'
 
+const FIELD_KEYS: MetricsField[] = [
+  'weight',
+  'bmi',
+  'bodyFatPct',
+  'muscleMassPct',
+  'calories',
+  'bioAge',
+  'visceralFat',
+]
+
 export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
   const { t } = useTranslation()
   const draft = useFormDraftDB<MetricsFormState>(DRAFT_KEY)
 
   const [form, setForm] = useState<MetricsFormState>(EMPTY_FORM)
   const [hydrated, setHydrated] = useState(false)
+  const [errors, setErrors] = useState<ErrorState>({})
+  const [touched, setTouched] = useState<TouchedState>({})
+  const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
 
   useEffect(() => {
     if (!draft.loading && !hydrated) {
@@ -56,30 +70,6 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
       setHydrated(true)
     }
   }, [draft.loading, draft.value, hydrated])
-
-  // P1-6: skeleton mientras se hidrata el draft por primera vez.
-  if (draft.loading && !hydrated) {
-    return (
-      <section
-        aria-busy="true"
-        aria-live="polite"
-        className="flex flex-col gap-5"
-      >
-        <div className="h-8 w-48 bg-divider rounded-2xl animate-pulse" />
-        <div className="h-3 w-full bg-divider rounded-full animate-pulse" />
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <div
-            key={i}
-            className="h-12 bg-divider/60 rounded-2xl animate-pulse"
-          />
-        ))}
-      </section>
-    )
-  }
-  const [errors, setErrors] = useState<ErrorState>({})
-  const [touched, setTouched] = useState<TouchedState>({})
-  const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [showSummary, setShowSummary] = useState(false)
 
   const computeState = (field: MetricsField): InputState => {
     if (!touched[field] && !submitAttempted) return 'neutral'
@@ -154,15 +144,27 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
     onSubmit(parsed.data)
   }
 
-  const fieldKeys: MetricsField[] = [
-    'weight',
-    'bmi',
-    'bodyFatPct',
-    'muscleMassPct',
-    'calories',
-    'bioAge',
-    'visceralFat',
-  ]
+  // P1-6: skeleton mientras se hidrata el draft por primera vez en este
+  // montaje. NOTA: el early return va DESPUÉS de todos los hooks para no
+  // romper las Rules of Hooks (no hooks condicionales).
+  if (draft.loading && !hydrated) {
+    return (
+      <section
+        aria-busy="true"
+        aria-live="polite"
+        className="flex flex-col gap-5"
+      >
+        <div className="h-8 w-48 bg-divider rounded-2xl animate-pulse" />
+        <div className="h-3 w-full bg-divider rounded-full animate-pulse" />
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div
+            key={i}
+            className="h-12 bg-divider/60 rounded-2xl animate-pulse"
+          />
+        ))}
+      </section>
+    )
+  }
 
   return (
     <form
@@ -193,7 +195,7 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
         </p>
       </header>
 
-      {fieldKeys.map((key) => {
+      {FIELD_KEYS.map((key) => {
         const range = FIELD_RANGES[key]
         const isOptional = range.min === 0
         return (
