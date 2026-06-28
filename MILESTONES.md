@@ -128,11 +128,11 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `e0fc788 feat(fase6): Dexie persistence + identity matching + client history`
-- **Tag más reciente:** `v0.6.0-fase6`
-- **Tests:** 83 pasando (67 previos + 16 nuevos del repo Dexie con `fake-indexeddb`)
+- **Último commit:** `7ac558b fix(fase6): preserve basic data draft across navigation (work preservation)`
+- **Tag más reciente:** `v0.6.0-fase6` (con refinamientos post-validación aplicados encima)
+- **Tests:** 92 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB)
 - **Typecheck:** 0 errores
-- **Build de producción:** OK (`dist/` generado, ~427 kB JS / 130 kB gzip)
+- **Build de producción:** OK (`dist/` generado, ~432 kB JS / 132 kB gzip)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
 
 ---
@@ -296,6 +296,108 @@ src/
 - Sin exportación Excel/PDF: entra en Fase 7.
 - Sin sincronización entre pestañas: si el usuario abre 2 pestañas, la última escritura gana (Dexie no resuelve conflictos).
 - `deleteClient` borra en cascada sin confirmación UI: la confirmación queda para Fase 8.
+
+---
+
+## Refinamientos post-validación de Fase 6 (commit `7ac558b`)
+
+**Fecha:** Junio 2026
+**Estado:** ✅ Aplicado sobre el tag `v0.6.0-fase6`
+
+### Por qué este commit
+
+Durante la validación manual posterior al cierre de Fase 6 detectamos dos issues que afectan la usabilidad central:
+
+1. **Bug crítico de preservación de trabajo**: al submitear BasicDataForm, el draft se borraba de IndexedDB. Esto causaba que al volver "atrás" desde MetricsPage, el form de datos básicos apareciera **vacío** (sensación de "se borró todo").
+2. **Modal confuso + falta de ruta clara al Home**: el botón "Ahora no, gracias" cerraba el modal sin feedback; el logo del Header no era clickeable.
+
+El tag NO se mueve — son refinamientos detectados tras la validación, parte del mismo hito `v0.6.0-fase6`.
+
+### Cambios (resumen)
+
+#### Work preservation — drafts sobreviven al submit
+
+| Antes | Ahora |
+|---|---|
+| `handleBasicDataSubmit` borraba `DRAFT_KEY_BASIC` | Solo setea `basicData` en estado; el draft persiste |
+| `handleResultsSaved` borraba `DRAFT_KEY_METRICS` | Borra AMBOS drafts (basic + metrics) |
+| `useFormDraftDB` flushPending usaba `setTimeout` | Cancelación + escritura inmediata al desmontar (último keystroke no se pierde) |
+
+Resultado: tras ir a métricas y volver, BasicDataForm se rehidrata con los datos completos. F5, cerrar pestaña, o navegar "atrás" en cualquier punto del flujo **nunca borran datos**.
+
+#### Navegación clara
+
+- **SaveModal**:
+  - Title: *"¡Listo! Tus datos están guardados"* (afirmación falsa) → *"¿Querés guardar tus datos?"* (pregunta).
+  - Body: *"Si los guardás, vamos a poder mostrarte tu historial la próxima vez. Si no, podés volver al inicio sin guardarlos."*
+  - Skip: *"Ahora no, gracias"* → *"Volver al inicio sin guardar"* (consecuencia explícita).
+  - Orden invertido: primary (Guardar) a la izquierda; skip (outline) a la derecha (mobile: arriba/abajo).
+- **ResultsPage**: botón outline secundario **"Volver al inicio"** debajo de los CTAs principales. Llama a `requestGoHome` que dispara `DiscardConfirmDialog` si hay datos en memoria.
+- **DiscardConfirmDialog** (nuevo, en `src/components/shared/`): modal cálido con copy PLAN §7.8. Foco automático al botón "Quedarme aquí" (la opción conservadora). Captura Escape.
+
+#### Header — Logo como Home + indicador
+
+- Logo/título ahora es `<button>` con `aria-label="Volver al inicio"`. Al click:
+  - Sin datos en memoria → navega directo al Home.
+  - Con datos en memoria → abre `DiscardConfirmDialog`.
+- Punto ámbar `bg-warning` con `ring-bone` aparece junto al logo cuando hay `basicData` o `metrics` en memoria sin persistir (`hasUnsavedFlowData`).
+
+#### Hidratación de activeClientName (P1-5)
+
+- Nuevo helper `getLatestRecordContext` en `db/repo.ts`: devuelve record + cliente en una llamada.
+- App.tsx ahora hidrata `activeClientName` desde `getLatestRecordContext` en el `useEffect` de mount.
+- Resultado: tras F5 con datos existentes, el saludo dice *"Hola, Juan Pérez González. ¿Quieres registrar nuevos datos o revisar tu evolución?"* desde la primera carga.
+
+#### Anti-flash de form vacío (P1-6)
+
+- Skeleton animado (`animate-pulse`) mientras `useFormDraftDB.loading && !hydrated` en BasicDataForm y MetricsForm.
+- Solo se muestra la primera vez que se hidrata el draft; navegaciones internas son instantáneas (porque `hydrated=true`).
+
+### Tests añadidos (92 totales)
+
+**`src/hooks/__tests__/useFormDraftDB.test.ts`** (6 tests nuevos):
+- `writeDraftForTest` persiste un draft en IndexedDB.
+- `readDraftForTest` devuelve null si no hay draft.
+- `clearDraftByKey` borra SOLO la key indicada (no la otra).
+- Drafts Basic y Metrics coexisten (no se sobrescriben entre sí).
+- `clearAllData` limpia ambos.
+- Schema incluye tabla `drafts` (regression).
+
+**`src/db/__tests__/repo.test.ts`** (3 tests nuevos para `getLatestRecordContext`):
+- Devuelve record + cliente asociado.
+- Devuelve undefined cuando no hay records.
+- Resuelve el cliente aunque haya varios clientes con records.
+
+### Decisiones de UX aplicadas
+
+| Principio | Aplicación |
+|---|---|
+| **Work Preservation** (Nielsen + iOS HIG) | Drafts sobreviven a F5, cierre de pestaña y navegación atrás |
+| **El camino destructivo debe ser opt-in y explícito** | Botón "Volver al inicio sin guardar" + DiscardConfirm |
+| **Confirmaciones cálidas, no alertas frías** | Copy PLAN §7.8 aplicado al DiscardConfirmDialog |
+| **El header no es decorativo, es funcional** | Logo = Home (GOV.UK + Apple HIG) con indicador de estado |
+| **Jerarquía visual: primary primero** | Invertido respecto a Fase 5 (Fitts's Law + lectura L→R) |
+
+### Archivos modificados / nuevos
+
+```
+src/App.tsx                                          # +66 / -10
+src/components/form/BasicDataForm.tsx                # skeleton
+src/components/form/MetricsForm.tsx                  # skeleton
+src/components/layout/Header.tsx                     # logo + dot
+src/components/shared/DiscardConfirmDialog.tsx       # NUEVO
+src/db/repo.ts                                       # +getLatestRecordContext
+src/db/__tests__/repo.test.ts                        # +3 tests
+src/hooks/useFormDraftDB.ts                          # flushPending reforzado + helpers test
+src/hooks/__tests__/useFormDraftDB.test.ts           # NUEVO (+6 tests)
+src/i18n/{es,en}.json                                # +savedBody, +discardConfirm, +unsavedIndicator, +goHome
+src/pages/ResultsPage.tsx                            # +Volver al inicio, modal copy + orden
+```
+
+### Limitaciones remanentes
+
+- La confirmación al descartar es **siempre obligatoria** (sin toggle "no volver a preguntar"). Si te parece molesto para power users, se puede agregar en Fase 11 (pulido).
+- El indicador ámbar del Header solo se ve mientras hay datos en **memoria React** (`basicData` o `metrics`). Si el usuario tiene drafts en IndexedDB pero nunca llegó a submitear, el indicador no se muestra (porque no hay memoria). Esto es aceptable porque el banner del Home "Tienes una medición a medio terminar" ya comunica esa información.
 
 ---
 
