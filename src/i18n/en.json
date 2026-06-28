@@ -12,10 +12,12 @@
     "welcomeFirst": "Hello, it's great to have you here. Today we'll review how your health is doing, calmly and without rush.",
     "welcomeReturning": "Hello again. Your last visit was {{days}} days ago. Would you like to record new data?",
     "welcomeReturningToday": "Hello again. Your last visit was today. Would you like to record new data?",
+    "welcomeNamed": "Hello, {{name}}. Would you like to record new data or review your progress?",
     "ctaRegister": "Record my data",
     "ctaHint": "Let's begin whenever you're ready",
     "privacyNotice": "Your data is stored only on this device. Nothing is sent to the internet.",
     "comingSoon": "Coming soon",
+    "viewHistory": "View my history",
     "hasDraft": {
       "title": "You have a measurement in progress",
       "subtitle": "You can continue where you left off or start fresh.",
@@ -94,6 +96,20 @@
     "buttons": {
       "continue": "Continue",
       "back": "Back"
+    },
+    "match": {
+      "high": {
+        "title": "Great to see you again!",
+        "body": "I found your previous records, {{name}}. Let's continue with your measurements.",
+        "confirm": "Yes, that's me"
+      },
+      "partial": {
+        "title": "I found similar data",
+        "body": "Are you {{name}}? If so, I'll add your measurement to their history. If not, let's continue as new.",
+        "bornOn": "Born on {{date}}",
+        "yes": "Yes, that's me",
+        "no": "No, I'm someone new"
+      }
     }
   },
   "metricsForm": {
@@ -167,9 +183,11 @@
   },
   "common": {
     "loading": "Loading...",
+    "saving": "Saving...",
     "close": "Close",
     "back": "Back",
-    "optional": "optional"
+    "optional": "optional",
+    "locale": "en"
   },
   "results": {
     "title": "Your results",
@@ -276,7 +294,23 @@
       "exportPdf": "Download PDF",
       "skip": "Not now, thanks",
       "comingSoonTitle": "Coming soon",
-      "comingSoonBody": "Persistent storage and Excel/PDF export arrive in upcoming phases."
+      "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases.",
+      "confirmSave": "Save my data",
+      "saveError": "Oops, something didn't go as expected while saving. Shall we try again?"
     }
+  },
+  "history": {
+    "title": "Your history",
+    "subtitle": "Here are all your measurements, {{name}}. Each one tells a story.",
+    "timelineTitle": "Your timeline",
+    "summary": {
+      "empty": "This is your first measurement with us. The next time you come back, you'll see how you've progressed here.",
+      "one": "This is your first measurement with us. The next time you come back, you'll see how you've progressed here.",
+      "few": "Look, we already have {{count}} records for you. Each one tells a story.",
+      "many": "You have {{count}} measurements with us. Review how your values have changed over time."
+    },
+    "noRecords": "There are no saved measurements yet. Go back to the main screen to record the first one.",
+    "notFound": "We couldn't find this client's data.",
+    "recordSummary": "{{weight}} kg · {{normals}} normal · {{warnings}} attention · {{alerts}} alert"
   }
 }

@@ -11,6 +11,7 @@ export interface Client {
   firstName: string
   lastName1: string
   lastName2: string
+  normalizedName: string
   birthDate: string
   age: number
   gender: Gender

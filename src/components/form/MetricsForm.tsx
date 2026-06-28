@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormField } from '@/components/form/FormField'
 import { Input, type InputState } from '@/components/shared/Input'
@@ -9,7 +9,7 @@ import {
   type MetricsField,
   type MetricsOutput,
 } from '@/lib/validation'
-import { useFormDraft } from '@/hooks/useFormDraft'
+import { useFormDraftDB } from '@/hooks/useFormDraftDB'
 
 type MetricsFormState = Record<MetricsField, string>
 
@@ -41,13 +41,21 @@ const EMPTY_FORM: MetricsFormState = {
   visceralFat: '',
 }
 
-const DRAFT_KEY = 'salud_draft_metrics_form_v1'
+const DRAFT_KEY = 'salud_draft_metrics_v1'
 
 export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
   const { t } = useTranslation()
-  const draft = useFormDraft<MetricsFormState>(DRAFT_KEY)
+  const draft = useFormDraftDB<MetricsFormState>(DRAFT_KEY)
 
-  const [form, setForm] = useState<MetricsFormState>(() => draft.value ?? EMPTY_FORM)
+  const [form, setForm] = useState<MetricsFormState>(EMPTY_FORM)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    if (!draft.loading && !hydrated) {
+      if (draft.value) setForm(draft.value)
+      setHydrated(true)
+    }
+  }, [draft.loading, draft.value, hydrated])
   const [errors, setErrors] = useState<ErrorState>({})
   const [touched, setTouched] = useState<TouchedState>({})
   const [submitAttempted, setSubmitAttempted] = useState(false)

@@ -5,10 +5,29 @@ interface HomePageProps {
   onRegister: () => void
   hasDraft?: boolean
   onStartNew?: () => void
+  lastVisitDays?: number | null
+  knownClientName?: string
+  onViewHistory?: () => void
 }
 
-export function HomePage({ onRegister, hasDraft = false, onStartNew }: HomePageProps) {
+export function HomePage({
+  onRegister,
+  hasDraft = false,
+  onStartNew,
+  lastVisitDays = null,
+  knownClientName,
+  onViewHistory,
+}: HomePageProps) {
   const { t } = useTranslation()
+
+  const greetingKey =
+    lastVisitDays === null
+      ? 'home.welcomeFirst'
+      : lastVisitDays === 0
+        ? 'home.welcomeReturningToday'
+        : 'home.welcomeReturning'
+
+  const greeting = t(greetingKey, lastVisitDays !== null && lastVisitDays > 0 ? { days: lastVisitDays } : {})
 
   return (
     <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-16 flex flex-col items-center text-center">
@@ -27,9 +46,15 @@ export function HomePage({ onRegister, hasDraft = false, onStartNew }: HomePageP
         </svg>
       </div>
 
-      <p className="text-graphite/80 text-base sm:text-lg leading-relaxed max-w-xl mb-6">
-        {t('home.welcomeFirst')}
+      <p className="text-graphite/80 text-base sm:text-lg leading-relaxed max-w-xl mb-2">
+        {greeting}
       </p>
+
+      {knownClientName && lastVisitDays !== null && (
+        <p className="text-sm text-graphite/60 mb-6">
+          {t('home.welcomeNamed', { name: knownClientName })}
+        </p>
+      )}
 
       {hasDraft ? (
         <div
@@ -65,11 +90,7 @@ export function HomePage({ onRegister, hasDraft = false, onStartNew }: HomePageP
           </div>
         </div>
       ) : (
-        <Button
-          size="lg"
-          onClick={onRegister}
-          title={t('home.ctaHint')}
-        >
+        <Button size="lg" onClick={onRegister} title={t('home.ctaHint')}>
           {t('home.ctaRegister')}
           <svg
             viewBox="0 0 24 24"
@@ -85,6 +106,29 @@ export function HomePage({ onRegister, hasDraft = false, onStartNew }: HomePageP
             <path d="m12 5 7 7-7 7" />
           </svg>
         </Button>
+      )}
+
+      {onViewHistory && (
+        <button
+          type="button"
+          onClick={onViewHistory}
+          className="mt-5 text-sm font-medium text-primary-dark hover:text-primary transition-colors inline-flex items-center gap-1.5"
+        >
+          {t('home.viewHistory')}
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </button>
       )}
 
       <p className="mt-12 text-xs text-graphite/50 max-w-md leading-relaxed">

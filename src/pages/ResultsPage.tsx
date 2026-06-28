@@ -6,10 +6,17 @@ import { MetricCard } from '@/components/results/MetricCard'
 import { RecommendationCard } from '@/components/results/RecommendationCard'
 import { ResultsSummary } from '@/components/results/ResultsSummary'
 import { evaluate } from '@/lib/evaluator'
-import type { Client, MetricEvaluation } from '@/types'
+import { createClient, saveRecord } from '@/db/repo'
+import { combineName, normalizeName } from '@/lib/name'
+import type { BasicDataOutput } from '@/lib/validation'
+import type { MetricEvaluation } from '@/types'
 
 interface ResultsPageProps {
-  client: Client
+  basicData: BasicDataOutput & {
+    age: number
+    fullName: string
+    clientId?: number
+  }
   record: {
     weight: number
     bmi: number
@@ -20,28 +27,53 @@ interface ResultsPageProps {
     visceralFat: number
   }
   onBack: () => void
-  onConfirmSave: () => void
+  /**
+   * Callback al confirmar guardado exitoso: recibe el clientId creado/actualizado
+   * y el nombre completo. App.tsx lo usa para refrescar el "último cliente activo".
+   */
+  onSaved: (clientId: number, clientName: string) => void
 }
 
 /**
- * Pantalla de resultados: aplica el evaluador sobre (record, client),
+ * Pantalla de resultados: aplica el evaluador sobre (record, basicData),
  * muestra el resumen cálido y las 7 tarjetas con semáforo.
  *
- * En esta fase el botón "Guardar" abre un modal cálido (PLAN §7.5)
- * pero NO persiste aún: el guardado real llega en Fase 6 con Dexie.
+ * El botón "Guardar" abre el modal cálido (PLAN §7.5) y al confirmarlo
+ * persiste el registro en Dexie (Fase 6):
+ * - Si basicData ya trae clientId (porque hubo match alto/parcial confirmado
+ *   en FormPage), reutiliza ese cliente.
+ * - Si no, crea un cliente nuevo con los datos del formulario.
+ * - Luego inserta un Record nuevo vinculado al cliente.
  */
-export function ResultsPage({
-  client,
-  record,
-  onBack,
-  onConfirmSave,
-}: ResultsPageProps) {
+export function ResultsPage({ basicData, record, onBack, onSaved }: ResultsPageProps) {
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Adaptador mínimo a Client para que el evaluador + banner funcione sin
+  // conocer la persistencia. El id real lo determinaremos al guardar.
+  const evaluationTarget = useMemo(
+    () => ({
+      firstName: basicData.firstName,
+      lastName1: basicData.lastName1,
+      lastName2: basicData.lastName2,
+      normalizedName: normalizeName(
+        combineName(basicData.firstName, basicData.lastName1, basicData.lastName2),
+      ),
+      birthDate: basicData.birthDate,
+      age: basicData.age,
+      gender: basicData.gender,
+      heightCm: basicData.heightCm,
+      wristContexture: basicData.wristContexture,
+      createdAt: new Date(),
+    }),
+    [basicData],
+  )
 
   const evaluations: MetricEvaluation[] = useMemo(
-    () => evaluate(record, client),
-    [record, client],
+    () => evaluate(record, evaluationTarget),
+    [record, evaluationTarget],
   )
 
   const alerts = evaluations.filter((e) => e.status === 'alert').length
@@ -54,6 +86,41 @@ export function ResultsPage({
         ? 'results.modal.subtitleWithWarnings'
         : 'results.modal.subtitleAllNormal'
 
+  const handleConfirmSave = async () => {
+    setSaving(true)
+    setSaveError(null)
+    try {
+      let clientId = basicData.clientId
+      if (clientId == null) {
+        clientId = await createClient({
+          firstName: basicData.firstName,
+          lastName1: basicData.lastName1,
+          lastName2: basicData.lastName2,
+          birthDate: basicData.birthDate,
+          age: basicData.age,
+          gender: basicData.gender,
+          heightCm: basicData.heightCm,
+          wristContexture: basicData.wristContexture,
+        })
+      }
+      await saveRecord(clientId, {
+        weight: record.weight,
+        bmi: record.bmi,
+        bodyFatPct: record.bodyFatPct,
+        muscleMassPct: record.muscleMassPct,
+        calories: record.calories,
+        bioAge: record.bioAge,
+        visceralFat: record.visceralFat,
+      })
+      setModalOpen(false)
+      onSaved(clientId, basicData.fullName)
+    } catch {
+      setSaveError(t('results.modal.saveError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
       <header className="flex flex-col gap-2 mb-6">
@@ -65,7 +132,7 @@ export function ResultsPage({
         </p>
       </header>
 
-      <ClientProfileBanner client={client} currentWeight={record.weight} />
+      <ClientProfileBanner client={evaluationTarget} currentWeight={record.weight} />
 
       <RecommendationCard currentWeight={record.weight} />
 
@@ -89,6 +156,7 @@ export function ResultsPage({
           size="lg"
           onClick={onBack}
           fullWidth
+          disabled={saving}
         >
           {t('results.buttons.back')}
         </Button>
@@ -97,6 +165,7 @@ export function ResultsPage({
           size="lg"
           onClick={() => setModalOpen(true)}
           fullWidth
+          disabled={saving}
         >
           {t('results.buttons.save')}
         </Button>
@@ -105,11 +174,10 @@ export function ResultsPage({
       {modalOpen && (
         <SaveModal
           subtitleKey={modalSubtitleKey}
-          onSkip={() => {
-            setModalOpen(false)
-            onConfirmSave()
-          }}
-          onClose={() => setModalOpen(false)}
+          saving={saving}
+          saveError={saveError}
+          onConfirm={handleConfirmSave}
+          onClose={() => !saving && setModalOpen(false)}
         />
       )}
     </section>
@@ -118,17 +186,20 @@ export function ResultsPage({
 
 interface SaveModalProps {
   subtitleKey: string
-  onSkip: () => void
+  saving: boolean
+  saveError: string | null
+  onConfirm: () => void
   onClose: () => void
 }
 
 /**
- * Modal cálido de "guardado exitoso" (PLAN §7.5). En esta fase muestra
- * el flujo de exportación pero los botones de Excel/PDF están deshabilitados
- * porque la exportación entra en Fase 7. El guardado real en Dexie entra
- * en Fase 6.
+ * Modal cálido de "guardado exitoso" (PLAN §7.5).
+ *
+ * En Fase 6 este modal cierra el ciclo de persistencia: al confirmar,
+ * `onConfirm` crea el cliente (si no existe) y guarda el record en Dexie.
+ * Los botones de Excel/PDF siguen deshabilitados — entran en Fase 7.
  */
-function SaveModal({ subtitleKey, onSkip, onClose }: SaveModalProps) {
+function SaveModal({ subtitleKey, saving, saveError, onConfirm, onClose }: SaveModalProps) {
   const { t } = useTranslation()
 
   return (
@@ -171,6 +242,15 @@ function SaveModal({ subtitleKey, onSkip, onClose }: SaveModalProps) {
           </p>
         </div>
 
+        {saveError && (
+          <div
+            role="alert"
+            className="rounded-2xl border-2 border-alert bg-alert/10 p-3 text-sm text-alert"
+          >
+            {saveError}
+          </div>
+        )}
+
         <div className="rounded-2xl border border-divider bg-white p-4 flex flex-col gap-3">
           <p className="text-sm font-semibold text-graphite">
             {t('results.modal.comingSoonTitle')}
@@ -200,9 +280,27 @@ function SaveModal({ subtitleKey, onSkip, onClose }: SaveModalProps) {
           </div>
         </div>
 
-        <Button type="button" variant="outline" size="md" onClick={onSkip} fullWidth>
-          {t('results.modal.skip')}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={onClose}
+            fullWidth
+            disabled={saving}
+          >
+            {t('results.modal.skip')}
+          </Button>
+          <Button
+            type="button"
+            size="md"
+            onClick={onConfirm}
+            fullWidth
+            disabled={saving}
+          >
+            {saving ? t('common.saving') : t('results.modal.confirmSave')}
+          </Button>
+        </div>
       </div>
     </div>
   )
