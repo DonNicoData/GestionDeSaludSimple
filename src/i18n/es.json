@@ -299,7 +299,7 @@
       "savedTitle": "¡Listo! Tus datos están guardados",
       "savedBody": "Tu medición quedó registrada. Cuando quieras, podés volver al inicio para revisitar tu historial.",
       "savedGoHome": "Ir al inicio",
-      "skip": "Volver al inicio sin guardar",
+      "skip": "Volver al inicio",
       "confirmSave": "Guardar mis datos",
       "saveError": "Ups, algo no salió como esperábamos al guardar. ¿Intentamos otra vez?",
       "exportQuestion": "¿En qué formato te gustaría descargar tu registro?",

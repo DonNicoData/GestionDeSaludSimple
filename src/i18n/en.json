@@ -299,7 +299,7 @@
       "savedTitle": "Done! Your data is saved",
       "savedBody": "Your measurement is now recorded. Whenever you want, you can return to the home screen to review your history.",
       "savedGoHome": "Go to home",
-      "skip": "Go to home without saving",
+      "skip": "Back to home",
       "confirmSave": "Save my data",
       "saveError": "Oops, something didn't go as expected while saving. Shall we try again?",
       "exportQuestion": "In which format would you like to download your record?",
