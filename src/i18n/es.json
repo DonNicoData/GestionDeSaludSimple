@@ -191,7 +191,7 @@
     "locale": "es",
     "discardConfirm": {
       "title": "¿Salir sin guardar?",
-      "body": "Si salís ahora, los datos que cargaste se perderán. ¿Querés volver al inicio de todos modos?",
+      "body": "Si sales ahora, los datos que cargaste se perderán. ¿Quieres volver al inicio de todos modos?",
       "stay": "Quedarme aquí",
       "discard": "Sí, volver al inicio"
     },
@@ -294,10 +294,10 @@
       "goHome": "Volver al inicio"
     },
     "modal": {
-      "title": "¿Querés guardar tus datos?",
-      "askBody": "Si los guardás, vamos a poder mostrarte tu historial la próxima vez. Si no, podés volver al inicio sin guardarlos.",
+      "title": "¿Quieres guardar tus datos?",
+      "askBody": "Si los guardas, vamos a poder mostrarte tu historial la próxima vez. Si no, puedes volver al inicio sin guardarlos.",
       "savedTitle": "¡Listo! Tus datos están guardados",
-      "savedBody": "Tu medición quedó registrada. Cuando quieras, podés volver al inicio para revisitar tu historial.",
+      "savedBody": "Tu medición quedó registrada. Cuando quieras, puedes volver al inicio para revisitar tu historial.",
       "savedGoHome": "Ir al inicio",
       "skip": "Volver al inicio",
       "confirmSave": "Guardar mis datos",
