@@ -10,7 +10,7 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.6.0-fase6
+**Estado al cierre de este hito:** v0.6.2-fase6-i18n
 
 **Última fase completada:** ✅ Fase 6 — Persistencia real con Dexie (IndexedDB) + detección de coincidencia por tripleta + historial del cliente + guardado real en Results
 
@@ -33,7 +33,8 @@ Convenciones de tags:
 - `v0.4.0-fase4` — evaluador + pantalla de resultados con semáforo
 - `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso)
 - `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente
-- `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks *(ESTAMOS AQUÍ)*
+- `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks
+- `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro *(ESTAMOS AQUÍ)*
 
 ### Comandos git para retomar en cualquier momento
 
@@ -129,9 +130,9 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `c437b76 milestone(fase6): document additional refinements (hooks fix + shorter modal label)`
-- **Tag más reciente:** `v0.6.1-fase6-hotfix` (refinamientos post-validación + bugfix críticos sobre `v0.6.0-fase6`)
-- **Tags disponibles:** `v0.6.0-fase6` (cierre original de fase) y `v0.6.1-fase6-hotfix` (con refinamientos)
+- **Último commit:** `67a1fe1 fix(i18n): replace voseo with neutral LatAm Spanish in user copy`
+- **Tag más reciente:** `v0.6.2-fase6-i18n` (neutralización de copy ES a español latino neutro)
+- **Tags disponibles:** `v0.6.0-fase6`, `v0.6.1-fase6-hotfix`, `v0.6.2-fase6-i18n`
 - **Tests:** 95 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB + 3 hooksOrder regression)
 - **Typecheck:** 0 errores
 - **Build de producción:** OK (`dist/` generado, ~432 kB JS / 132 kB gzip)
@@ -452,6 +453,41 @@ Feedback del usuario: el botón "Volver al inicio sin guardar" era largo y agres
 | EN: "Go to home without saving" | EN: **"Back to home"** |
 
 El detail cálido de "sin guardar" sigue presente — vive en el `DiscardConfirmDialog` que `App.tsx` abre por detrás cuando hay datos en memoria. Así el botón queda limpio y el contexto emocional se mantiene.
+
+---
+
+## v0.6.2-fase6-i18n — Neutralización de copy a español latino neutro
+**Fecha:** Junio 2026
+**Estado:** ✅ Aplicado sobre el tag `v0.6.1-fase6-hotfix`
+
+### Descripción
+
+Pequeño ajuste de i18n detectado durante una validación manual posterior al cierre de Fase 6: algunas cadenas en español del archivo `src/i18n/es.json` empleaban conjugaciones de **voseo** (características del español rioplatense/argentino), en un copy cuyo tono general apunta a español latino neutro. Se reemplazaron las formas afectadas por sus equivalentes en **tú**, consistentes con el resto de la copia de la aplicación.
+
+### Cambios
+
+| Clave i18n | Antes | Ahora |
+|---|---|---|
+| `common.discardConfirm.body` | "Si salís ahora…" | "Si sales ahora…" |
+| `results.modal.title` | "¿Querés guardar tus datos?" | "¿Quieres guardar tus datos?" |
+| `results.modal.askBody` | "Si los guardás… podés volver…" | "Si los guardas… puedes volver…" |
+| `results.modal.savedBody` | "Cuando quieras, podés volver…" | "Cuando quieras, puedes volver…" |
+
+- Solo archivo `src/i18n/es.json` modificado.
+- Sin cambios en componentes ni en `en.json`.
+- Typecheck: 0 errores. **95/95 tests pasando**.
+
+### Decisión de tono cerrada
+
+| Decisión | Valor |
+|---|---|
+| Conjugación usada | **tú** (consistente con el resto de la app) |
+| Justificación | Tono cálido e informal ya establecido en el copy existente ("Hola, qué bueno tenerte aquí", "Cuéntame un poco sobre ti", "¿Quieres registrar nuevos datos?") |
+| Alcance geográfico | Latinoamérica en general — México, Perú, Chile, Colombia, etc. |
+
+### Commit
+
+- `67a1fe1` — `fix(i18n): replace voseo with neutral LatAm Spanish in user copy`
 
 ---
 
