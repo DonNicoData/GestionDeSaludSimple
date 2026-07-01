@@ -225,7 +225,7 @@
       "water": {
         "label": "Recommended water",
         "value": "{{liters}} L/day",
-        "hint": "Based on your current weight ({{weight}} kg), drinking about {{liters}} liters of water a day helps your body work well. If it's hot or you move more than usual, add a little more. Small frequent sips work better than a lot at once.",
+        "hint": "Based on your current weight ({{weight}} kg), drinking about {{liters}} liters of water a day helps your body work well. If it's hot or you do more physical activity than usual, add a little more. Small frequent sips work better than a lot at once.",
         "methodology": "This suggestion uses the 35 milliliters per kilogram of body weight formula, a reference used by the European Food Safety Authority (EFSA) and the U.S. Institute of Medicine (IOM). It's a gentle starting point: if your physical activity or the climate change, you can adjust a bit upward."
       }
     },
