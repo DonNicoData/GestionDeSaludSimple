@@ -225,7 +225,7 @@
       "water": {
         "label": "Agua recomendada",
         "value": "{{liters}} L/día",
-        "hint": "Según tu peso actual ({{weight}} kg), tomar alrededor de {{liters}} litros de agua al día ayuda a tu cuerpo a funcionar bien. Si hace calor o te mueves más de lo habitual, suma un poco más. Pequeños sorbos frecuentes funcionan mejor que mucho de golpe.",
+        "hint": "Según tu peso actual ({{weight}} kg), tomar alrededor de {{liters}} litros de agua al día ayuda a tu cuerpo a funcionar bien. Si hace calor o haces más actividad física de lo habitual, suma un poco más. Pequeños sorbos frecuentes funcionan mejor que mucho de golpe.",
         "methodology": "Esta sugerencia se basa en la fórmula de 35 mililitros por cada kilogramo de peso corporal, una referencia usada por la Autoridad Europea de Seguridad Alimentaria (EFSA) y el Instituto de Medicina de los Estados Unidos (IOM). Es un punto de partida amable: si tu actividad física o el clima cambian, puedes ajustar un poco hacia arriba."
       }
     },
