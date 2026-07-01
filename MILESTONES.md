@@ -97,6 +97,38 @@ pkill -9 -f vite
 bash scripts/run.sh dev
 ```
 
+### Probar en el celular (datos móviles o WiFi ajena) — Cloudflare Tunnel
+
+Útil cuando no estás en la misma WiFi que la PC, o querés probar desde datos móviles / compartir con amigos. No requiere cuenta.
+
+**Requisitos previos:**
+- `vite.config.ts` debe tener `server.allowedHosts: true` (para que Vite no bloquee el host del túnel).
+- Vite corriendo en WSL (`bash scripts/run.sh dev`).
+
+**Paso 1 — Descargar `cloudflared` para Windows** (solo la primera vez):
+- Descargar `cloudflared-windows-amd64.exe` desde <https://github.com/cloudflare/cloudflared/releases>
+- Moverlo a `C:\Users\User\Downloads\` (o la ruta que prefieras)
+
+**Paso 2 — Levantar el túnel** (PowerShell o cmd de Windows, en una terminal aparte de la de Vite):
+```powershell
+cd C:\Users\User\Downloads
+.\cloudflared-windows-amd64.exe tunnel --url http://172.18.96.1:5173
+```
+> Reemplazar `172.18.96.1` por la IP interna de WSL que muestra `ipconfig` bajo `vEthernet (WSL (Hyper-V firewall))`. Puede cambiar entre reinicios.
+
+**Paso 3 — Copiar la URL pública** que imprime cloudflared, algo como:
+```
+https://football-technician-valuable-tel.trycloudflare.com
+```
+
+**Paso 4 — Abrir esa URL en Chrome del celular** (datos móviles o cualquier red).
+
+**Notas:**
+- La URL es **temporal**: muere al cerrar cloudflared. Cada vez genera una URL nueva.
+- Es **pública**: cualquiera con el link puede entrar. Apto para testeo, no para producción.
+- Cada dispositivo tiene su propio IndexedDB — los datos no se comparten entre quien pruebe.
+- Para detener: `Ctrl+C` en la PowerShell de cloudflared.
+
 ### Crear nuevo hito (cuando se cierra una fase)
 
 Patrón usado por commits previos:
