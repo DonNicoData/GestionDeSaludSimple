@@ -306,7 +306,22 @@
       "exportExcel": "Download Excel",
       "exportPdf": "Download PDF",
       "comingSoonTitle": "Coming soon",
-      "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases."
+      "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases.",
+      "exportError": "The file couldn't be generated. Check that your device has space and let's try again."
+    },
+    "export": {
+      "headers": {
+        "metric": "Metric",
+        "value": "Value",
+        "unit": "Unit",
+        "idealRange": "Ideal range",
+        "status": "Status"
+      },
+      "titles": {
+        "client": "Client",
+        "measurement": "Measurement",
+        "generatedAt": "Generated on {{date}}"
+      }
     }
   },
   "history": {
@@ -321,6 +336,13 @@
     },
     "noRecords": "There are no saved measurements yet. Go back to the main screen to record the first one.",
     "notFound": "We couldn't find this client's data.",
-    "recordSummary": "{{weight}} kg · {{normals}} normal · {{warnings}} attention · {{alerts}} alert"
+    "recordSummary": "{{weight}} kg · {{normals}} normal · {{warnings}} attention · {{alerts}} alert",
+    "downloadHistory": "Download full history",
+    "downloadHistoryExcel": "Download Excel",
+    "downloadHistoryPdf": "Download PDF"
+  },
+  "toast": {
+    "exportSuccess": "Done, file is in your downloads folder",
+    "exportError": "We couldn't generate the file. Please try again."
   }
 }

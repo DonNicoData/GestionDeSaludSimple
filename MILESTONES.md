@@ -10,11 +10,11 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.6.2-fase6-i18n
+**Estado al cierre de este hito:** v0.7.0-fase7
 
-**Última fase completada:** ✅ Fase 6 — Persistencia real con Dexie (IndexedDB) + detección de coincidencia por tripleta + historial del cliente + guardado real en Results
+**Última fase completada:** ✅ Fase 7 — Exportación a Excel (.xlsx) y PDF (jsPDF + autoTable) desde el modal de guardado y desde la página de historial
 
-**Próxima fase por hacer:** ⏭️ Fase 7 — Exportación a Excel (.xlsx) y PDF (jsPDF + autoTable)
+**Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
 
 **Atajos para retomar en otro momento:**
 
@@ -34,7 +34,8 @@ Convenciones de tags:
 - `v0.5.0-fase5` — recomendaciones para hoy (hidratación basada en peso)
 - `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente
 - `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks
-- `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro *(ESTAMOS AQUÍ)*
+- `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro
+- `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda *(ESTAMOS AQUÍ)*
 
 ### Comandos git para retomar en cualquier momento
 
@@ -1225,6 +1226,53 @@ Checklist:
 - HTML: 0.95 kB (gzip 0.51 kB)
 - CSS: 11.56 kB (gzip 3.06 kB)
 - JS: ~208 kB (gzip ~66 kB)
+
+---
+
+## v0.7.0-fase7 — Exportación a Excel y PDF
+**Fecha:** Julio 2026
+
+### Logros
+- **Export a Excel (.xlsx)** con `xlsx` (SheetJS) — multi-hoja: hoja "Cliente" con datos básicos + 1 hoja por medición con las 7 métricas en filas (Métrica | Valor | Unidad | Rango ideal | Estado).
+- **Export a PDF A4** con `jsPDF` + `jspdf-autotable` — encabezado con datos del cliente, secciones por medición con tabla coloreada por semáforo en la celda "Estado" (verde / ámbar / coral).
+- **Helper `useExportHistory()`** que arma labels i18n y serializa el payload. Usado desde el modal de guardado y desde la página de historial (DRY).
+- **`serializeForExport()`** pura (sin i18n ni Dexie) — recibe cliente + records + labels y devuelve un payload testeable.
+- **Toast efímero** (componente + hook `useToast`) para feedback de éxito/error del export.
+- **SaveModal** ahora tiene 4 fases: `asking` (confirmar guardar) → `saving` (spinner) → `error` (reintento) → `saved` (ofrece descarga). El botón "Volver al inicio" del estado `saved` cierra el modal y navega al home con la confirmación de guardado exitosa.
+- **HistoryPage** ahora tiene un panel "Descargar historial completo" con dos botones: Excel y PDF (solo aparece si hay registros).
+- **Filename** formato `NombreApellido_YYYY-MM-DD_HHmm.xlsx` (sin acentos, sin espacios). Ej: `MariaGarciaLopez_2026-07-01_1430.xlsx`.
+- **i18n ES/EN** completo: headers de columna, títulos, mensajes de toast, label del botón "Descargar historial completo".
+- 16 tests nuevos (16/16 verde) — total 111 tests pasando, 0 errores de tipo.
+
+### Decisiones de diseño
+- **Por defecto descarga el historial completo** (no solo la medición recién guardada). Decisión del usuario: separar la decisión del modal de guardado (momento de cierre) y la página de historial (momento de pensar en el progreso). Si en el futuro se quiere ofrecer "solo esta medición", basta con pasar `[currentRecord]` al helper — el export no se entera.
+- **Excel multi-hoja** en vez de una hoja plana con todo. Razón: una medición por hoja evita que el archivo se "ensucie" con 20 columnas ilegibles cuando hay varias mediciones; la hoja "Cliente" sirve de índice legible.
+- **PDF con colores en celda de estado** (no solo texto). Refuerza el semáforo visualmente para、印刷 fácil de leer.
+- **Toast efímero** en vez de alert modal. Razón: el alert modal interrumpiría el flujo post-guardado, que ya es un momento tenso (decisión, navegación). El toast desaparece solo y refuerza la sensación de "listo, ya está".
+
+### Archivos nuevos
+- `src/lib/export/serialize.ts` — payload puro.
+- `src/lib/export/filename.ts` — generador de nombres de archivo.
+- `src/lib/export/excel.ts` — wrapper xlsx.
+- `src/lib/export/pdf.ts` — wrapper jspdf.
+- `src/lib/export/index.ts` — barrel.
+- `src/hooks/useExportHistory.ts` — hook con labels i18n.
+- `src/components/shared/Toast.tsx` — provider + `useToast`.
+- `src/lib/export/__tests__/serialize.test.ts` — 9 tests.
+- `src/lib/export/__tests__/filename.test.ts` — 7 tests.
+
+### Archivos modificados
+- `src/pages/ResultsPage.tsx` — SaveModal reescrito a 4 fases, integración con `useToast` y `useExportHistory`.
+- `src/pages/HistoryPage.tsx` — panel "Descargar historial completo" con botones Excel/PDF.
+- `src/App.tsx` — mount de `<ToastProvider>`.
+- `src/i18n/es.json` y `src/i18n/en.json` — keys `results.export.*`, `results.modal.exportError`, `history.downloadHistory*`, `toast.*`.
+- `vite.config.ts` — `server.allowedHosts: true` (necesario para que Vite no bloquee el host del túnel cloudflared en pruebas en celular).
+- `package.json` — deps `xlsx`, `jspdf`, `jspdf-autotable`; devDep `@types/xlsx`.
+
+### Métricas build
+- 485 módulos transformados
+- JS: 1.15 MB (gzip 370 kB) — bundle grande por xlsx + jspdf, aceptable para una app local; se puede code-splitear más adelante con dynamic import si molesta.
+- 111 tests pasando (16 nuevos para export).
 
 ---
 
