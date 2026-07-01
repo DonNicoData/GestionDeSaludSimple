@@ -306,7 +306,22 @@
       "exportExcel": "Descargar Excel",
       "exportPdf": "Descargar PDF",
       "comingSoonTitle": "Pronto disponible",
-      "comingSoonBody": "La exportación a Excel y PDF se habilita en próximas fases."
+      "comingSoonBody": "La exportación a Excel y PDF se habilita en próximas fases.",
+      "exportError": "El archivo no se pudo generar. Revisa que tu dispositivo tenga espacio y volvamos a intentarlo."
+    },
+    "export": {
+      "headers": {
+        "metric": "Métrica",
+        "value": "Valor",
+        "unit": "Unidad",
+        "idealRange": "Rango ideal",
+        "status": "Estado"
+      },
+      "titles": {
+        "client": "Cliente",
+        "measurement": "Medición",
+        "generatedAt": "Generado el {{date}}"
+      }
     }
   },
   "history": {
@@ -321,6 +336,13 @@
     },
     "noRecords": "Aún no hay mediciones guardadas. Vuelve a la pantalla principal para registrar la primera.",
     "notFound": "No encontramos los datos de este cliente.",
-    "recordSummary": "{{weight}} kg · {{normals}} normales · {{warnings}} atención · {{alerts}} alerta"
+    "recordSummary": "{{weight}} kg · {{normals}} normales · {{warnings}} atención · {{alerts}} alerta",
+    "downloadHistory": "Descargar historial completo",
+    "downloadHistoryExcel": "Descargar Excel",
+    "downloadHistoryPdf": "Descargar PDF"
+  },
+  "toast": {
+    "exportSuccess": "Listo, archivo en tu carpeta de descargas",
+    "exportError": "No pudimos generar el archivo. Probá otra vez."
   }
 }

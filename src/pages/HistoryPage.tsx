@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
+import { useToast } from '@/components/shared/Toast'
 import { getClient, getRecordsForClient } from '@/db/repo'
 import { fullNameOf } from '@/lib/name'
 import { evaluate } from '@/lib/evaluator'
+import { useExportHistory } from '@/hooks/useExportHistory'
 import type { Client, MetricEvaluation, Record } from '@/types'
 
 interface HistoryPageProps {
@@ -26,10 +28,13 @@ interface HistoryPageProps {
  */
 export function HistoryPage({ clientId, onBack }: HistoryPageProps) {
   const { t } = useTranslation()
+  const toast = useToast()
+  const { runExport } = useExportHistory()
   const [client, setClient] = useState<Client | null>(null)
   const [records, setRecords] = useState<Record[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [exporting, setExporting] = useState<null | 'xlsx' | 'pdf'>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -82,6 +87,19 @@ export function HistoryPage({ clientId, onBack }: HistoryPageProps) {
       ? t('history.summary.empty')
       : t(summaryKey, { count })
 
+  const handleDownload = (format: 'xlsx' | 'pdf') => {
+    if (!client || records.length === 0) return
+    setExporting(format)
+    try {
+      runExport(client, records, format)
+      toast.show(t('toast.exportSuccess'))
+    } catch {
+      toast.show(t('toast.exportError'), 'error')
+    } finally {
+      setExporting(null)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
       <header className="flex flex-col gap-2 mb-6">
@@ -120,6 +138,36 @@ export function HistoryPage({ clientId, onBack }: HistoryPageProps) {
             />
           ))}
         </ul>
+      )}
+
+      {records.length > 0 && (
+        <div className="rounded-2xl border border-divider bg-white p-4 mb-6">
+          <p className="text-sm font-semibold text-graphite mb-3">
+            {t('history.downloadHistory')}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => handleDownload('xlsx')}
+              disabled={exporting != null}
+              fullWidth
+            >
+              {exporting === 'xlsx' ? t('common.saving') : t('history.downloadHistoryExcel')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={() => handleDownload('pdf')}
+              disabled={exporting != null}
+              fullWidth
+            >
+              {exporting === 'pdf' ? t('common.saving') : t('history.downloadHistoryPdf')}
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="pt-2">

@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
+import { useToast } from '@/components/shared/Toast'
 import { ClientProfileBanner } from '@/components/results/ClientProfileBanner'
 import { MetricCard } from '@/components/results/MetricCard'
 import { RecommendationCard } from '@/components/results/RecommendationCard'
 import { ResultsSummary } from '@/components/results/ResultsSummary'
 import { evaluate } from '@/lib/evaluator'
-import { createClient, saveRecord } from '@/db/repo'
+import { createClient, getClient, getRecordsForClient, saveRecord } from '@/db/repo'
 import { combineName, normalizeName } from '@/lib/name'
+import { useExportHistory } from '@/hooks/useExportHistory'
 import type { BasicDataOutput } from '@/lib/validation'
-import type { MetricEvaluation } from '@/types'
+import type { Client, MetricEvaluation } from '@/types'
 
 interface ResultsPageProps {
   basicData: BasicDataOutput & {
@@ -50,9 +52,14 @@ interface ResultsPageProps {
  */
 export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: ResultsPageProps) {
   const { t } = useTranslation()
+  const toast = useToast()
+  const { runExport } = useExportHistory()
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [savedClientId, setSavedClientId] = useState<number | null>(null)
+  const [exporting, setExporting] = useState<null | 'xlsx' | 'pdf'>(null)
 
   const evaluationTarget = useMemo(
     () => ({
@@ -106,12 +113,39 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
         bioAge: record.bioAge,
         visceralFat: record.visceralFat,
       })
-      setModalOpen(false)
-      onSaved(clientId, basicData.fullName)
+      setSavedClientId(clientId)
+      setSaved(true)
+      // NO cerramos el modal: pasamos a la fase "saved" con botones de export.
     } catch {
       setSaveError(t('results.modal.saveError'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSkipAfterSave = () => {
+    if (savedClientId != null) {
+      onSaved(savedClientId, basicData.fullName)
+    } else {
+      onGoHome()
+    }
+  }
+
+  const handleExport = async (format: 'xlsx' | 'pdf') => {
+    if (savedClientId == null) return
+    setExporting(format)
+    try {
+      const [client, records] = await Promise.all([
+        getClient(savedClientId),
+        getRecordsForClient(savedClientId),
+      ])
+      if (!client) throw new Error('client-not-found')
+      runExport(client as Client, records, format)
+      toast.show(t('toast.exportSuccess'))
+    } catch {
+      toast.show(t('toast.exportError'), 'error')
+    } finally {
+      setExporting(null)
     }
   }
 
@@ -182,9 +216,12 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
           warnings={warnings}
           saving={saving}
           saveError={saveError}
+          saved={saved}
+          exporting={exporting}
           onConfirm={handleConfirmSave}
-          onSkip={onGoHome}
-          onClose={() => !saving && setModalOpen(false)}
+          onExport={handleExport}
+          onSkipAfterSave={handleSkipAfterSave}
+          onClose={() => !saving && !exporting && setModalOpen(false)}
         />
       )}
     </section>
@@ -196,22 +233,29 @@ interface SaveModalProps {
   warnings: number
   saving: boolean
   saveError: string | null
+  saved: boolean
+  exporting: null | 'xlsx' | 'pdf'
   onConfirm: () => void
-  /** Salir sin guardar y volver al inicio. */
-  onSkip: () => void
+  onExport: (format: 'xlsx' | 'pdf') => void
+  /** Después de guardar: salir y volver al inicio (o a donde decida el padre). */
+  onSkipAfterSave: () => void
   /** Cancelar el modal (volver a Results sin descartar). */
   onClose: () => void
 }
 
 /**
- * Modal cálido de guardado (Fase 6, refinado P0-4).
+ * Modal cálido de guardado (Fase 6, refinado P0-4; Fase 7 export).
  *
- * Tres fases visuales:
+ * Cuatro fases visuales:
  * - Asking: "¿Querés guardar tus datos?" — pregunta antes de hacer nada.
  *   El CTA primario (izquierda) es "Guardar mis datos". El secundario
  *   es "Volver al inicio sin guardar" (label explícito de la consecuencia).
  * - Saving: durante la persistencia, botón "Guardando..." deshabilitado.
  * - Error: si Dexie falla, alert cálido con opción de reintentar.
+ * - Saved: post-guardado. CTA cambia a "¿Querés descargar tu historial?".
+ *   Botones Excel / PDF disparan exportToExcel / exportToPdf. El toast
+ *   efímero confirma éxito o error. Botón "Ahora no, gracias" cierra
+ *   el modal y vuelve al inicio.
  *
  * NOTA: el copy "¡Listo! Tus datos están guardados" se movió a HomePage
  * después del guardado exitoso (state `lastVisitDays = 0` y saludo
@@ -221,7 +265,18 @@ interface SaveModalProps {
  * se traslada al DiscardConfirmDialog que abre App.tsx por detrás, no
  * al texto del botón (que de otro modo sería largo y agresiva).
  */
-function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onClose }: SaveModalProps) {
+function SaveModal({
+  alerts,
+  warnings,
+  saving,
+  saveError,
+  saved,
+  exporting,
+  onConfirm,
+  onExport,
+  onSkipAfterSave,
+  onClose,
+}: SaveModalProps) {
   const { t } = useTranslation()
 
   const summaryKey =
@@ -257,19 +312,23 @@ function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onC
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M20 6 9 17l-5-5" />
+              {saved ? (
+                <path d="M20 6 9 17l-5-5" />
+              ) : (
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z M17 21v-8H7v8 M7 3v5h8" />
+              )}
             </svg>
           </div>
           <h2
             id="save-modal-title"
             className="text-lg sm:text-xl font-bold text-graphite"
           >
-            {t('results.modal.title')}
+            {saved ? t('results.modal.savedTitle') : t('results.modal.title')}
           </h2>
           <p className="text-sm text-graphite/70 leading-relaxed">
-            {t('results.modal.askBody')}
+            {saved ? t('results.modal.savedBody') : t('results.modal.askBody')}
           </p>
-          {summaryKey && (alerts > 0 || warnings > 0) && (
+          {!saved && (alerts > 0 || warnings > 0) && (
             <p className="text-xs text-graphite/50 italic">{t(summaryKey)}</p>
           )}
         </div>
@@ -283,60 +342,72 @@ function SaveModal({ alerts, warnings, saving, saveError, onConfirm, onSkip, onC
           </div>
         )}
 
-        <div className="rounded-2xl border border-divider bg-white p-4 flex flex-col gap-3">
-          <p className="text-sm font-semibold text-graphite">
-            {t('results.modal.comingSoonTitle')}
-          </p>
-          <p className="text-xs text-graphite/70 leading-relaxed">
-            {t('results.modal.comingSoonBody')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 mt-1">
+        {saved ? (
+          <div className="rounded-2xl border border-divider bg-white p-4 flex flex-col gap-3">
+            <p className="text-sm font-semibold text-graphite">
+              {t('results.modal.exportQuestion')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 mt-1">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => onExport('xlsx')}
+                disabled={exporting != null}
+                fullWidth
+              >
+                {exporting === 'xlsx' ? t('common.saving') : t('results.modal.exportExcel')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={() => onExport('pdf')}
+                disabled={exporting != null}
+                fullWidth
+              >
+                {exporting === 'pdf' ? t('common.saving') : t('results.modal.exportPdf')}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Botonera inferior: cambia entre "asking" y "saved". */}
+        {saved ? (
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
             <Button
               type="button"
-              variant="secondary"
               size="md"
-              disabled
+              onClick={onSkipAfterSave}
               fullWidth
+              disabled={exporting != null}
             >
-              {t('results.modal.exportExcel')}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="md"
-              disabled
-              fullWidth
-            >
-              {t('results.modal.exportPdf')}
+              {t('results.modal.savedGoHome')}
             </Button>
           </div>
-        </div>
-
-        {/* Orden invertido respecto a Fase 5: primary a la izquierda.
-            Móvil (col-reverse): "Confirmar guardar" arriba, "Volver al inicio"
-            abajo. App.tsx abre DiscardConfirmDialog con el detail cálido
-            si hay datos sin guardar. */}
-        <div className="flex flex-col-reverse sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="md"
-            onClick={onSkip}
-            fullWidth
-            disabled={saving}
-          >
-            {t('results.modal.skip')}
-          </Button>
-          <Button
-            type="button"
-            size="md"
-            onClick={onConfirm}
-            fullWidth
-            disabled={saving}
-          >
-            {saving ? t('common.saving') : t('results.modal.confirmSave')}
-          </Button>
-        </div>
+        ) : (
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={onSkipAfterSave}
+              fullWidth
+              disabled={saving}
+            >
+              {t('results.modal.skip')}
+            </Button>
+            <Button
+              type="button"
+              size="md"
+              onClick={onConfirm}
+              fullWidth
+              disabled={saving}
+            >
+              {saving ? t('common.saving') : t('results.modal.confirmSave')}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -6,6 +6,7 @@ import { MetricsPage } from '@/pages/MetricsPage'
 import { ResultsPage } from '@/pages/ResultsPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import { DiscardConfirmDialog } from '@/components/shared/DiscardConfirmDialog'
+import { ToastProvider } from '@/components/shared/Toast'
 import {
   clearAllDrafts,
   clearDraftByKey,
@@ -174,7 +175,7 @@ function App() {
   }, [requestGoHome])
 
   return (
-    <>
+    <ToastProvider>
       <Header
         onGoHome={handleHeaderGoHome}
         hasUnsavedData={hasUnsavedFlowData}
@@ -224,7 +225,7 @@ function App() {
         onStay={handleStayDiscard}
         onDiscard={handleDiscardConfirmed}
       />
-    </>
+    </ToastProvider>
   )
 }
 
