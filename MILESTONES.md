@@ -1343,6 +1343,48 @@ Dos detalles del flujo post-guardado merecían una segunda vuelta:
 
 ---
 
+## Refinamiento post-v0.7.1 — Fix scope filter + HistoryPage = solo vista
+**Fecha:** Julio 2026
+
+### Contexto
+Después de mergear v0.7.1, dos issues aparecieron en uso real:
+
+1. **Bug funcional del scope filter**: seleccionar "Esta medición" en el save modal y descargar podía bajar el historial completo. El usuario veía el radio marcado correctamente antes de descargar, lo que descartaba un bug de UI. El culpable más probable: race entre el re-render de React (triggered por `setExportScope`) y el `handleExport` ejecutado en el mismo tick por un click rápido — el closure capturaba el state anterior.
+2. **Redundancia**: el save modal tenía un link "Ver tus mediciones anteriores" que llevaba a `HistoryPage`, y `HistoryPage` a su vez tenía sus propios botones "Descargar Excel/PDF". Tres caminos distintos para descargar = ruido y confusión.
+
+### Cambios
+
+**A. Fix del scope filter (closure-resilience)**
+- En `ResultsPage`, `exportScope` ahora se mantiene en una `useRef` sincronizada con `setExportScope` en el mismo tick (vía un wrapper `updateExportScope` que actualiza ambos atómicamente).
+- `handleExport` lee siempre desde `exportScopeRef.current`, no desde el state. Esto garantiza el último valor aunque el re-render no se haya procesado.
+- Nuevo test de integración `src/lib/export/__tests__/exportScopeRef.test.ts` (7 tests) que simula el patrón React state + ref + sync atómico y verifica la resiliencia bajo cambios rápidos. Incluye un escenario explícito del bug reportado.
+
+**B. HistoryPage = solo lectura**
+- Quitado el panel "Descargar historial completo" (Excel/PDF).
+- Quitados de `HistoryPage`: `useExportHistory`, `useToast`, `handleDownload`, state `exporting`, y sus imports asociados.
+- La descarga vive exclusivamente en el save modal post-guardado. Un solo lugar, una decisión.
+- El link "Ver tus mediciones anteriores" del save modal sigue navegando a `HistoryPage`, pero ahora lleva a una vista pura — el usuario entiende que "ver" no es lo mismo que "descargar".
+
+**C. i18n cleanup**
+- Quitadas 3 claves huérfanas en `es.json` y `en.json`: `history.downloadHistory`, `history.downloadHistoryExcel`, `history.downloadHistoryPdf`. Solo las usaba el panel eliminado.
+
+### Decisiones de diseño
+- **Fix con useRef + sync atómico, no useEffect**: `useEffect` corre después del render, dejando una ventana de 1 frame donde el ref queda desactualizado. Sincronizar la ref en el mismo handler del state update elimina esa ventana.
+- **HistoryPage sin download**: violaba "one decision point per action". El usuario tiene ahora exactamente un lugar donde descargar (modal post-guardado), con la elección explícita de scope (esta vs completa) en el mismo componente.
+- **Test "behavioral simulation" en lugar de testing-library real**: el proyecto no tiene `@testing-library/react` ni `jsdom`. En lugar de agregar deps, el test simula el patrón React (state + ref + sync atómico) en JS plano. Captura la clase de bug (sincronización state↔ref) sin necesitar React real.
+
+### Archivos nuevos
+- `src/lib/export/__tests__/exportScopeRef.test.ts` — 7 tests del patrón state↔ref con sync atómico, incluyendo el escenario exacto del bug reportado.
+
+### Archivos modificados
+- `src/pages/ResultsPage.tsx` — `useRef` para `exportScope`; wrapper `updateExportScope` que sincroniza state y ref en el mismo tick; `handleExport` lee desde `exportScopeRef.current`.
+- `src/pages/HistoryPage.tsx` — removido panel de descarga + imports (`useExportHistory`, `useToast`) + state (`exporting`) + `handleDownload`.
+- `src/i18n/es.json`, `src/i18n/en.json` — removidas 3 claves `history.downloadHistory*`.
+
+---
+
+---
+
 ## v0.0.0-plan — Plan aprobado
 **Fecha:** Junio 2026
 

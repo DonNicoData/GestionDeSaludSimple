@@ -340,10 +340,7 @@
     },
     "noRecords": "There are no saved measurements yet. Go back to the main screen to record the first one.",
     "notFound": "We couldn't find this client's data.",
-    "recordSummary": "{{weight}} kg · {{normals}} normal · {{warnings}} attention · {{alerts}} alert",
-    "downloadHistory": "Download full history",
-    "downloadHistoryExcel": "Download Excel",
-    "downloadHistoryPdf": "Download PDF"
+    "recordSummary": "{{weight}} kg · {{normals}} normal · {{warnings}} attention · {{alerts}} alert"
   },
   "toast": {
     "exportSuccess": "Done, file is in your downloads folder",

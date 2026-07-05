@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/shared/Button'
 import { useToast } from '@/components/shared/Toast'
@@ -71,8 +71,20 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
   /** Cantidad total de records del cliente post-guardado. Determina si se muestra el selector de scope. */
   const [savedRecordsCount, setSavedRecordsCount] = useState(0)
   /** Alcance del export: solo la medición recién guardada o el historial completo. */
-  const [exportScope, setExportScope] = useState<ExportScope>('current')
+  const [exportScope, setExportScopeState] = useState<ExportScope>('current')
+  /**
+   * Ref sincronizada con `exportScope` en el mismo tick del state update
+   * (vía `updateExportScope`). Garantiza que `handleExport` siempre lea el
+   * último valor seleccionado, incluso si el re-render de React todavía no
+   * procesó el cambio (ej. clicks rápidos radio → botón).
+   */
+  const exportScopeRef = useRef<ExportScope>('current')
   const [exporting, setExporting] = useState<null | 'xlsx' | 'pdf'>(null)
+
+  const updateExportScope = (next: ExportScope) => {
+    exportScopeRef.current = next
+    setExportScopeState(next)
+  }
 
   const evaluationTarget = useMemo(
     () => ({
@@ -132,7 +144,7 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
       setSavedClientId(clientId)
       setSavedRecordId(recordId)
       setSavedRecordsCount(allRecords.length)
-      setExportScope('current')
+      updateExportScope('current')
       setSaved(true)
       // NO cerramos el modal: pasamos a la fase "saved" con botones de export.
     } catch {
@@ -159,7 +171,9 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
         getRecordsForClient(savedClientId),
       ])
       if (!client) throw new Error('client-not-found')
-      const subset = pickRecordsForScope(records, exportScope, savedRecordId)
+      // Lee desde la ref para garantizar el último valor seleccionado, sin
+      // depender del re-render de React. Ver `updateExportScope` arriba.
+      const subset = pickRecordsForScope(records, exportScopeRef.current, savedRecordId)
       runExport(client as Client, subset, format)
       toast.show(t('toast.exportSuccess'))
     } catch {
@@ -240,7 +254,7 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
           exporting={exporting}
           savedRecordsCount={savedRecordsCount}
           exportScope={exportScope}
-          onChangeExportScope={setExportScope}
+          onChangeExportScope={updateExportScope}
           onConfirm={handleConfirmSave}
           onExport={handleExport}
           onSkipAfterSave={handleSkipAfterSave}

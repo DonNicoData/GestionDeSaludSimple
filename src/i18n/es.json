@@ -340,10 +340,7 @@
     },
     "noRecords": "Aún no hay mediciones guardadas. Vuelve a la pantalla principal para registrar la primera.",
     "notFound": "No encontramos los datos de este cliente.",
-    "recordSummary": "{{weight}} kg · {{normals}} normales · {{warnings}} atención · {{alerts}} alerta",
-    "downloadHistory": "Descargar historial completo",
-    "downloadHistoryExcel": "Descargar Excel",
-    "downloadHistoryPdf": "Descargar PDF"
+    "recordSummary": "{{weight}} kg · {{normals}} normales · {{warnings}} atención · {{alerts}} alerta"
   },
   "toast": {
     "exportSuccess": "Listo, archivo en tu carpeta de descargas",
