@@ -16,6 +16,37 @@ Convenciones de tags:
 
 **Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
 
+---
+
+### 📌 Checkpoint — Julio 2026 (sesión cerrada, retomar mañana)
+
+**Última sesión (cerrada):**
+- Bug del scope filter diagnosticado (race condition entre re-render y click rápido en "Descargar").
+- Fix aplicado: `useRef` sincronizada con state vía wrapper atómico `updateExportScope(next)`; `handleExport` lee desde la ref.
+- HistoryPage simplificada a vista pura (sin botones de descarga).
+- i18n: 3 claves huérfanas removidas.
+- 12 tests de stress nuevos en `src/lib/export/__tests__/exportScopeRef.test.ts` (escenario del bug, 100 toggles alternados, race conditions, estado inicial adverso).
+- Suite: 136/136 verde. Typecheck + build: exit 0.
+- Tags pusheados: `v0.7.1-fase7-refinement` + `v0.7.2-fase7-scope-fix`.
+
+**Pendiente para mañana (no tocado):**
+- Validar visualmente el fix en el navegador (`./scripts/run.sh dev`) — el usuario debe confirmar que ya no se reproduce el bug en uso real.
+- Decidir si Fase 8 (panel admin) arranca ahora o si se hace un refinamiento extra primero.
+- Posibles mejoras opcionales detectadas pero no implementadas:
+  - Los dos saludos redundantes en HomePage (greeting genérico + `welcomeNamed` con "test test test") siguen como estaban.
+  - "Tu última visita fue hoy" podría ser más específico ("hace 2 horas").
+
+**Para retomar:**
+```bash
+./scripts/run.sh sync    # sincroniza repo a Windows
+./scripts/run.sh dev     # levanta el server en localhost:5173
+./scripts/run.sh test    # corre los 136 tests
+```
+
+**Si algo se rompe durante la validación visual:** el rollback está documentado más abajo (Cómo hacer rollback).
+
+---
+
 **Atajos para retomar en otro momento:**
 
 | Si quieres decir... | Di o pide... |
