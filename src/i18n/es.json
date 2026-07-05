@@ -305,6 +305,10 @@
       "exportQuestion": "¿En qué formato te gustaría descargar tu registro?",
       "exportExcel": "Descargar Excel",
       "exportPdf": "Descargar PDF",
+      "exportScopeQuestion": "¿Qué te gustaría descargar?",
+      "exportScopeCurrent": "Esta medición",
+      "exportScopeHistory": "Tu historial completo",
+      "viewHistoryLink": "Ver tus mediciones anteriores",
       "comingSoonTitle": "Pronto disponible",
       "comingSoonBody": "La exportación a Excel y PDF se habilita en próximas fases.",
       "exportError": "El archivo no se pudo generar. Revisa que tu dispositivo tenga espacio y volvamos a intentarlo."

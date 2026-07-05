@@ -10,6 +10,7 @@ import { evaluate } from '@/lib/evaluator'
 import { createClient, getClient, getRecordsForClient, saveRecord } from '@/db/repo'
 import { combineName, normalizeName } from '@/lib/name'
 import { useExportHistory } from '@/hooks/useExportHistory'
+import { pickRecordsForScope, type ExportScope } from '@/lib/export/scope'
 import type { BasicDataOutput } from '@/lib/validation'
 import type { Client, MetricEvaluation } from '@/types'
 
@@ -39,6 +40,12 @@ interface ResultsPageProps {
    * y el nombre completo. App.tsx lo usa para refrescar el "último cliente activo".
    */
   onSaved: (clientId: number, clientName: string) => void
+  /**
+   * Navegar a la pantalla de historial del cliente activo. Se ofrece
+   * como link secundario dentro del modal post-guardado, ya que en el
+   * Home solo aparece condicional al flag de sesión.
+   */
+  onViewHistory?: () => void
 }
 
 /**
@@ -50,7 +57,7 @@ interface ResultsPageProps {
  * - "Volver al inicio" → onGoHome (descarta; App.tsx puede mostrar confirmación)
  * - "Guardar mis datos" → modal cálido → crea client + record en Dexie
  */
-export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: ResultsPageProps) {
+export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onViewHistory }: ResultsPageProps) {
   const { t } = useTranslation()
   const toast = useToast()
   const { runExport } = useExportHistory()
@@ -59,6 +66,12 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [savedClientId, setSavedClientId] = useState<number | null>(null)
+  /** ID del record recién persistido. Necesario para filtrar scope='current'. */
+  const [savedRecordId, setSavedRecordId] = useState<number | null>(null)
+  /** Cantidad total de records del cliente post-guardado. Determina si se muestra el selector de scope. */
+  const [savedRecordsCount, setSavedRecordsCount] = useState(0)
+  /** Alcance del export: solo la medición recién guardada o el historial completo. */
+  const [exportScope, setExportScope] = useState<ExportScope>('current')
   const [exporting, setExporting] = useState<null | 'xlsx' | 'pdf'>(null)
 
   const evaluationTarget = useMemo(
@@ -104,7 +117,7 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
           wristContexture: basicData.wristContexture,
         })
       }
-      await saveRecord(clientId, {
+      const recordId = await saveRecord(clientId, {
         weight: record.weight,
         bmi: record.bmi,
         bodyFatPct: record.bodyFatPct,
@@ -113,7 +126,13 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
         bioAge: record.bioAge,
         visceralFat: record.visceralFat,
       })
+      // Traer el conteo de records para decidir si mostrar el selector
+      // de scope (solo si hay más de una medición, sino la decisión es trivial).
+      const allRecords = await getRecordsForClient(clientId)
       setSavedClientId(clientId)
+      setSavedRecordId(recordId)
+      setSavedRecordsCount(allRecords.length)
+      setExportScope('current')
       setSaved(true)
       // NO cerramos el modal: pasamos a la fase "saved" con botones de export.
     } catch {
@@ -132,7 +151,7 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
   }
 
   const handleExport = async (format: 'xlsx' | 'pdf') => {
-    if (savedClientId == null) return
+    if (savedClientId == null || savedRecordId == null) return
     setExporting(format)
     try {
       const [client, records] = await Promise.all([
@@ -140,7 +159,8 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
         getRecordsForClient(savedClientId),
       ])
       if (!client) throw new Error('client-not-found')
-      runExport(client as Client, records, format)
+      const subset = pickRecordsForScope(records, exportScope, savedRecordId)
+      runExport(client as Client, subset, format)
       toast.show(t('toast.exportSuccess'))
     } catch {
       toast.show(t('toast.exportError'), 'error')
@@ -218,9 +238,13 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved }: Re
           saveError={saveError}
           saved={saved}
           exporting={exporting}
+          savedRecordsCount={savedRecordsCount}
+          exportScope={exportScope}
+          onChangeExportScope={setExportScope}
           onConfirm={handleConfirmSave}
           onExport={handleExport}
           onSkipAfterSave={handleSkipAfterSave}
+          onViewHistory={onViewHistory}
           onClose={() => !saving && !exporting && setModalOpen(false)}
         />
       )}
@@ -235,12 +259,20 @@ interface SaveModalProps {
   saveError: string | null
   saved: boolean
   exporting: null | 'xlsx' | 'pdf'
+  /** Cantidad total de records del cliente. Si > 1, se muestra el selector de scope. */
+  savedRecordsCount: number
+  /** Alcance elegido para el export. */
+  exportScope: ExportScope
+  /** Cambia el alcance del export. */
+  onChangeExportScope: (scope: ExportScope) => void
   onConfirm: () => void
   onExport: (format: 'xlsx' | 'pdf') => void
   /** Después de guardar: salir y volver al inicio (o a donde decida el padre). */
   onSkipAfterSave: () => void
   /** Cancelar el modal (volver a Results sin descartar). */
   onClose: () => void
+  /** Navegar a la pantalla de historial del cliente. Mostrado como link secundario post-guardado. */
+  onViewHistory?: () => void
 }
 
 /**
@@ -272,9 +304,13 @@ function SaveModal({
   saveError,
   saved,
   exporting,
+  savedRecordsCount,
+  exportScope,
+  onChangeExportScope,
   onConfirm,
   onExport,
   onSkipAfterSave,
+  onViewHistory,
   onClose,
 }: SaveModalProps) {
   const { t } = useTranslation()
@@ -285,6 +321,8 @@ function SaveModal({
       : warnings > 0
         ? 'results.modal.subtitleWithWarnings'
         : 'results.modal.subtitleAllNormal'
+
+  const showScopeSelector = saved && savedRecordsCount > 1
 
   return (
     <div
@@ -344,6 +382,47 @@ function SaveModal({
 
         {saved ? (
           <div className="rounded-2xl border border-divider bg-white p-4 flex flex-col gap-3">
+            {showScopeSelector && (
+              <fieldset className="flex flex-col gap-2">
+                <legend className="text-sm font-semibold text-graphite mb-1">
+                  {t('results.modal.exportScopeQuestion')}
+                </legend>
+                <label
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                    exportScope === 'current'
+                      ? 'border-primary bg-primary-soft/40 text-graphite font-medium'
+                      : 'border-divider text-graphite/80 hover:bg-primary-soft/20'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="export-scope"
+                    value="current"
+                    checked={exportScope === 'current'}
+                    onChange={() => onChangeExportScope('current')}
+                    className="accent-primary"
+                  />
+                  {t('results.modal.exportScopeCurrent')}
+                </label>
+                <label
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                    exportScope === 'history'
+                      ? 'border-primary bg-primary-soft/40 text-graphite font-medium'
+                      : 'border-divider text-graphite/80 hover:bg-primary-soft/20'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="export-scope"
+                    value="history"
+                    checked={exportScope === 'history'}
+                    onChange={() => onChangeExportScope('history')}
+                    className="accent-primary"
+                  />
+                  {t('results.modal.exportScopeHistory')}
+                </label>
+              </fieldset>
+            )}
             <p className="text-sm font-semibold text-graphite">
               {t('results.modal.exportQuestion')}
             </p>
@@ -369,6 +448,29 @@ function SaveModal({
                 {exporting === 'pdf' ? t('common.saving') : t('results.modal.exportPdf')}
               </Button>
             </div>
+            {onViewHistory && (
+              <button
+                type="button"
+                onClick={onViewHistory}
+                disabled={exporting != null}
+                className="text-sm font-medium text-primary-dark hover:text-primary transition-colors self-start mt-1 inline-flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {t('results.modal.viewHistoryLink')}
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
         ) : null}
 

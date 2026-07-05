@@ -305,6 +305,10 @@
       "exportQuestion": "In which format would you like to download your record?",
       "exportExcel": "Download Excel",
       "exportPdf": "Download PDF",
+      "exportScopeQuestion": "What would you like to download?",
+      "exportScopeCurrent": "This measurement",
+      "exportScopeHistory": "Your full history",
+      "viewHistoryLink": "See your previous measurements",
       "comingSoonTitle": "Coming soon",
       "comingSoonBody": "Excel and PDF export will be enabled in upcoming phases.",
       "exportError": "The file couldn't be generated. Check that your device has space and let's try again."
