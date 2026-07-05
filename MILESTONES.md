@@ -10,9 +10,9 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.7.0-fase7
+**Estado al cierre de este hito:** v0.7.1-fase7-refinement
 
-**Última fase completada:** ✅ Fase 7 — Exportación a Excel (.xlsx) y PDF (jsPDF + autoTable) desde el modal de guardado y desde la página de historial
+**Última fase completada:** ✅ Refinamiento post-Fase 7 — Selector de alcance en modal post-guardado + "Ver mi historial" gated por flag de sesión
 
 **Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
 
@@ -35,7 +35,29 @@ Convenciones de tags:
 - `v0.6.0-fase6` — persistencia Dexie + matching por tripleta + historial del cliente
 - `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks
 - `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro
-- `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda *(ESTAMOS AQUÍ)*
+- `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda
+- `v0.7.1-fase7-refinement` — selector de alcance + CTA de historial gated por sesión *(ESTAMOS AQUÍ)*
+
+### Cómo hacer rollback
+
+El proyecto taggea cada hito, así que el rollback es siempre via `git checkout` del tag anterior:
+
+```bash
+# Si algo se rompe después de este commit, volver a v0.7.0-fase7:
+git fetch --tags
+git checkout v0.7.0-fase7          # modo detached, solo lectura
+
+# O volver a main y descartar el último commit (DESTRUCTIVO en local):
+git checkout main
+git reset --hard 231c83d            # el hash anterior al commit actual
+
+# O crear un commit de reversión sin perder historial:
+git checkout main
+git revert 94186af                  # crea un commit nuevo que deshace los cambios
+git push origin main
+```
+
+Si el push a `main` aún no se hizo, basta con `git reset --soft HEAD~1` (conserva cambios staged) o `git reset --hard HEAD~1` (limpia el working tree).
 
 ### Comandos git para retomar en cualquier momento
 
