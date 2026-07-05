@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useFormDraftDB'
 import { getLatestRecordContext } from '@/db/repo'
 import { fullNameOf } from '@/lib/name'
+import { readSessionSavedFlag, writeSessionSavedFlag } from '@/lib/sessionFlag'
 import type { BasicDataOutput, MetricsOutput } from '@/lib/validation'
 
 type Page = 'home' | 'form' | 'metrics' | 'results' | 'history'
@@ -34,6 +35,16 @@ function App() {
   const [lastVisitDays, setLastVisitDays] = useState<number | null>(null)
   const [activeClientId, setActiveClientId] = useState<number | null>(null)
   const [activeClientName, setActiveClientName] = useState<string | null>(null)
+  /**
+   * Bandera de sesión: true si el usuario guardó al menos un record en
+   * esta pestaña (sobrevive a F5 via sessionStorage, muere al cerrarla).
+   * Se usa para condicionar CTAs como "Ver mi historial" en el Home.
+   * Antes aparecían siempre que había datos históricos en Dexie, lo que
+   * era ruidoso en refresh en frío.
+   */
+  const [hasSavedInSession, setHasSavedInSession] = useState<boolean>(() =>
+    readSessionSavedFlag(),
+  )
 
   // Discard confirmation: cuando el usuario intenta salir con datos en memoria.
   const [discardOpen, setDiscardOpen] = useState(false)
@@ -130,6 +141,10 @@ function App() {
       void clearDraftByKey(DRAFT_KEY_BASIC)
       void clearDraftByKey(DRAFT_KEY_METRICS)
       void hasAnyDraft().then(setHasDraft)
+      // Marcar la sesión como "guardada al menos una vez" para habilitar
+      // el CTA "Ver mi historial" en el Home mientras la pestaña siga viva.
+      setHasSavedInSession(true)
+      writeSessionSavedFlag()
       navigate('home')
     },
     [navigate],
@@ -188,7 +203,7 @@ function App() {
             onStartNew={handleStartNew}
             lastVisitDays={lastVisitDays}
             knownClientName={activeClientName ?? undefined}
-            onViewHistory={activeClientId != null ? handleViewHistory : undefined}
+            onViewHistory={hasSavedInSession ? handleViewHistory : undefined}
           />
         )}
         {page === 'form' && (
@@ -210,6 +225,7 @@ function App() {
             onBack={() => navigate('metrics')}
             onGoHome={requestGoHome}
             onSaved={handleResultsSaved}
+            onViewHistory={handleViewHistory}
           />
         )}
         {page === 'history' && activeClientId != null && (

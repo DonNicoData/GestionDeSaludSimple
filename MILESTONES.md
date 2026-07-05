@@ -1276,6 +1276,51 @@ Checklist:
 
 ---
 
+## Refinamiento post-Fase 7 — Alcance del export + "Ver mi historial" por sesión
+**Fecha:** Julio 2026
+
+### Contexto
+Dos detalles del flujo post-guardado merecían una segunda vuelta:
+
+1. **"Ver mi historial" en el Home aparecía siempre que había datos históricos en Dexie**, incluso en un refresh en frío (F5 con la pestaña recargada). Esto era ruido: el usuario aterrizaba en el Home sin contexto y veía un CTA a algo que ya había visto o que no necesitaba ahora.
+2. **El modal post-guardado descargaba siempre el historial completo**, sin dar opción de bajar "solo esta medición". Un usuario que acaba de guardar una sola medición probablemente quiere bajar esa, no las 5 anteriores.
+
+### Cambios
+
+**A. Flag de sesión para "Ver mi historial" en el Home**
+- Nuevo helper `src/lib/sessionFlag.ts` con `readSessionSavedFlag()` / `writeSessionSavedFlag()`, respaldado en `sessionStorage` (clave `gds:has-saved-in-session`).
+- `App.tsx` ahora condiciona el paso de `onViewHistory` a `HomePage` por la bandera de sesión: el CTA **solo aparece si el usuario guardó al menos un record en esta pestaña**.
+- Sobrevive a F5 (misma pestaña), muere al cerrar la pestaña — semántica nativa de sessionStorage.
+- El state también se hidrata al mount, así que un refresh casual mantiene el flag.
+
+**B. Selector de alcance en el SaveModal post-guardado**
+- Cuando hay más de 1 medición del cliente, aparece un fieldset con dos radios: "Esta medición" / "Tu historial completo".
+- Si solo hay 1 medición, el selector se oculta (la decisión es trivial: implícitamente "esta medición").
+- Default: `'current'` (la recién guardada). El usuario puede cambiar con un click.
+- Nuevo helper puro `pickRecordsForScope()` en `src/lib/export/scope.ts` (testeable sin DOM ni Dexie).
+
+**C. Link a "Ver tus mediciones anteriores" en el SaveModal**
+- Nuevo link secundario debajo de los botones de formato, navega a `HistoryPage`. Reemplaza la aparición incondicional en el Home: el usuario ahora descubre el historial en el momento post-guardado, cuando es relevante.
+
+### Decisiones de diseño
+- **Flag de sesión en sessionStorage, no localStorage**: queremos que "ya guardé" sea un evento del flujo actual, no un estado permanente del usuario. Si abre la app mañana en frío, sigue siendo una primera visita real.
+- **Selector oculto cuando hay 1 sola medición**: ofrecer "actual vs historial" cuando ambas opciones son la misma cosa es ruido. La complejidad aparece solo donde hay decisión real.
+- **Default a `'current'` en lugar de `'history'`**: el usuario acaba de guardar; lo más probable es que quiera descargar eso. Los usuarios que quieren el historial completo van a hacer un click extra, los demás no.
+- **Link a historial en el modal, no en el Home**: la sesión actual ya garantiza que el usuario tuvo un "acto de guardado" reciente; ese es el momento natural para ofrecer ver más. En el Home ese momento no es seguro.
+
+### Archivos nuevos
+- `src/lib/export/scope.ts` — `pickRecordsForScope()` helper puro.
+- `src/lib/export/__tests__/scope.test.ts` — 6 tests (history devuelve todos, current filtra por id, id inexistente → [], no muta, records vacío).
+- `src/lib/sessionFlag.ts` — `readSessionSavedFlag()` / `writeSessionSavedFlag()` SSR-safe.
+- `src/lib/__tests__/sessionFlag.test.ts` — 7 tests (default false, "1" → true, otros valores → false, getItem throwing → false, setItem throwing no rompe, idempotencia).
+
+### Archivos modificados
+- `src/App.tsx` — state `hasSavedInSession` con lazy initializer desde `readSessionSavedFlag()`; write en `handleResultsSaved`; condición de `onViewHistory` para HomePage cambiada de `activeClientId != null` a `hasSavedInSession`; `handleViewHistory` se pasa ahora también a `ResultsPage`.
+- `src/pages/ResultsPage.tsx` — captura `savedRecordId` (id del record recién guardado), `savedRecordsCount` (para decidir si mostrar el selector), y `exportScope`; `handleExport` filtra con `pickRecordsForScope()` antes de pasar a `runExport`; `SaveModal` recibe nuevos props (`savedRecordsCount`, `exportScope`, `onChangeExportScope`, `onViewHistory`) y renderiza el fieldset con radios + el link a historial.
+- `src/i18n/es.json` y `src/i18n/en.json` — 4 claves nuevas en `results.modal`: `exportScopeQuestion`, `exportScopeCurrent`, `exportScopeHistory`, `viewHistoryLink`.
+
+---
+
 ## v0.0.0-plan — Plan aprobado
 **Fecha:** Junio 2026
 
