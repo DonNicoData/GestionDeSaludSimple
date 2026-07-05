@@ -10,9 +10,9 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.7.1-fase7-refinement
+**Estado al cierre de este hito:** v0.7.2-fase7-scope-fix
 
-**Última fase completada:** ✅ Refinamiento post-Fase 7 — Selector de alcance en modal post-guardado + "Ver mi historial" gated por flag de sesión
+**Última fase completada:** ✅ Fix bug scope filter (race condition) + HistoryPage = vista pura
 
 **Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
 
@@ -36,7 +36,8 @@ Convenciones de tags:
 - `v0.6.1-fase6-hotfix` — refinamientos post-validación + fix crítico de Rules of Hooks
 - `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro
 - `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda
-- `v0.7.1-fase7-refinement` — selector de alcance + CTA de historial gated por sesión *(ESTAMOS AQUÍ)*
+- `v0.7.1-fase7-refinement` — selector de alcance + CTA de historial gated por sesión
+- `v0.7.2-fase7-scope-fix` — fix race condition del scope filter + HistoryPage read-only *(ESTAMOS AQUÍ)*
 
 ### Cómo hacer rollback
 
