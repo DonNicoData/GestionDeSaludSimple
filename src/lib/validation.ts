@@ -41,7 +41,12 @@ function requiredNumberField(min: number, max: number, rangeErrorKey: string) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'required' })
         return z.NEVER
       }
-      const n = Number(s)
+      // Defensa en profundidad: aceptar coma como separador decimal aunque
+      // Input.tsx ya normalice en la UI. Cubre drafts viejos guardados
+      // antes del fix y futuras rutas que entreguen strings directos
+      // (ej: import de datos, deep-link, etc.).
+      const normalized = s.replace(',', '.')
+      const n = Number(normalized)
       if (Number.isNaN(n)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'invalidNumber' })
         return z.NEVER
