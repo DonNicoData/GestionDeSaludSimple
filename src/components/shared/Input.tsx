@@ -60,7 +60,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             if (isNumeric && raw !== '' && !NUMERIC_REGEX.test(raw)) {
               return
             }
-            onChange(raw)
+            // Para campos numéricos: normalizar coma → punto al tipear.
+            // El teclado iOS en LatAm (es-AR, es-MX, etc.) muestra ',' como
+            // separador decimal por defecto; aceptar visualmente la coma pero
+            // guardar punto en el state mantiene consistencia con el backend
+            // y da feedback visual inmediato al usuario.
+            const normalized = isNumeric ? raw.replace(',', '.') : raw
+            onChange(normalized)
           }}
           className={[baseClasses, stateClasses[state], suffix ? 'pr-12' : '', className]
             .filter(Boolean)
