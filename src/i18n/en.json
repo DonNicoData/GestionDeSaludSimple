@@ -74,7 +74,7 @@
       },
 "wristContexture": {
         "label": "Your wrist frame",
-        "help": "Measure your wrist just above the bone. This helps us calculate your ideal weight more precisely.",
+        "intro": "Wrap your wrist with the thumb and middle finger of your other hand. Choose based on what you see.",
         "options": {
           "thin": "Thin",
           "normal": "Normal",
