@@ -20,7 +20,7 @@ const variantClasses: Record<Variant, string> = {
   ghost:
     'bg-transparent text-graphite hover:bg-divider',
   outline:
-    'bg-transparent border border-divider text-graphite hover:bg-bone hover:border-primary-soft',
+    'bg-white border border-divider text-graphite hover:bg-bone hover:border-primary-soft hover:shadow-soft',
 }
 
 const sizeClasses: Record<Size, string> = {
