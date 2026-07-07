@@ -10,31 +10,46 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.7.2-fase7-scope-fix
+**Estado al cierre de este hito:** v0.7.3-ui-polish
 
-**Última fase completada:** ✅ Fix bug scope filter (race condition) + HistoryPage = vista pura
+**Última fase completada:** ✅ Sesión de polish UI (wrist contexture + numeric input + home greeting + button outline)
 
 **Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
 
 ---
 
-### 📌 Checkpoint — Julio 2026 (sesión cerrada, retomar mañana)
+### 📌 Checkpoint — Julio 2026 (sesión de polish UI cerrada)
 
-**Última sesión (cerrada):**
-- Bug del scope filter diagnosticado (race condition entre re-render y click rápido en "Descargar").
-- Fix aplicado: `useRef` sincronizada con state vía wrapper atómico `updateExportScope(next)`; `handleExport` lee desde la ref.
-- HistoryPage simplificada a vista pura (sin botones de descarga).
-- i18n: 3 claves huérfanas removidas.
-- 12 tests de stress nuevos en `src/lib/export/__tests__/exportScopeRef.test.ts` (escenario del bug, 100 toggles alternados, race conditions, estado inicial adverso).
-- Suite: 136/136 verde. Typecheck + build: exit 0.
-- Tags pusheados: `v0.7.1-fase7-refinement` + `v0.7.2-fase7-scope-fix`.
+**Sesión del 2026-07-07 (cerrada):**
 
-**Pendiente para mañana (no tocado):**
-- Validar visualmente el fix en el navegador (`./scripts/run.sh dev`) — el usuario debe confirmar que ya no se reproduce el bug en uso real.
-- Decidir si Fase 8 (panel admin) arranca ahora o si se hace un refinamiento extra primero.
-- Posibles mejoras opcionales detectadas pero no implementadas:
-  - Los dos saludos redundantes en HomePage (greeting genérico + `welcomeNamed` con "test test test") siguen como estaban.
-  - "Tu última visita fue hoy" podría ser más específico ("hace 2 horas").
+5 commits de polish UI posteriores a `v0.7.2-fase7-scope-fix`:
+
+1. **`07e861b` feat(wrist-help)**: cada botón del segmented de contextura de muñeca muestra su propia ilustración SVG (label → icon → description). 3 SVG en `public/images/`.
+2. **`6dea027` feat(wrist-help)`**: intro explicativo arriba del segmented ("Envuelve tu muñeca con el pulgar y el dedo medio de la otra mano. Elige según lo que veas."), sin tooltip ⓘ, sin help de abajo.
+3. **`eb09270` fix(numeric-input)`**: aceptar coma como decimal (teclado iOS en LatAm muestra `,`). Fix en dos capas: `Input.tsx` normaliza al tipear (feedback visual), `validation.ts` como defensa en profundidad.
+4. **`aa287db` fix(home)`**: saludo único con pluralización correcta (`_one`/`_other`). Eliminado el doble saludo redundante. Tono pasa de pregunta a afirmación informativa.
+5. **`262e939` style(button)`**: variant `outline` con `bg-white` por defecto y `hover:shadow-soft` (afecta 9 lugares).
+
+**Tags pusheados:**
+- `pre-polish-2026-07-07` (en `a1a89f0`, punto de partida)
+- `v0.7.3-ui-polish` (en `262e939`, cierre de sesión)
+
+**Métricas:**
+- Tests: 136 → 146 verde (10 nuevos en `src/lib/__tests__/validation.test.ts`)
+- Typecheck: 0 errores
+- Build: OK
+- Archivos modificados: 8 (1 doc, 2 i18n, 4 código, 1 test nuevo)
+
+**Decisiones clave de la sesión:**
+- Wrist contexture: ilustración inline > tooltip (más autoexplicativo).
+- Numeric input: belt-and-suspenders (UI + validation), no solo UI.
+- Home: 1 saludo > 2 apilados. Tono afirmativo > pregunta redundante con botones.
+- Button outline: cambio global del variant (consistencia en los 9 usos).
+
+**Pendiente para próxima sesión (no tocado):**
+- Validar visualmente todo en el celular (`./scripts/run.sh dev` + Cloudflare Tunnel).
+- Confirmar que el teclado iOS LatAm ahora acepta `,` correctamente.
+- Decidir si Fase 8 (panel admin) arranca o si hay más polish pendiente.
 
 **Para retomar:**
 ```bash
@@ -68,7 +83,9 @@ Convenciones de tags:
 - `v0.6.2-fase6-i18n` — neutralización de copy a español latino neutro
 - `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda
 - `v0.7.1-fase7-refinement` — selector de alcance + CTA de historial gated por sesión
-- `v0.7.2-fase7-scope-fix` — fix race condition del scope filter + HistoryPage read-only *(ESTAMOS AQUÍ)*
+- `v0.7.2-fase7-scope-fix` — fix race condition del scope filter + HistoryPage read-only
+- `v0.7.3-ui-polish` — sesión de polish UI: wrist help, numeric input, home greeting, button outline *(ESTAMOS AQUÍ)*
+- `pre-polish-2026-07-07` — checkpoint del estado antes de la sesión de polish (rollback target)
 
 ### Cómo hacer rollback
 
@@ -217,12 +234,12 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `67a1fe1 fix(i18n): replace voseo with neutral LatAm Spanish in user copy`
-- **Tag más reciente:** `v0.6.2-fase6-i18n` (neutralización de copy ES a español latino neutro)
-- **Tags disponibles:** `v0.6.0-fase6`, `v0.6.1-fase6-hotfix`, `v0.6.2-fase6-i18n`
-- **Tests:** 95 pasando (67 evaluator + 19 repo Dexie + 6 useFormDraftDB + 3 hooksOrder regression)
+- **Último commit:** `262e939 style(button): outline variant con fondo blanco + shadow en hover`
+- **Tag más reciente:** `v0.7.3-ui-polish` (sesión de polish UI cerrada el 2026-07-07)
+- **Snapshot pre-sesión:** `pre-polish-2026-07-07` (en `a1a89f0`)
+- **Tests:** 146 pasando (136 previos + 10 nuevos en `validation.test.ts`)
 - **Typecheck:** 0 errores
-- **Build de producción:** OK (`dist/` generado, ~432 kB JS / 132 kB gzip)
+- **Build de producción:** OK (`dist/` generado, ~371 kB JS / gzip)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
 
 ---
@@ -1579,3 +1596,139 @@ Aplicados tras feedback del usuario en la misma fase, sin esperar a Fase 6:
 - Persistencia real con Dexie (IndexedDB) — `src/lib/db.ts`
 - Historial del cliente (último registro, comparación con registros previos)
 - Reemplazar el modal cálido actual por un guardado real + modal de éxito con descarga efectiva
+
+---
+
+## v0.7.3-ui-polish — Sesión de polish UI (2026-07-07)
+
+**Fecha:** Julio 2026
+**Estado:** ✅ Completa
+**Tag:** `v0.7.3-ui-polish`
+**Snapshot previo:** `pre-polish-2026-07-07` (en `a1a89f0`)
+
+### Descripción general
+
+Bundle de 5 ajustes menores de UX, copy e i18n aplicados después de cerrar Fase 7. No agregan features nuevas: refinan la experiencia existente para que se sienta más pulida, más clara y más consistente con el resto del proyecto.
+
+### Commits incluidos
+
+| Hash | Tipo | Resumen |
+|---|---|---|
+| `07e861b` | feat(wrist-help) | Ilustraciones SVG inline en cada botón del segmented |
+| `6dea027` | feat(wrist-help) | Intro explicativo arriba del segmented (sin help ni tooltip) |
+| `eb09270` | fix(numeric-input) | Aceptar coma como decimal (i18n LatAm en iOS) |
+| `aa287db` | fix(home) | Saludo único con pluralización correcta |
+| `262e939` | style(button) | `outline` variant con fondo blanco + shadow en hover |
+
+### Cambios por feature
+
+#### A. Wrist contexture help (commits `07e861b`, `6dea027`)
+
+Mejora la UX del campo "Tu contextura de muñeca" en el formulario de datos básicos.
+
+**Antes**: 3 radios en cards separadas con texto de ayuda `help` debajo ("Mide tu muñeca justo encima del hueso...") que no coincidía con el método real.
+
+**Después**: 
+- 3 botones conectados en un `SegmentedControl` con label arriba, ilustración SVG en el medio y descripción corta abajo.
+- 3 SVG en `public/images/wrist-{thin,normal,thick}.svg` (~1.5 KB cada uno, total ~4 KB).
+- Intro plano arriba: *"Envuelve tu muñeca con el pulgar y el dedo medio de la otra mano. Elige según lo que veas."*
+- Sin tooltip ⓘ, sin help de abajo.
+
+**Decisiones**:
+- Ilustración inline > tooltip: el usuario ve el gesto sin abrir nada.
+- 1 solo texto introductorio: el segmented ya muestra los 3 casos visualmente.
+- Cambio de `RadioGroup` (cards separadas) a `SegmentedControl` (conectado): unifica con el patrón de género.
+
+#### B. Numeric input coma/punto (commit `eb09270`)
+
+Arregla el bug donde usuarios de iPhone en LatAm tipeaban `22,5` en el IMC y la app rechazaba con *"Mmm, ese número no me cuadra"*.
+
+**Causa raíz**: `Input.tsx` aceptaba ambos separadores en el regex, pero `validation.ts` usaba `Number(s)` que solo entiende punto.
+
+**Fix en dos capas (belt-and-suspenders)**:
+- **Capa 1 (UI)**: `Input.tsx` normaliza `,` → `.` en el `onChange` numérico. El usuario ve `.` inmediatamente al tipear.
+- **Capa 2 (validation)**: `requiredNumberField` también normaliza antes de `Number()`. Defensa en profundidad para drafts viejos y rutas que bypasseen Input.
+
+**Cobertura**: 8 campos numéricos (heightCm + 7 métricas).
+
+**Tests**: 10 nuevos en `src/lib/__tests__/validation.test.ts` cubriendo `.`, `,`, `,5`, `22,`, mezcla inválida, rango, no numérico, y 4 campos distintos (bmi, heightCm, weight, bodyFatPct).
+
+#### C. Home greeting unificado (commit `aa287db`)
+
+Arregla tres problemas en el saludo del Home:
+
+1. **Error de gramática**: `"hace 1 días"` (siempre plural). Solucionado con pluralización de i18next (`_one`/`_other`).
+2. **Doble saludo redundante**: la página apilaba un saludo genérico + uno con nombre, ambos preguntando "¿quieres registrar?". Ahora se renderiza UNO solo, con el nombre integrado.
+3. **Tono**: pasa de pregunta a afirmación informativa. Los botones hacen el CTA, el saludo es contexto.
+
+**Estructura nueva de i18n (ES y EN)**:
+- `welcomeFirst` (sin cambios)
+- `welcomeReturningNamed_one` / `_other` / `Today`
+- `welcomeReturningAnon_one` / `_other` / `Today`
+
+Eliminadas: `welcomeReturning`, `welcomeReturningToday`, `welcomeNamed`.
+
+#### D. Button outline style (commit `262e939`)
+
+Mejora la variant `outline` del componente `Button`:
+
+**Antes**: `bg-transparent` (botón invisible sobre fondo claro), `hover:bg-bone` (cream sutil).
+
+**Después**: `bg-white` por defecto, `hover:bg-bone hover:border-primary-soft hover:shadow-soft`.
+
+**Cobertura**: 9 lugares usan `variant="outline"`:
+- HomePage: "Empezar de nuevo"
+- BasicDataForm / MetricsForm / HistoryPage: botones "Volver"
+- ResultsPage: "Volver al inicio", "Ver mis mediciones anteriores"
+- DiscardConfirmDialog: "Quedarme aquí"
+- BasicDataForm match banner: "No, soy alguien nuevo"
+
+**Decisión**: cambio global del variant (no nuevo variant ni override) porque todos los usos se benefician del mismo fix.
+
+### Archivos nuevos
+
+- `public/images/wrist-thin.svg`
+- `public/images/wrist-normal.svg`
+- `public/images/wrist-thick.svg`
+- `src/lib/__tests__/validation.test.ts`
+
+### Archivos modificados
+
+- `src/components/shared/Input.tsx` — normalización `,` → `.` en onChange numérico
+- `src/components/shared/Button.tsx` — `outline` variant con `bg-white` + `hover:shadow-soft`
+- `src/components/form/SegmentedControl.tsx` — soporte para `icon` (ReactNode) opcional por opción
+- `src/components/form/BasicDataForm.tsx` — wrist options con `icon` y `description`, sin `help`
+- `src/pages/HomePage.tsx` — saludo unificado con pluralización
+- `src/lib/validation.ts` — defensa en profundidad en `requiredNumberField`
+- `src/i18n/es.json` — nuevas claves (wrist intro, descriptions, welcome returning)
+- `src/i18n/en.json` — idem en inglés
+- `MILESTONES.md` — este documento
+
+### Métricas finales
+
+- **Tests:** 146/146 verde (10 archivos, +10 nuevos)
+- **Typecheck:** 0 errores
+- **Build:** OK
+- **Bundle gzipped:** ~371 KB (igual a v0.7.2; las nuevas imágenes se sirven como assets estáticos fuera del bundle JS)
+- **Commits de la sesión:** 5
+- **Archivos tocados:** 10
+
+### Decisiones de diseño
+
+1. **Ilustraciones inline vs tooltip**: el tooltip requería click extra y mostraba info que el segmented ya tenía. Inline es más directo y autoexplicativo.
+2. **Belt-and-suspenders en numeric input**: cubrir tanto la UI como la validation cuesta 6 líneas más y cierra categorías distintas de falla.
+3. **Pluralización con `_one`/`_other`**: i18next soporta pluralización nativa por idioma. Más correcto que un `if days === 1` en código.
+4. **Variant global para button outline**: los 9 usos tienen el mismo problema, así que un solo cambio los arregla a todos.
+
+### Español neutro
+
+Todo el copy nuevo sigue la convención del proyecto: **español neutro LatAm, sin voseo**. Ejemplos verificados:
+- *"Envuelve tu muñeca..."* (no "Envolvé")
+- *"Elige según lo que veas"* (no "Elegí")
+- *"Hola otra vez, María. Tu última visita fue hace 1 día."* (no "Tu última visita fue hace 1 días.")
+
+### Próximos pasos sugeridos
+
+- **Validar visualmente** todo el polish en el celular (Cloudflare Tunnel como se documenta en este archivo).
+- **Confirmar el fix de numeric input** tipeando `22,5` en un campo numérico desde iPhone.
+- **Fase 8**: panel de admin (login + CRUD + filtro + ver todos los clientes).
