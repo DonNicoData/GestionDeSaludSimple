@@ -79,6 +79,11 @@
           "thin": "Delgada",
           "normal": "Normal",
           "thick": "Gruesa"
+        },
+        "descriptions": {
+          "thin": "se solapan",
+          "normal": "apenas se tocan",
+          "thick": "no se tocan"
         }
       }
     },

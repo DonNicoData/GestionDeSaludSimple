@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-labelledby="t" preserveAspectRatio="xMidYMid meet">
+  <title id="t">Contextura delgada: pulgar y dedo medio se solapan</title>
+  <defs>
+    <style>
+      .stroke { stroke: #3A4A4F; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .flesh { fill: #FAF8F5; stroke: #3A4A4F; stroke-width: 1.5; }
+      .wrist-fill { fill: #A8E6C9; }
+    </style>
+    <marker id="arrow" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 8 4 L 0 8 z" fill="#E57373"/>
+    </marker>
+  </defs>
+
+  <g transform="translate(60, 60)">
+    <path class="stroke" d="M -45 18 Q -40 -5 -34 -8 L 34 -8 Q 40 -5 45 18" opacity="0.25"/>
+    <rect class="wrist-fill" stroke="#3A4A4F" stroke-width="1.5" x="-30" y="-10" width="60" height="20" rx="10"/>
+    <path class="stroke" d="M -24 -10 Q -10 -30 8 -44"/>
+    <circle class="flesh" cx="8" cy="-44" r="5"/>
+    <path stroke="#3A4A4F" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4" d="M 24 -10 Q 22 -28 -2 -42"/>
+    <circle fill="#FAF8F5" stroke="#3A4A4F" stroke-width="1.5" opacity="0.4" cx="-2" cy="-42" r="5"/>
+    <path d="M -10 -36 Q 0 -28 10 -36" stroke="#E57373" stroke-width="1.2" fill="none" marker-end="url(#arrow)"/>
+  </g>
+</svg>
