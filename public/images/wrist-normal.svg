@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-labelledby="t" preserveAspectRatio="xMidYMid meet">
+  <title id="t">Contextura normal: pulgar y dedo medio apenas se tocan</title>
+  <defs>
+    <style>
+      .stroke { stroke: #3A4A4F; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .flesh { fill: #FAF8F5; stroke: #3A4A4F; stroke-width: 1.5; }
+      .wrist-fill { fill: #A8E6C9; }
+    </style>
+  </defs>
+
+  <g transform="translate(60, 60)">
+    <path class="stroke" d="M -50 18 Q -45 -5 -38 -8 L 38 -8 Q 45 -5 50 18" opacity="0.25"/>
+    <rect class="wrist-fill" stroke="#3A4A4F" stroke-width="1.5" x="-34" y="-10" width="68" height="20" rx="10"/>
+    <path class="stroke" d="M -28 -10 Q -32 -32 -2 -48"/>
+    <circle class="flesh" cx="-2" cy="-48" r="5"/>
+    <path class="stroke" d="M 28 -10 Q 32 -32 4 -48"/>
+    <circle class="flesh" cx="4" cy="-48" r="5"/>
+    <circle cx="1" cy="-46" r="2" fill="#4CAF7C"/>
+  </g>
+</svg>

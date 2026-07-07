@@ -72,13 +72,18 @@
           "M": "Man"
         }
       },
-      "wristContexture": {
+"wristContexture": {
         "label": "Your wrist frame",
         "help": "Measure your wrist just above the bone. This helps us calculate your ideal weight more precisely.",
         "options": {
           "thin": "Thin",
-          "normal": "Medium",
+          "normal": "Normal",
           "thick": "Thick"
+        },
+        "descriptions": {
+          "thin": "overlap",
+          "normal": "barely touch",
+          "thick": "don't touch"
         }
       }
     },

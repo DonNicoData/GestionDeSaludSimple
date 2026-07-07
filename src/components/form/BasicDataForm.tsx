@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FormField } from '@/components/form/FormField'
-import { GenderField } from '@/components/form/SegmentedControl'
-import { RadioGroup } from '@/components/form/RadioGroup'
+import { GenderField, SegmentedControl } from '@/components/form/SegmentedControl'
 import { Input, type InputState } from '@/components/shared/Input'
 import { Button } from '@/components/shared/Button'
 import {
@@ -240,9 +239,45 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
 
   const isMatchPhase = matchPhase.kind !== 'idle' && matchPhase.kind !== 'loading'
   const wristOptions = [
-    { value: 'thin' as const, label: t('basicForm.fields.wristContexture.options.thin') },
-    { value: 'normal' as const, label: t('basicForm.fields.wristContexture.options.normal') },
-    { value: 'thick' as const, label: t('basicForm.fields.wristContexture.options.thick') },
+    {
+      value: 'thin' as const,
+      label: t('basicForm.fields.wristContexture.options.thin'),
+      description: t('basicForm.fields.wristContexture.descriptions.thin'),
+      icon: (
+        <img
+          src="/images/wrist-thin.svg"
+          alt=""
+          className="h-full w-full object-contain"
+          loading="lazy"
+        />
+      ),
+    },
+    {
+      value: 'normal' as const,
+      label: t('basicForm.fields.wristContexture.options.normal'),
+      description: t('basicForm.fields.wristContexture.descriptions.normal'),
+      icon: (
+        <img
+          src="/images/wrist-normal.svg"
+          alt=""
+          className="h-full w-full object-contain"
+          loading="lazy"
+        />
+      ),
+    },
+    {
+      value: 'thick' as const,
+      label: t('basicForm.fields.wristContexture.options.thick'),
+      description: t('basicForm.fields.wristContexture.descriptions.thick'),
+      icon: (
+        <img
+          src="/images/wrist-thick.svg"
+          alt=""
+          className="h-full w-full object-contain"
+          loading="lazy"
+        />
+      ),
+    },
   ]
 
   const nameFieldProps = (key: 'firstName' | 'lastName1' | 'lastName2') => ({
@@ -423,7 +458,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
         errorKey={errors.wristContexture ?? null}
         required
       >
-        <RadioGroup<WristContexture>
+        <SegmentedControl<WristContexture>
           name="wristContexture"
           options={wristOptions}
           value={form.wristContexture}
