@@ -20,14 +20,20 @@ export function HomePage({
 }: HomePageProps) {
   const { t } = useTranslation()
 
+  const hasName = Boolean(knownClientName)
+  const prefix = hasName ? 'home.welcomeReturningNamed' : 'home.welcomeReturningAnon'
   const greetingKey =
     lastVisitDays === null
       ? 'home.welcomeFirst'
       : lastVisitDays === 0
-        ? 'home.welcomeReturningToday'
-        : 'home.welcomeReturning'
+        ? `${prefix}Today`
+        : `${prefix}`
 
-  const greeting = t(greetingKey, lastVisitDays !== null && lastVisitDays > 0 ? { days: lastVisitDays } : {})
+  const greeting = t(greetingKey, {
+    count: lastVisitDays ?? 0,
+    ...(hasName ? { name: knownClientName } : {}),
+    ...(lastVisitDays !== null && lastVisitDays > 0 ? { days: lastVisitDays } : {}),
+  })
 
   return (
     <section className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-16 flex flex-col items-center text-center">
@@ -46,15 +52,9 @@ export function HomePage({
         </svg>
       </div>
 
-      <p className="text-graphite/80 text-base sm:text-lg leading-relaxed max-w-xl mb-2">
+      <p className="text-graphite/80 text-base sm:text-lg leading-relaxed max-w-xl mb-6">
         {greeting}
       </p>
-
-      {knownClientName && lastVisitDays !== null && (
-        <p className="text-sm text-graphite/60 mb-6">
-          {t('home.welcomeNamed', { name: knownClientName })}
-        </p>
-      )}
 
       {hasDraft ? (
         <div
