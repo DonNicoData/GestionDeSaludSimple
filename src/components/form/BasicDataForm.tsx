@@ -454,10 +454,12 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       <FormField
         id="wristContexture"
         label={t('basicForm.fields.wristContexture.label')}
-        help={t('basicForm.fields.wristContexture.help')}
         errorKey={errors.wristContexture ?? null}
         required
       >
+        <p className="text-sm text-graphite/70 -mt-1 mb-2 leading-relaxed">
+          {t('basicForm.fields.wristContexture.intro')}
+        </p>
         <SegmentedControl<WristContexture>
           name="wristContexture"
           options={wristOptions}

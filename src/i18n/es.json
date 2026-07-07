@@ -74,7 +74,7 @@
       },
       "wristContexture": {
         "label": "Tu contextura de muñeca",
-        "help": "Mide tu muñeca justo encima del hueso. Esto nos ayuda a calcular tu peso ideal con mayor precisión.",
+        "intro": "Envuelve tu muñeca con el pulgar y el dedo medio de la otra mano. Elige según lo que veas.",
         "options": {
           "thin": "Delgada",
           "normal": "Normal",
