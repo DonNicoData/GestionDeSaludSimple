@@ -28,6 +28,7 @@ interface ResultsPageProps {
     calories: number
     bioAge: number
     visceralFat: number
+    notes?: string
   }
   onBack: () => void
   /**
@@ -137,6 +138,7 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
         calories: record.calories,
         bioAge: record.bioAge,
         visceralFat: record.visceralFat,
+        notes: record.notes,
       })
       // Traer el conteo de records para decidir si mostrar el selector
       // de scope (solo si hay más de una medición, sino la decisión es trivial).
@@ -197,6 +199,17 @@ export function ResultsPage({ basicData, record, onBack, onGoHome, onSaved, onVi
       <ClientProfileBanner client={evaluationTarget} currentWeight={record.weight} />
 
       <RecommendationCard currentWeight={record.weight} />
+
+      {record.notes && record.notes.trim().length > 0 && (
+        <div className="mb-6 rounded-2xl border border-divider bg-white p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-graphite/50 mb-2">
+            {t('results.notes.title')}
+          </p>
+          <p className="text-sm text-graphite leading-relaxed italic whitespace-pre-wrap">
+            “{record.notes}”
+          </p>
+        </div>
+      )}
 
       <div className="mb-6">
         <ResultsSummary evaluations={evaluations} />

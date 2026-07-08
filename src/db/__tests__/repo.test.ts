@@ -4,14 +4,20 @@ import {
   clearAllData,
   createClient,
   deleteClient,
+  deleteRecord,
   findClientMatch,
+  getAdminStats,
   getClient,
+  getClientSnapshot,
   getLastRecordForClient,
   getLatestRecord,
   getLatestRecordContext,
   getRecordsForClient,
   listAllClients,
+  restoreClientSnapshot,
   saveRecord,
+  updateClient,
+  updateRecord,
 } from '../repo'
 
 function basicInput(
@@ -244,5 +250,125 @@ describe('clearAllData', () => {
     await clearAllData()
     await clearAllData()
     expect(await listAllClients()).toEqual([])
+  })
+})
+
+describe('Fase 8 — admin: updateClient / updateRecord / deleteRecord / snapshot / stats', () => {
+  describe('updateClient', () => {
+    it('actualiza campos y re-deriva normalizedName', async () => {
+      const id = await createClient(basicInput())
+      await updateClient(id, {
+        firstName: 'Juan',
+        lastName1: 'Pérez',
+        lastName2: 'Gómez',
+        birthDate: '1990-05-15',
+        gender: 'M',
+        heightCm: 180,
+        wristContexture: 'thick',
+      })
+      const after = await getClient(id)
+      expect(after?.lastName2).toBe('Gómez')
+      expect(after?.heightCm).toBe(180)
+      expect(after?.wristContexture).toBe('thick')
+      expect(after?.normalizedName).toBe('juan perez gomez')
+    })
+
+    it('re-deriva age desde el nuevo birthDate', async () => {
+      const id = await createClient(basicInput({ birthDate: '1990-05-15', age: 35 }))
+      await updateClient(id, {
+        firstName: 'Juan',
+        lastName1: 'Pérez',
+        lastName2: 'González',
+        birthDate: '1985-03-10',
+        gender: 'M',
+        heightCm: 175,
+        wristContexture: 'normal',
+      })
+      const after = await getClient(id)
+      expect(after?.birthDate).toBe('1985-03-10')
+      // age se recalcula; assert de cambio (no valor exacto, depende del día)
+      expect(after?.age).not.toBe(35)
+    })
+  })
+
+  describe('updateRecord', () => {
+    it('actualiza los valores de la medición preservando id y clientId', async () => {
+      const clientId = await createClient(basicInput())
+      const recordId = await saveRecord(clientId, recordInput({ weight: 70 }))
+      await updateRecord(recordId, { ...recordInput(), weight: 85, notes: 'post-vacaciones' })
+      const after = await getClientSnapshot(clientId)
+      expect(after?.records[0]?.weight).toBe(85)
+      expect(after?.records[0]?.notes).toBe('post-vacaciones')
+      expect(after?.records[0]?.id).toBe(recordId)
+      expect(after?.records[0]?.clientId).toBe(clientId)
+    })
+  })
+
+  describe('deleteRecord', () => {
+    it('elimina SOLO el record indicado, sin tocar otros del mismo cliente', async () => {
+      const clientId = await createClient(basicInput())
+      const r1 = await saveRecord(clientId, recordInput({ weight: 70 }))
+      const r2 = await saveRecord(clientId, recordInput({ weight: 72 }))
+      const r3 = await saveRecord(clientId, recordInput({ weight: 74 }))
+
+      await deleteRecord(r2)
+
+      const records = await getRecordsForClient(clientId)
+      expect(records.map((r) => r.id)).toEqual([r3, r1])
+    })
+  })
+
+  describe('snapshot / restore', () => {
+    it('getClientSnapshot devuelve cliente + records', async () => {
+      const clientId = await createClient(basicInput())
+      await saveRecord(clientId, recordInput())
+      await saveRecord(clientId, recordInput({ weight: 75 }))
+
+      const snap = await getClientSnapshot(clientId)
+      expect(snap?.client.id).toBe(clientId)
+      expect(snap?.records).toHaveLength(2)
+    })
+
+    it('restoreClientSnapshot recrea cliente + records', async () => {
+      const clientId = await createClient(basicInput({ firstName: 'Ana' }))
+      const r1 = await saveRecord(clientId, recordInput())
+      const snap = await getClientSnapshot(clientId)
+
+      // Borramos todo del cliente original.
+      await deleteClient(clientId)
+      expect(await getClient(clientId)).toBeUndefined()
+
+      // Restauramos.
+      const newId = await restoreClientSnapshot(snap!)
+      expect(newId).not.toBe(clientId)
+      const restored = await getClient(newId)
+      expect(restored?.firstName).toBe('Ana')
+      const records = await getRecordsForClient(newId)
+      expect(records).toHaveLength(1)
+      expect(records[0]?.id).not.toBe(r1)
+    })
+  })
+
+  describe('getAdminStats', () => {
+    it('cuenta clientes y records y devuelve la fecha del último', async () => {
+      expect(await getAdminStats()).toEqual({
+        clientCount: 0,
+        recordCount: 0,
+        lastRecordAt: null,
+      })
+
+      const c1 = await createClient(basicInput({ firstName: 'Ana' }))
+      const c2 = await createClient(basicInput({ firstName: 'Beto' }))
+      await saveRecord(c1, recordInput())
+      await new Promise((r) => setTimeout(r, 5))
+      await saveRecord(c2, recordInput())
+      await new Promise((r) => setTimeout(r, 5))
+      await saveRecord(c2, recordInput())
+
+      const stats = await getAdminStats()
+      expect(stats.clientCount).toBe(2)
+      expect(stats.recordCount).toBe(3)
+      expect(stats.lastRecordAt).toBeInstanceOf(Date)
+    })
   })
 })

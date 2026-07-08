@@ -129,6 +129,11 @@
       "body": "Los marqué en rojo para ti. Cuando estén bien, se pondrán en verde."
     },
     "notMeasured": "No medido",
+    "notes": {
+      "label": "Notas (opcional)",
+      "help": "Algo que quieras recordar de esta medición (medicación, ánimo, observaciones, etc.).",
+      "placeholder": "Por ejemplo: ‘Empecé a nadar 2 veces por semana. Me siento con más energía.’"
+    },
     "fields": {
       "weight": {
         "label": "Tu peso actual",
@@ -219,6 +224,9 @@
       "alert": "Alerta"
     },
     "infoLabel": "¿Qué es esto?",
+    "notes": {
+      "title": "Notas de esta medición"
+    },
     "profile": {
       "title": "Tu perfil",
       "contexture": "Contextura de muñeca",
@@ -353,5 +361,104 @@
   "toast": {
     "exportSuccess": "Listo, archivo en tu carpeta de descargas",
     "exportError": "No pudimos generar el archivo. Probá otra vez."
+  },
+  "admin": {
+    "login": {
+      "title": "Área solo para administradores",
+      "subtitle": "Ingresa tu contraseña para continuar.",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Tu contraseña",
+      "submit": "Ingresar",
+      "error": "Las credenciales no coinciden. Verifícalas, por favor.",
+      "lockedPrefix": "Demasiados intentos. Probá de nuevo en",
+      "lockedSuffix": "s.",
+      "backToApp": "Volver a la app",
+      "noPasswordConfigured": "No hay contraseña configurada. Revisá el archivo .env."
+    },
+    "shell": {
+      "title": "Panel de administración",
+      "logout": "Cerrar sesión",
+      "logoutConfirmTitle": "¿Cerrar la sesión?",
+      "logoutConfirmBody": "Vas a salir del panel. Podés volver cuando quieras.",
+      "logoutConfirmStay": "Quedarme",
+      "logoutConfirmLeave": "Sí, salir"
+    },
+    "stats": {
+      "clients_one": "{{count}} cliente",
+      "clients_other": "{{count}} clientes",
+      "records_one": "{{count}} medición",
+      "records_other": "{{count}} mediciones",
+      "lastRecord": "Última: {{date}}",
+      "lastRecordNever": "Última: nunca"
+    },
+    "search": {
+      "placeholder": "Buscar por nombre…",
+      "empty": "No encontré clientes con ese nombre. Probá con otro o presioná «Ver todos».",
+      "noClients": "Aún no hay clientes registrados. Cuando alguien use la app, aparecerán acá.",
+      "viewAll": "Ver todos"
+    },
+    "clientCard": {
+      "lastVisit": "Última visita: {{date}}",
+      "lastVisitNever": "Última visita: nunca",
+      "recordCount_one": "{{count}} medición",
+      "recordCount_other": "{{count}} mediciones",
+      "ageAndHeight": "{{age}} años · {{height}} cm"
+    },
+    "actions": {
+      "view": "Ver",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "dangerZone": "Zona peligrosa",
+      "back": "Volver",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    },
+    "detail": {
+      "dataTitle": "Datos personales",
+      "recordsTitle": "Mediciones",
+      "editClient": "Editar datos",
+      "addRecord": "Agregar medición",
+      "noRecords": "Este cliente todavía no tiene mediciones guardadas.",
+      "lastVisit": "Última visita: {{date}}",
+      "lastVisitNever": "Última visita: nunca",
+      "deleteClient": "Eliminar cliente",
+      "deleteRecord": "Eliminar medición",
+      "clientCreated": "Cliente desde el {{date}}"
+    },
+    "deleteClient": {
+      "title": "¿Eliminar a {{name}}?",
+      "body": "Esta acción borra al cliente y todas sus mediciones ({{count}}). Vas a tener 5 segundos para deshacer.",
+      "typePrompt": "Para confirmar, escribí el nombre completo:",
+      "placeholder": "Nombre completo",
+      "submit": "Eliminar definitivamente",
+      "cancel": "Cancelar",
+      "mismatch": "El nombre no coincide. Revisalo y volvé a intentar.",
+      "undo": "Eliminación de {{name}} deshecha"
+    },
+    "deleteRecord": {
+      "title": "¿Eliminar esta medición?",
+      "body": "Vas a tener 5 segundos para deshacer.",
+      "submit": "Eliminar",
+      "cancel": "Cancelar",
+      "undo": "Medición del {{date}} deshecha"
+    },
+    "wipe": {
+      "title": "Borrar todos los datos",
+      "subtitle": "Esta acción elimina TODOS los clientes, mediciones y borradores. No se puede deshacer.",
+      "stats_one": "Se va a borrar {{clients}} cliente y {{records}} medición.",
+      "stats_other": "Se van a borrar {{clients}} clientes y {{records}} mediciones.",
+      "typePrompt": "Para confirmar, escribí BORRAR TODO en mayúsculas:",
+      "placeholder": "BORRAR TODO",
+      "passwordLabel": "Volvé a ingresar la contraseña de admin:",
+      "submit": "Borrar todo definitivamente",
+      "cancel": "Cancelar",
+      "typeMismatch": "Tenés que escribir BORRAR TODO exactamente.",
+      "success": "Todos los datos fueron eliminados."
+    },
+    "undoToast": {
+      "action": "Deshacer",
+      "ariaCountdown": "Deshacer disponible por {{seconds}} segundos"
+    }
   }
 }

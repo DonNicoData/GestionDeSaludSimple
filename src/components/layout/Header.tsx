@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
 
 interface HeaderProps {
   onGoHome?: () => void
@@ -10,24 +9,24 @@ interface HeaderProps {
    * hay datos en memoria. Default true.
    */
   homeEnabled?: boolean
+  /**
+   * Abre el panel de admin. App.tsx decide cómo navegar.
+   * Si no se pasa, el botón Admin no se renderiza.
+   */
+  onOpenAdmin?: () => void
 }
 
 export function Header({
   onGoHome,
   hasUnsavedData = false,
   homeEnabled = true,
+  onOpenAdmin,
 }: HeaderProps) {
   const { t, i18n } = useTranslation()
-  const [adminHint, setAdminHint] = useState(false)
 
   const toggleLanguage = () => {
     const next = i18n.language.startsWith('es') ? 'en' : 'es'
     void i18n.changeLanguage(next)
-  }
-
-  const handleAdminClick = () => {
-    setAdminHint(true)
-    window.setTimeout(() => setAdminHint(false), 2500)
   }
 
   const handleHomeClick = () => {
@@ -111,24 +110,17 @@ export function Header({
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleAdminClick}
-            className="h-11 px-4 rounded-2xl text-sm font-medium border border-divider text-graphite hover:border-primary-soft hover:bg-primary-soft/30 transition-colors"
-          >
-            {t('header.admin')}
-          </button>
+          {onOpenAdmin && (
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              className="h-11 px-4 rounded-2xl text-sm font-medium border border-divider text-graphite hover:border-primary-soft hover:bg-primary-soft/30 transition-colors"
+            >
+              {t('header.admin')}
+            </button>
+          )}
         </div>
       </div>
-
-      {adminHint && (
-        <div
-          role="status"
-          className="absolute right-4 top-16 mt-2 bg-graphite text-bone text-xs px-3 py-2 rounded-xl shadow-card animate-[fadeIn_150ms_ease-out]"
-        >
-          {t('home.comingSoon')}
-        </div>
-      )}
     </header>
   )
 }

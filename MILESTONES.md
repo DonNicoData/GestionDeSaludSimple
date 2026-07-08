@@ -10,11 +10,65 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.7.3-ui-polish
+**Estado al cierre de este hito:** v0.8.0-fase8
 
-**Última fase completada:** ✅ Sesión de polish UI (wrist contexture + numeric input + home greeting + button outline)
+**Última fase completada:** ✅ Fase 8 — Panel de administración (login bcrypt + CRUD + búsqueda + danger zone + notas por medición)
 
-**Próxima fase por hacer:** ⏭️ Fase 8 — Panel de admin (login + CRUD + filtro + ver todos)
+**Próxima fase por hacer:** ⏭️ Fase 9 — PWA (instalable, offline, service worker)
+
+---
+
+### 📌 Checkpoint — Julio 2026 (Fase 8 cerrada)
+
+**Sesión del 2026-07-08 (cerrada):**
+
+Fase 8 completa — panel de admin funcional con lazy load, autenticación local, CRUD de clientes y mediciones, búsqueda, danger zone y notas por medición.
+
+**Tags pusheados:**
+- `pre-fase8-2026-07-08` (en `262e939`, punto de partida)
+- `v0.8.0-fase8` (en el commit de cierre, admin completo)
+
+**Métricas:**
+- Tests: 146 → 173 verde (+27 nuevos: 14 auth + 6 undo + 7 admin/repo)
+- Typecheck: 0 errores
+- Build: OK, 1.16 MB main + 55.6 kB admin (lazy-loaded, no se descarga hasta que se hace click en "Admin")
+- Archivos nuevos: 13 (5 admin pages, 4 componentes, 3 auth, 1 hook)
+- Archivos modificados: 8 (i18n ES+EN, App, Header, MetricsForm, ResultsPage, HistoryPage, schema)
+
+**Decisiones clave:**
+- Login con bcryptjs (10 rounds) + comparación contra `VITE_ADMIN_PASSWORD` (sin hashear en disco). Cumple `PLAN §8` ("PIN admin local — filtro básico").
+- Sesión admin en `sessionStorage` (muere al cerrar pestaña) — decidido siguiendo `NN/g User Control & Freedom` y `PLAN §8`.
+- Lockout tras 3 intentos fallidos (30s) en `sessionStorage`.
+- Búsqueda con `useDeferredValue` (React 18) en lugar de `setTimeout` — typing fluido sin debounce manual.
+- Eliminar medición = undo 5s, sin modal previo (patrón NN/g: "ofrecer undo > pedir confirmación genérica"). Implementado con `UndoToastProvider` global.
+- Eliminar cliente = doble barrera: modal con tipeo del nombre (patrón Mailchimp, NN/g) + undo 5s.
+- Wipe total = triple barrera: tipeo "BORRAR TODO" + reingreso de contraseña + botón destructive. Sin undo (no recuperable).
+- Code splitting del admin vía `React.lazy` (cumple `PLAN §9` "admin lazy-loaded").
+- Notas por medición activadas (campo `notes?: string` que ya existía en el modelo desde Fase 2, ver `PLAN.md §4`).
+- Snapshots para undo vía `getClientSnapshot()` + `restoreClientSnapshot()` (transacción Dexie atómica).
+
+**Patrones de UX aplicados (de la investigación pre-fase):**
+- **NN/g Confirmation Dialogs** → ofrecimos undo en lugar de confirmaciones genéricas para acciones reversibles.
+- **NN/g User Control & Freedom** → siempre hay "emergency exit"; el header de admin tiene logout explícito.
+- **Mailchimp pattern** → tipeo del nombre como barrera para acciones destructivas.
+- **Notion / Airtable** → delete individual con undo en toast, sin modal previo.
+- **Kent C. Dodds — State colocation** → el state del undo vive en el provider global solo para el admin; el resto del state se levanta solo donde se necesita.
+
+**Pendiente para próximas sesiones:**
+- Validar visualmente el admin en el celular.
+- Decidir si Fase 9 (PWA) arranca o si hay más polish pendiente.
+- Considerar roles/permisos si en el futuro se comparte el dispositivo entre profesionales (hoy es single-user por diseño).
+
+**Para retomar:**
+```bash
+./scripts/run.sh sync    # sincroniza repo a Windows
+./scripts/run.sh dev     # levanta el server en localhost:5173
+./scripts/run.sh test    # corre los 173 tests
+```
+
+---
+
+**Atajos para retomar en otro momento:**
 
 ---
 
@@ -84,8 +138,9 @@ Convenciones de tags:
 - `v0.7.0-fase7` — exportación a Excel (.xlsx) y PDF con semáforo por celda
 - `v0.7.1-fase7-refinement` — selector de alcance + CTA de historial gated por sesión
 - `v0.7.2-fase7-scope-fix` — fix race condition del scope filter + HistoryPage read-only
-- `v0.7.3-ui-polish` — sesión de polish UI: wrist help, numeric input, home greeting, button outline *(ESTAMOS AQUÍ)*
-- `pre-polish-2026-07-07` — checkpoint del estado antes de la sesión de polish (rollback target)
+- `v0.7.3-ui-polish` — sesión de polish UI: wrist help, numeric input, home greeting, button outline
+- `pre-fase8-2026-07-08` — checkpoint del estado antes de la Fase 8 (rollback target)
+- `v0.8.0-fase8` — panel de admin completo *(ESTAMOS AQUÍ)*
 
 ### Cómo hacer rollback
 
@@ -234,12 +289,12 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** `262e939 style(button): outline variant con fondo blanco + shadow en hover`
-- **Tag más reciente:** `v0.7.3-ui-polish` (sesión de polish UI cerrada el 2026-07-07)
-- **Snapshot pre-sesión:** `pre-polish-2026-07-07` (en `a1a89f0`)
-- **Tests:** 146 pasando (136 previos + 10 nuevos en `validation.test.ts`)
+- **Último commit:** commit de cierre de Fase 8
+- **Tag más reciente:** `v0.8.0-fase8` (Fase 8 cerrada el 2026-07-08)
+- **Snapshot pre-sesión:** `pre-fase8-2026-07-08` (en `262e939`, fin de v0.7.3)
+- **Tests:** 173 pasando (146 previos + 27 nuevos en admin: 14 auth + 6 undo + 7 admin/repo)
 - **Typecheck:** 0 errores
-- **Build de producción:** OK (`dist/` generado, ~371 kB JS / gzip)
+- **Build de producción:** OK (`dist/` generado, ~1.16 MB JS principal / gzip 374 kB + 55.6 kB chunk admin lazy-loaded / gzip 18.3 kB)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
 
 ---
@@ -1732,3 +1787,206 @@ Todo el copy nuevo sigue la convención del proyecto: **español neutro LatAm, s
 - **Validar visualmente** todo el polish en el celular (Cloudflare Tunnel como se documenta en este archivo).
 - **Confirmar el fix de numeric input** tipeando `22,5` en un campo numérico desde iPhone.
 - **Fase 8**: panel de admin (login + CRUD + filtro + ver todos los clientes).
+
+---
+
+## v0.8.0-fase8 — Panel de administración completo (login + CRUD + danger zone + notas)
+
+**Fecha:** Julio 2026
+**Estado:** ✅ Completa
+**Tag de rollback:** `pre-fase8-2026-07-08` (commit `262e939`, fin de v0.7.3)
+
+### Descripción general
+
+La Fase 8 entrega el panel de administración completo que el `PLAN §7.7 + §10` reservaba para esta etapa. Es la última fase puramente de la app cliente: a partir de acá, las siguientes (9, 10) son empaquetado (PWA, APK).
+
+**Funcionalidades visibles:**
+
+1. **Acceso**: el botón "Admin" del header (antes mostraba un "Próximamente") ahora abre el panel lazy-loaded. Al cerrar, vuelve al home de la app.
+2. **Login con PIN**: el admin tipea la contraseña configurada en `.env` (`VITE_ADMIN_PASSWORD=adminadmin` por defecto). 3 intentos fallidos → bloqueo de 30s con countdown visible.
+3. **Lista de clientes**:
+   - Header con 3 KPIs: total de clientes, total de mediciones, fecha de la última.
+   - Búsqueda con `useDeferredValue` (typing fluido sin debounce manual). Tolera acentos y mayúsculas.
+   - Cards con: iniciales, nombre completo, edad/altura, N° de mediciones, fecha de última visita.
+   - Estado vacío cálido (PLAN §7.7) cuando no hay clientes.
+4. **Detalle de cliente**:
+   - Datos personales + mediciones en cards separadas.
+   - Cada medición: peso, IMC, % grasa + nota si la tiene. Acciones: Editar / Eliminar.
+   - Eliminar medición = **undo 5s en toast** (sin modal previo, patrón Notion/Airtable).
+   - Editar datos del cliente o una medición: reusa los mismos Field components que `BasicDataForm` y `MetricsForm` (no se duplica código de forms).
+   - Eliminar cliente = modal con **tipeo del nombre completo** (patrón Mailchimp, NN/g) + undo 5s post-confirmación. Cascade transaccional.
+5. **Zona peligrosa**:
+   - Acción única: borrar todos los datos.
+   - **Triple barrera**: tipeo literal "BORRAR TODO" + reingreso de contraseña + botón destructive. Sin undo.
+   - Honestidad sobre el alcance: muestra cuántos clientes y mediciones se van a borrar antes de pedir la confirmación.
+
+### Stack adicional
+
+| Paquete | Versión | Propósito |
+|---|---|---|
+| bcryptjs | 3.0.x | Hash y verificación de contraseña de admin (10 rounds) |
+| @types/bcryptjs | 2.4.x (dev) | Tipos de bcryptjs |
+| happy-dom | 20.x (dev) | DOM en tests para hooks que tocan sessionStorage |
+| @testing-library/react | 16.x (dev) | `renderHook` y `act` para tests de hooks |
+
+### Autenticación (capa `src/admin/auth/`)
+
+**Tres módulos independientes con tests:**
+
+- `hash.ts` — `hashPassword(plain)` y `verifyPassword(plain, expectedHash)`. Compara con `bcrypt.compare` (constant-time sobre el derivado, mitigación básica de timing attacks).
+- `session.ts` — `startAdminSession()`, `endAdminSession()`, `isAdminAuthenticated()`. Marca opaca (timestamp) en `sessionStorage`. Memoria como fallback si sessionStorage no está disponible.
+- `lockout.ts` — `recordFailedAttempt()`, `readLockoutState()`, `isLocked()`, `getRemainingLockoutMs()`, `clearLockout()`. Estado en `sessionStorage`. Default: 3 intentos → 30s de bloqueo.
+
+Decisión de seguridad: la contraseña se lee desde `VITE_ADMIN_PASSWORD` y se hashea en runtime. **Nunca persistimos el hash en disco** porque el bundle del cliente ya la contiene (es un filtro básico, no seguridad de servidor — `PLAN §8`).
+
+### Extensión de la capa de datos (`src/db/repo.ts`)
+
+Funciones nuevas, todas con tests en `src/db/__tests__/repo.test.ts`:
+
+| Función | Propósito | Tests |
+|---|---|---|
+| `updateClient(id, input)` | Edita datos básicos, recalcula `normalizedName` y `age` | 2 |
+| `updateRecord(id, input)` | Edita una medición, preserva id/clientId/date | 1 |
+| `deleteRecord(id)` | Elimina una sola medición (sin tocar otras) | 1 |
+| `getClientSnapshot(id)` | Devuelve `{ client, records[] }` para usar en undo | 1 |
+| `restoreClientSnapshot(snap)` | Restaura cliente + records (transacción Dexie atómica, nuevos IDs) | 1 |
+| `getAdminStats()` | Cuenta clientes y records + fecha del último, en 1 query paralela | 1 |
+| `deleteClient` | Ya existía; ahora cubierto por undo con snapshot | (existente) |
+
+### Hooks nuevos (`src/admin/hooks/`)
+
+- **`useAdminAuth`** — encapsula login, lockout, logout, sesión. Devuelve `authenticated`, `submitting`, `errorKey`, `lockedSecondsRemaining`, `login(password)`, `logout()`.
+- **`useClients`** — carga inicial de clientes + N° de records + última medición (paralelo). Devuelve `items` (filtrados) y `allItems`. Búsqueda vía `useDeferredValue`.
+- **`useUndoableDelete<T>`** — patrón genérico de "soft delete en UI + commit diferido" con undo. **No se usa directamente en esta fase** (en su lugar usamos el `UndoToastProvider` global), pero queda como bloque reutilizable. Tiene 6 tests que cubren: pending, commit, undo, cancel, segundo trigger sobreescribe, timer cleanup.
+
+### Componentes nuevos (`src/admin/components/`)
+
+- **`UndoToastProvider`** — provider global del toast con acción "Deshacer" + countdown visible. Solo 1 toast a la vez: si se dispara uno nuevo, el anterior se commitea.
+- **`AdminStatsHeader`** — 3 KPIs en una sola card. Variante "empty" para estado sin clientes.
+- **`ClientSearchBar`** — input con icono de búsqueda, sin debounce (el padre usa `useDeferredValue`).
+- **`ClientCard`** — card de cliente en la lista.
+- **`EditClientModal`** — modal de edición que reusa `FormField` + `Input` + `GenderField` + `SegmentedControl`. Validación con `basicDataSchema` directo.
+- **`EditRecordModal`** — modal de edición con los 7 campos + notas. Validación con `metricsSchema`.
+- **`DeleteClientDialog`** — modal con tipeo del nombre (Mailchimp pattern). El botón se habilita solo cuando `typed === fullNameOf(client)`.
+- **`WipeAllDialog`** — triple barrera. Token de tipeo localizado (ES: "BORRAR TODO", EN: "DELETE ALL") + campo de contraseña + botón destructive.
+- **`ConfirmDialog`** — modal genérico reutilizable (para logout del admin).
+
+### Páginas (`src/admin/pages/`)
+
+- **`AdminLoginPage`** — formulario de password. Maneja estado de error y countdown de lockout. Botón "Volver a la app" para cancelar.
+- **`AdminListPage`** — header de stats + search bar + lista (o empty state). Botón "Ver todos" en estado filtrado-sin-resultados.
+- **`AdminClientDetailPage`** — datos + mediciones + acciones. Implementa el soft delete + undo. `useUndoToast()` para disparar el toast.
+- **`AdminDangerZonePage`** — solo una acción hoy (borrar todo). La página existe como lugar extensible.
+
+### Activación del campo `notes` (Fase 8 también)
+
+El campo `notes?: string` existía en el modelo `Record` desde `PLAN §4` pero nunca se usaba. La Fase 8 lo activa:
+
+- `src/lib/validation.ts` — `metricsSchema.notes` agregado (opcional, max 500).
+- `src/components/form/MetricsForm.tsx` — textarea opcional con contador. Persiste en `sessionStorage` (no en draft de IndexedDB — son efímeras y complementarias, no métricas críticas).
+- `src/pages/ResultsPage.tsx` — card con la nota en la pantalla de resultados (entre `RecommendationCard` y el grid de métricas).
+- `src/pages/HistoryPage.tsx` — la nota ya se mostraba en el detalle expandido (se agregó en esta fase).
+- `src/admin/components/EditRecordModal.tsx` — textarea de notas con contador.
+
+### Code splitting (cumpliendo `PLAN §9`)
+
+En `src/App.tsx`:
+
+```ts
+const AdminApp = lazy(() =>
+  import('@/admin/AdminApp').then((m) => ({ default: m.AdminApp })),
+)
+```
+
+Resultado del build: el bundle principal queda en ~1.16 MB (igual que antes; bcryptjs NO se incluye en él) y aparece un chunk separado `AdminApp-*.js` de **55.6 kB (18.3 kB gzip)** que **solo se descarga cuando el usuario hace click en "Admin"**. El TTI del flujo cliente no se ve afectado.
+
+### Decisiones técnicas cerradas
+
+| Decisión | Valor | Justificación |
+|---|---|---|
+| Hash | bcryptjs 10 rounds | Filtro básico, no seguridad real (PLAN §8) |
+| Storage del hash | Variable de entorno + cálculo en runtime | Nunca persistido en disco; bundle del cliente ya contiene la password |
+| Storage de sesión | sessionStorage | Muere al cerrar pestaña (compartido en casa) |
+| Lockout | 3 intentos → 30s | Suficiente fricción sin castigar al usuario honesto |
+| Búsqueda | useDeferredValue (no setTimeout) | Cancelación automática, sin cleanup, sin 300ms de latencia |
+| Pattern undo | Soft delete UI + commit diferido | Cumple NN/g "ofrecer undo > pedir confirmación" |
+| Pattern delete cliente | Tipeo del nombre + undo | Cumple NN/g Mailchimp pattern para acciones destructivas |
+| Wipe total | Triple barrera sin undo | Honestidad sobre la gravedad; no recuperable |
+| Code splitting | React.lazy del módulo admin | Cumple PLAN §9 "admin lazy-loaded" |
+| Bundle admin | 55.6 kB / 18.3 kB gzip | Acceptable; se descarga 1 vez y se cachea |
+| Notas | sessionStorage (no IndexedDB) | Complemento efímero, no métrica crítica |
+| Hard delete cliente | Transaccional en repo (`db.transaction('rw', ...)`) | Atomicidad garantizada por Dexie |
+
+### Patrones de UX aplicados (de la investigación pre-fase)
+
+| Fuente | Aplicación |
+|---|---|
+| **NN/g — Confirmation Dialogs** (Jakob Nielsen, 2018) | "Ofrecer undo es mejor que pedir confirmación genérica" → undo 5s en lugar de modal previo para delete de record |
+| **NN/g — User Control & Freedom** (H3) | "Emergency exit" siempre visible → botón "Volver a la app" en login, "Cerrar sesión" en header del admin |
+| **Mailchimp** | Tipeo del nombre como barrera para acciones destructivas (deleteClient, wipeAll) |
+| **Notion / Airtable** | Delete individual = undo en toast, sin modal previo |
+| **Google Drive** | Confirmación específica con cantidad ("3 archivos") antes de borrar |
+| **Kent C. Dodds — App State Management** | State del undo vive en un provider global solo para el admin; el resto del state se levanta localmente |
+
+### Limitaciones conocidas
+
+- **Single-user**: el admin no tiene roles. Si en el futuro se comparte el dispositivo, habría que agregar roles. Hoy es por diseño (PLAN §1: "menos de 20 clientes, proyecto personal").
+- **Sin audit log**: las acciones destructivas no se loguean. Para un proyecto de hobby no hace falta, pero un consultorio profesional real lo querría.
+- **Sin export masivo del admin**: "Exportar todo" quedó fuera de esta fase para mantener el scope acotado. Se puede agregar en Fase 11 (pulido) reusando el motor de Fase 7.
+- **Sin paginación**: si se pasa de 20 clientes (PLAN §1), la lista se hace lenta. No es un problema hoy; se aborda con `useDeferredValue` + virtualización si hace falta.
+- **El undo de un cliente con muchos records es lento**: `restoreClientSnapshot` re-inserta uno por uno en una transacción. Para 50 records es ~200ms; aceptable.
+
+### Archivos entregados
+
+```
+src/admin/                                    # Lazy-loaded, ~56 kB
+├── AdminApp.tsx                              # Shell con routing interno
+├── auth/
+│   ├── hash.ts                               # bcryptjs wrapper
+│   ├── lockout.ts                            # 3 intentos → 30s
+│   ├── session.ts                            # sessionStorage
+│   └── __tests__/                            # 14 tests
+├── components/
+│   ├── AdminStatsHeader.tsx                  # 3 KPIs
+│   ├── ClientCard.tsx                        # Card de cliente
+│   ├── ClientSearchBar.tsx                   # Input de búsqueda
+│   ├── ConfirmDialog.tsx                     # Modal genérico (logout)
+│   ├── DeleteClientDialog.tsx                # Tipeo del nombre (Mailchimp)
+│   ├── EditClientModal.tsx                   # Reusa BasicDataForm fields
+│   ├── EditRecordModal.tsx                   # Reusa MetricsForm fields
+│   ├── UndoToast.tsx                         # Provider de undo 5s
+│   ├── WipeAllDialog.tsx                     # Triple barrera
+│   └── format.ts                             # Helpers de fecha
+├── hooks/
+│   ├── useAdminAuth.ts                       # Login + lockout
+│   ├── useClients.ts                         # Lista + búsqueda
+│   ├── useUndoableDelete.ts                  # Soft delete + commit diferido
+│   └── __tests__/useUndoableDelete.test.ts   # 6 tests
+└── pages/
+    ├── AdminClientDetailPage.tsx             # Datos + mediciones + acciones
+    ├── AdminDangerZonePage.tsx               # Wipe all
+    ├── AdminListPage.tsx                     # Búsqueda + lista
+    └── AdminLoginPage.tsx                    # Password + lockout
+
+(modificados)
+src/App.tsx                                   # +page 'admin' + lazy + Suspense
+src/components/layout/Header.tsx              # Botón Admin navega a /admin
+src/components/shared/Input.tsx               # +type='password'
+src/components/form/MetricsForm.tsx           # +textarea notas
+src/db/repo.ts                                # +updateClient, +updateRecord, +deleteRecord, +getClientSnapshot, +restoreClientSnapshot, +getAdminStats
+src/db/__tests__/repo.test.ts                 # +7 tests admin
+src/i18n/{es,en}.json                         # +sección admin.* + notes.*
+src/lib/validation.ts                         # +notes en metricsSchema, +MetricsFormState exportado
+src/pages/ResultsPage.tsx                     # +card de nota
+.env.example                                  # NUEVO (template)
+.gitignore                                    # .env.local ya estaba
+
+(nuevos infraestructura)
+vitest.config.ts                              # +environmentMatchGlobs para happy-dom
+package.json                                  # +bcryptjs, +@types/bcryptjs, +happy-dom, +@testing-library/react
+```
+
+### Decisiones pendientes para Fase 9+
+
+- **PWA**: service worker, manifest, installable, offline. Ver `PLAN §10`.
+- **APK con Capacitor**: wrap del build web en APK Android compartible por WhatsApp. Ver `PLAN §10`.

@@ -6,7 +6,7 @@ interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'type'> {
   value: string | number
   onChange: (value: string) => void
-  type?: 'text' | 'number' | 'date' | 'email'
+  type?: 'text' | 'number' | 'date' | 'email' | 'password'
   suffix?: ReactNode
   state?: InputState
 }
@@ -50,7 +50,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           type={isNumeric ? 'text' : type}
-          inputMode={isNumeric ? 'decimal' : undefined}
+          inputMode={isNumeric || type === 'password' ? 'text' : undefined}
           value={value}
           onChange={(e) => {
             const raw = e.target.value

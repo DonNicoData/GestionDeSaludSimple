@@ -7,11 +7,10 @@ import {
   metricsSchema,
   validateMetricField,
   type MetricsField,
+  type MetricsFormState,
   type MetricsOutput,
 } from '@/lib/validation'
 import { useFormDraftDB } from '@/hooks/useFormDraftDB'
-
-type MetricsFormState = Record<MetricsField, string>
 
 type ErrorState = Partial<Record<MetricsField, string>>
 type TouchedState = Partial<Record<MetricsField, boolean>>
@@ -41,6 +40,8 @@ const EMPTY_FORM: MetricsFormState = {
   visceralFat: '',
 }
 
+const NOTES_MAX = 500
+
 const DRAFT_KEY = 'salud_draft_metrics_v1'
 
 const FIELD_KEYS: MetricsField[] = [
@@ -58,6 +59,7 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
   const draft = useFormDraftDB<MetricsFormState>(DRAFT_KEY)
 
   const [form, setForm] = useState<MetricsFormState>(EMPTY_FORM)
+  const [notes, setNotes] = useState<string>('')
   const [hydrated, setHydrated] = useState(false)
   const [errors, setErrors] = useState<ErrorState>({})
   const [touched, setTouched] = useState<TouchedState>({})
@@ -70,6 +72,24 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
       setHydrated(true)
     }
   }, [draft.loading, draft.value, hydrated])
+
+  useEffect(() => {
+    // Notas en sessionStorage (no persisten entre sesiones): son un
+    // complemento opcional y ephemeral, distinto de los 7 valores que
+    // sí valen la pena sobrevivir en el draft.
+    if (typeof window === 'undefined') return
+    const stored = window.sessionStorage.getItem('salud_draft_metrics_notes')
+    if (stored) setNotes(stored)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem('salud_draft_metrics_notes', notes)
+    } catch {
+      // ignore
+    }
+  }, [notes])
 
   const computeState = (field: MetricsField): InputState => {
     if (!touched[field] && !submitAttempted) return 'neutral'
@@ -118,6 +138,7 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
       calories: form.calories,
       bioAge: form.bioAge,
       visceralFat: form.visceralFat,
+      notes: notes.trim() || undefined,
     })
 
     if (!parsed.success) {
@@ -142,6 +163,13 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
     setErrors({})
     setShowSummary(false)
     onSubmit(parsed.data)
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.removeItem('salud_draft_metrics_notes')
+      } catch {
+        // ignore
+      }
+    }
   }
 
   // P1-6: skeleton mientras se hidrata el draft por primera vez en este
@@ -224,6 +252,25 @@ export function MetricsForm({ onSubmit, onBack }: MetricsFormProps) {
           </FormField>
         )
       })}
+
+      <FormField
+        id="metrics-notes"
+        label={t('metricsForm.notes.label')}
+        help={t('metricsForm.notes.help')}
+      >
+        <textarea
+          id="metrics-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value.slice(0, NOTES_MAX))}
+          maxLength={NOTES_MAX}
+          rows={3}
+          className="w-full px-4 py-3 text-base bg-white border-2 border-divider rounded-2xl focus:outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bone resize-y min-h-[80px]"
+          placeholder={t('metricsForm.notes.placeholder')}
+        />
+        <p className="text-xs text-graphite/50 text-right mt-1">
+          {notes.length}/{NOTES_MAX}
+        </p>
+      </FormField>
 
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
         {onBack && (
