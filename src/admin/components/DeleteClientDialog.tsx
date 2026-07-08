@@ -15,9 +15,8 @@ interface DeleteClientDialogProps {
   recordCount: number
   onCancel: () => void
   /**
-   * Callback que se ejecuta SOLO cuando ambas barreras (tipeo del
-   * nombre + reingreso de contraseña) son satisfechas. La validación
-   * de la contraseña ocurre dentro del dialog con bcrypt.
+   * Callback que se ejecuta SOLO cuando la contraseña fue re-ingresada
+   * correctamente. La validación ocurre dentro del dialog con bcrypt.
    */
   onConfirm: () => void
 }
@@ -25,24 +24,20 @@ interface DeleteClientDialogProps {
 /**
  * Modal de confirmación para borrar un cliente con cascade.
  *
- * Doble barrera (NN/g + sentido común para acciones destructivas):
- * 1. Tipear el nombre completo del cliente (Mailchimp pattern)
- * 2. Re-ingresar la contraseña de admin (re-autenticación)
+ * Barrera única: re-ingresar la contraseña de admin (validada con
+ * bcrypt). El undo 5s se ofrece DESPUÉS de confirmar (toast).
  *
- * ¿Por qué re-validar la contraseña si el admin ya está logueado?
- * - El admin pudo haber dejado la pestaña abierta y otra persona
- *   sentarse a usarla.
- * - Es un patrón estándar de "sudo mode" (Linux, macOS) para
- *   acciones sensibles.
- * - Coincide con el patrón ya usado en `WipeAllDialog` (consistencia).
- *
- * El undo 5s se ofrece DESPUÉS de confirmar (toast), no es barrera
- * previa porque ya gastamos el esfuerzo de re-autenticar.
- *
- * Decisión de diseño: la contraseña se valida on-submit, no en cada
- * keystroke. Hash bcrypt es caro (50-100ms por hash); hacerlo en cada
- * letra sería molesto. El name-typing sí da feedback instantáneo
- * porque es comparación de strings.
+ * Decisiones de diseño (revisión tras feedback):
+ * - Antes: doble barrera (tipeo del nombre + contraseña). El tipeo
+ *   agregaba fricción sin valor real de seguridad: alguien con la
+ *   contraseña ya tiene autorización, no necesita tipear también.
+ *   Lo simplificamos a UNA sola barrera: la contraseña.
+ * - La contraseña se valida on-submit, no on-keystroke: bcrypt es
+ *   caro (~50-100ms por hash), hacerlo en cada letra sería molesto.
+ * - La copia sigue siendo honesta: avisa cuántas mediciones se
+ *   borran en cascade y que hay 5s de undo.
+ * - El patrón coincide con WipeAllDialog (que también solo pide
+ *   contraseña) para consistencia entre acciones destructivas.
  */
 export function DeleteClientDialog({
   client,
@@ -51,13 +46,12 @@ export function DeleteClientDialog({
   onConfirm,
 }: DeleteClientDialogProps) {
   const { t } = useTranslation()
-  const [typed, setTyped] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const expected = fullNameOf(client)
-  const nameMatches = typed.trim() === expected
+
+  const name = fullNameOf(client)
   const passwordFilled = password.length > 0
 
   useEffect(() => {
@@ -69,7 +63,7 @@ export function DeleteClientDialog({
     return () => window.removeEventListener('keydown', onKey)
   }, [onCancel])
 
-  const canSubmit = nameMatches && passwordFilled && !submitting
+  const canSubmit = passwordFilled && !submitting
 
   const handleConfirm = async () => {
     if (!canSubmit) return
@@ -129,7 +123,7 @@ export function DeleteClientDialog({
             id="delete-client-title"
             className="text-lg sm:text-xl font-bold text-graphite"
           >
-            {t('admin.deleteClient.title', { name: expected })}
+            {t('admin.deleteClient.title', { name })}
           </h2>
           <p
             id="delete-client-body"
@@ -141,36 +135,13 @@ export function DeleteClientDialog({
 
         <div className="flex flex-col gap-2">
           <label
-            htmlFor="delete-client-type"
-            className="text-sm font-medium text-graphite"
-          >
-            {t('admin.deleteClient.typePrompt')}
-          </label>
-          <input
-            ref={inputRef}
-            id="delete-client-type"
-            type="text"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            placeholder={expected}
-            autoComplete="off"
-            className="h-12 px-4 text-base bg-white border-2 border-divider rounded-2xl focus:outline-none focus:border-alert focus-visible:ring-2 focus-visible:ring-alert focus-visible:ring-offset-2 focus-visible:ring-offset-bone"
-          />
-          {typed.length > 0 && !nameMatches && (
-            <p role="alert" className="text-xs text-alert">
-              {t('admin.deleteClient.mismatch')}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label
             htmlFor="delete-client-password"
             className="text-sm font-medium text-graphite"
           >
             {t('admin.deleteClient.passwordLabel')}
           </label>
           <Input
+            ref={inputRef}
             id="delete-client-password"
             type="password"
             value={password}
