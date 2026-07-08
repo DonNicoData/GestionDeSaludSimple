@@ -431,6 +431,7 @@
       "body": "Esta acción borra al cliente y todas sus mediciones ({{count}}). Vas a tener 5 segundos para deshacer.",
       "typePrompt": "Para confirmar, escribí el nombre completo:",
       "placeholder": "Nombre completo",
+      "passwordLabel": "Volvé a ingresar tu contraseña de admin:",
       "submit": "Eliminar definitivamente",
       "cancel": "Cancelar",
       "mismatch": "El nombre no coincide. Revisalo y volvé a intentar.",

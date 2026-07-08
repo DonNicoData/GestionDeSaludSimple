@@ -431,6 +431,7 @@
       "body": "This deletes the client and all their measurements ({{count}}). You'll have 5 seconds to undo.",
       "typePrompt": "To confirm, type the full name:",
       "placeholder": "Full name",
+      "passwordLabel": "Re-enter your admin password:",
       "submit": "Delete permanently",
       "cancel": "Cancel",
       "mismatch": "The name doesn't match. Check it and try again.",
