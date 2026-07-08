@@ -129,6 +129,11 @@
       "body": "I've marked them in red for you. When they're correct, they'll turn green."
     },
     "notMeasured": "Not measured",
+    "notes": {
+      "label": "Notes (optional)",
+      "help": "Anything you want to remember about this measurement (medication, mood, observations, etc.).",
+      "placeholder": "For example: ‘Started swimming twice a week. Feeling more energetic.’"
+    },
     "fields": {
       "weight": {
         "label": "Your current weight",
@@ -219,6 +224,9 @@
       "alert": "Alert"
     },
     "infoLabel": "What is this?",
+    "notes": {
+      "title": "Notes for this measurement"
+    },
     "profile": {
       "title": "Your profile",
       "contexture": "Wrist frame",
@@ -353,5 +361,104 @@
   "toast": {
     "exportSuccess": "Done, file is in your downloads folder",
     "exportError": "We couldn't generate the file. Please try again."
+  },
+  "admin": {
+    "login": {
+      "title": "Admin area only",
+      "subtitle": "Enter your password to continue.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Your password",
+      "submit": "Sign in",
+      "error": "Those credentials don't match. Please check them.",
+      "lockedPrefix": "Too many attempts. Try again in",
+      "lockedSuffix": "s.",
+      "backToApp": "Back to the app",
+      "noPasswordConfigured": "No password is configured. Check the .env file."
+    },
+    "shell": {
+      "title": "Admin panel",
+      "logout": "Sign out",
+      "logoutConfirmTitle": "Sign out?",
+      "logoutConfirmBody": "You'll leave the panel. You can come back anytime.",
+      "logoutConfirmStay": "Stay",
+      "logoutConfirmLeave": "Yes, sign out"
+    },
+    "stats": {
+      "clients_one": "{{count}} client",
+      "clients_other": "{{count}} clients",
+      "records_one": "{{count}} measurement",
+      "records_other": "{{count}} measurements",
+      "lastRecord": "Last: {{date}}",
+      "lastRecordNever": "Last: never"
+    },
+    "search": {
+      "placeholder": "Search by name…",
+      "empty": "I didn't find clients with that name. Try another or press «View all».",
+      "noClients": "There are no registered clients yet. When someone uses the app, they'll show up here.",
+      "viewAll": "View all"
+    },
+    "clientCard": {
+      "lastVisit": "Last visit: {{date}}",
+      "lastVisitNever": "Last visit: never",
+      "recordCount_one": "{{count}} measurement",
+      "recordCount_other": "{{count}} measurements",
+      "ageAndHeight": "{{age}} years · {{height}} cm"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "dangerZone": "Danger zone",
+      "back": "Back",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "detail": {
+      "dataTitle": "Personal data",
+      "recordsTitle": "Measurements",
+      "editClient": "Edit data",
+      "addRecord": "Add measurement",
+      "noRecords": "This client doesn't have any measurements yet.",
+      "lastVisit": "Last visit: {{date}}",
+      "lastVisitNever": "Last visit: never",
+      "deleteClient": "Delete client",
+      "deleteRecord": "Delete measurement",
+      "clientCreated": "Client since {{date}}"
+    },
+    "deleteClient": {
+      "title": "Delete {{name}}?",
+      "body": "This deletes the client and all their measurements ({{count}}). You'll have 5 seconds to undo.",
+      "typePrompt": "To confirm, type the full name:",
+      "placeholder": "Full name",
+      "submit": "Delete permanently",
+      "cancel": "Cancel",
+      "mismatch": "The name doesn't match. Check it and try again.",
+      "undo": "Deletion of {{name}} undone"
+    },
+    "deleteRecord": {
+      "title": "Delete this measurement?",
+      "body": "You'll have 5 seconds to undo.",
+      "submit": "Delete",
+      "cancel": "Cancel",
+      "undo": "Measurement from {{date}} undone"
+    },
+    "wipe": {
+      "title": "Erase all data",
+      "subtitle": "This deletes ALL clients, measurements, and drafts. It cannot be undone.",
+      "stats_one": "{{clients}} client and {{records}} measurement will be erased.",
+      "stats_other": "{{clients}} clients and {{records}} measurements will be erased.",
+      "typePrompt": "To confirm, type DELETE ALL in uppercase:",
+      "placeholder": "DELETE ALL",
+      "passwordLabel": "Re-enter the admin password:",
+      "submit": "Erase everything permanently",
+      "cancel": "Cancel",
+      "typeMismatch": "You must type DELETE ALL exactly.",
+      "success": "All data was erased."
+    },
+    "undoToast": {
+      "action": "Undo",
+      "ariaCountdown": "Undo available for {{seconds}} seconds"
+    }
   }
 }

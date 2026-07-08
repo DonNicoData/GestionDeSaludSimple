@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Header } from '@/components/layout/Header'
 import { HomePage } from '@/pages/HomePage'
 import { FormPage } from '@/pages/FormPage'
@@ -19,12 +19,28 @@ import { fullNameOf } from '@/lib/name'
 import { readSessionSavedFlag, writeSessionSavedFlag } from '@/lib/sessionFlag'
 import type { BasicDataOutput, MetricsOutput } from '@/lib/validation'
 
-type Page = 'home' | 'form' | 'metrics' | 'results' | 'history'
+// Fase 8: admin lazy-loaded. El bundle completo del admin (bcryptjs,
+// todas las páginas y modales) NO se descarga hasta que el usuario
+// hace click en "Admin". Reduce el TTI del flujo cliente.
+// PLAN §9: "Code splitting (admin lazy-loaded)".
+const AdminApp = lazy(() =>
+  import('@/admin/AdminApp').then((m) => ({ default: m.AdminApp })),
+)
+
+type Page = 'home' | 'form' | 'metrics' | 'results' | 'history' | 'admin'
 
 interface BasicDataState extends BasicDataOutput {
   age: number
   fullName: string
   clientId?: number
+}
+
+function AdminSkeleton() {
+  return (
+    <div className="min-h-screen bg-bone flex items-center justify-center">
+      <div className="text-graphite/60 text-sm">Cargando panel…</div>
+    </div>
+  )
 }
 
 function App() {
@@ -35,36 +51,15 @@ function App() {
   const [lastVisitDays, setLastVisitDays] = useState<number | null>(null)
   const [activeClientId, setActiveClientId] = useState<number | null>(null)
   const [activeClientName, setActiveClientName] = useState<string | null>(null)
-  /**
-   * Bandera de sesión: true si el usuario guardó al menos un record en
-   * esta pestaña (sobrevive a F5 via sessionStorage, muere al cerrarla).
-   * Se usa para condicionar CTAs como "Ver mi historial" en el Home.
-   * Antes aparecían siempre que había datos históricos en Dexie, lo que
-   * era ruidoso en refresh en frío.
-   */
   const [hasSavedInSession, setHasSavedInSession] = useState<boolean>(() =>
     readSessionSavedFlag(),
   )
 
-  // Discard confirmation: cuando el usuario intenta salir con datos en memoria.
   const [discardOpen, setDiscardOpen] = useState(false)
   const discardCallbackRef = useRef<(() => void) | null>(null)
 
-  /**
-   * Hay datos "sin guardar" si tenemos basicData o metrics cargados en
-   * memoria pero todavía no se persistió un record en Dexie. Esto es lo
-   * que dispara el indicador ámbar del header y la confirmación al descartar.
-   */
   const hasUnsavedFlowData = basicData != null || metrics != null
 
-  /**
-   * Resetea los datos en memoria pero MANTIENE los drafts en IndexedDB.
-   * Se usa al descartar (skip / Volver al inicio / home navegando). Los
-   * borradores siguen en DB para que el usuario pueda retomar.
-   *
-   * Solo `clearAllDrafts` se usa cuando el usuario explícitamente dice
-   * "Empezar de nuevo" desde el banner del Home.
-   */
   const navigate = useCallback((next: Page, opts?: { clearDrafts?: boolean }) => {
     if (next === 'home') {
       if (opts?.clearDrafts) {
@@ -82,7 +77,6 @@ function App() {
     void hasAnyDraft().then(setHasDraft)
   }, [])
 
-  // P1-5: hidratar al montar — última visita + nombre del cliente activo.
   useEffect(() => {
     void hasAnyDraft().then(setHasDraft)
     void getLatestRecordContext().then((ctx) => {
@@ -113,10 +107,6 @@ function App() {
   const handleBasicDataSubmit = useCallback(
     (data: BasicDataState) => {
       setBasicData(data)
-      // P0-1: NO borramos el draft básico aquí. El draft es la red de
-      // seguridad del usuario y debe sobrevivir a F5, cierre de pestaña y
-      // navegación "atrás". Solo se borra cuando el record se guarda OK
-      // en handleResultsSaved.
       navigate('metrics')
     },
     [navigate],
@@ -137,12 +127,9 @@ function App() {
       setLastVisitDays(0)
       setBasicData(null)
       setMetrics(null)
-      // P0-2: el record se persistió OK → ya no hacen falta los borradores.
       void clearDraftByKey(DRAFT_KEY_BASIC)
       void clearDraftByKey(DRAFT_KEY_METRICS)
       void hasAnyDraft().then(setHasDraft)
-      // Marcar la sesión como "guardada al menos una vez" para habilitar
-      // el CTA "Ver mi historial" en el Home mientras la pestaña siga viva.
       setHasSavedInSession(true)
       writeSessionSavedFlag()
       navigate('home')
@@ -156,12 +143,6 @@ function App() {
     }
   }, [activeClientId, navigate])
 
-  // P1-3 / P1-4: navegación con protección de datos + indicador.
-  /**
-   * Pide ir al inicio. Si hay datos sin guardar en memoria, abre el
-   * DiscardConfirmDialog; el callback de éxito (`onConfirmed`) solo se
-   * ejecuta cuando el usuario acepta descartar.
-   */
   const requestGoHome = useCallback(() => {
     const performGoHome = () => navigate('home', { clearDrafts: true })
     if (hasUnsavedFlowData) {
@@ -184,16 +165,43 @@ function App() {
     next?.()
   }, [])
 
-  // Para llamar desde header/logo: equivalente a requestGoHome.
   const handleHeaderGoHome = useCallback(() => {
     requestGoHome()
   }, [requestGoHome])
+
+  const openAdmin = useCallback(() => {
+    // Si hay datos sin guardar, pedimos descartar antes de entrar al
+    // admin. Mantener consistencia con cualquier otra navegación.
+    if (hasUnsavedFlowData) {
+      discardCallbackRef.current = () => setPage('admin')
+      setDiscardOpen(true)
+      return
+    }
+    setPage('admin')
+  }, [hasUnsavedFlowData])
+
+  const closeAdmin = useCallback(() => {
+    setPage('home')
+  }, [])
+
+  // Cuando estamos en el admin, NO renderizamos el Header de la app
+  // cliente (el admin trae su propio header con su propia navegación).
+  // El admin no debería tener el indicador de "datos sin guardar"
+  // porque está fuera del flujo de captura.
+  if (page === 'admin') {
+    return (
+      <Suspense fallback={<AdminSkeleton />}>
+        <AdminApp onClose={closeAdmin} />
+      </Suspense>
+    )
+  }
 
   return (
     <ToastProvider>
       <Header
         onGoHome={handleHeaderGoHome}
         hasUnsavedData={hasUnsavedFlowData}
+        onOpenAdmin={openAdmin}
       />
       <main className="flex-1">
         {page === 'home' && (

@@ -1,5 +1,6 @@
 import { db, initSchema } from '@/db/schema'
 import { combineName, normalizeName } from '@/lib/name'
+import { calculateAge } from '@/lib/age'
 import type { Client, Record } from '@/types'
 
 /**
@@ -180,6 +181,130 @@ export async function getLatestRecordContext(): Promise<LatestRecordContext | un
 export async function deleteRecord(id: number): Promise<void> {
   await ensureReady()
   await db.records.delete(id)
+}
+
+/**
+ * Actualiza un cliente preservando `id`, `normalizedName` (recalculado a
+ * partir de los nuevos nombre/apellido) y `createdAt`. El resto de los
+ * campos se reemplaza con los provistos.
+ *
+ * Si el nombre cambia, también se re-deriva `normalizedName` para que
+ * el matching por tripleta siga funcionando.
+ */
+export async function updateClient(
+  id: number,
+  input: Omit<CreateClientInput, 'age'>,
+): Promise<void> {
+  await ensureReady()
+  const normalized = normalizeName(
+    combineName(input.firstName, input.lastName1, input.lastName2),
+  )
+  const age = calculateAge(input.birthDate)
+  await db.clients.update(id, {
+    firstName: input.firstName,
+    lastName1: input.lastName1,
+    lastName2: input.lastName2,
+    normalizedName: normalized,
+    birthDate: input.birthDate,
+    age,
+    gender: input.gender,
+    heightCm: input.heightCm,
+    wristContexture: input.wristContexture,
+  })
+}
+
+/**
+ * Actualiza un record (medición) existente. `id` y `clientId` se
+ * preservan; la fecha se mantiene (no se toca: representa cuándo se
+ * tomó la medición, no cuándo se editó).
+ */
+export async function updateRecord(
+  id: number,
+  input: Omit<CreateRecordInput, never>,
+): Promise<void> {
+  await ensureReady()
+  await db.records.update(id, {
+    weight: input.weight,
+    bmi: input.bmi,
+    bodyFatPct: input.bodyFatPct,
+    muscleMassPct: input.muscleMassPct,
+    calories: input.calories,
+    bioAge: input.bioAge,
+    visceralFat: input.visceralFat,
+    notes: input.notes,
+  })
+}
+
+/**
+ * Snapshot completo de un cliente + sus records. Usado por el admin
+ * para ofrecer undo tras un delete (Fase 8): guardamos el snapshot
+ * en memoria, esperamos 5s, y si no hubo undo, restauramos desde el
+ * snapshot si fue necesario.
+ */
+export interface ClientSnapshot {
+  client: Client
+  records: Record[]
+}
+
+export async function getClientSnapshot(
+  clientId: number,
+): Promise<ClientSnapshot | undefined> {
+  await ensureReady()
+  const client = await db.clients.get(clientId)
+  if (!client) return undefined
+  const records = await db.records
+    .where('clientId')
+    .equals(clientId)
+    .toArray()
+  return { client, records }
+}
+
+/**
+ * Restaura un cliente y todos sus records a partir de un snapshot.
+ * Se usa tras un undo del delete en el admin. Genera nuevos IDs para
+ * evitar colisiones con PKs (en el caso muy raro de que la PK ya
+ * hubiera sido reusada por otro insert).
+ */
+export async function restoreClientSnapshot(
+  snapshot: ClientSnapshot,
+): Promise<number> {
+  await ensureReady()
+  return db.transaction('rw', db.clients, db.records, async () => {
+    const { id: _oldId, ...clientFields } = snapshot.client
+    const newClientId = (await db.clients.add({
+      ...clientFields,
+      createdAt: new Date(),
+    })) as number
+    for (const rec of snapshot.records) {
+      const { id: _rid, clientId: _oldClientId, ...recFields } = rec
+      await db.records.add({
+        ...recFields,
+        clientId: newClientId,
+      })
+    }
+    return newClientId
+  })
+}
+
+export interface AdminStats {
+  clientCount: number
+  recordCount: number
+  /** Fecha del record más reciente, o null si no hay ninguno. */
+  lastRecordAt: Date | null
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  await ensureReady()
+  const [clientCount, recordCount, latest] = await Promise.all([
+    db.clients.count(),
+    db.records.count(),
+    getLatestRecord(),
+  ])
+  return {
+    clientCount,
+    recordCount,
+    lastRecordAt: latest ? latest.date : null,
+  }
 }
 
 export async function deleteClient(id: number): Promise<void> {
