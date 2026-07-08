@@ -10,54 +10,67 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.8.0-fase8
+**Estado al cierre de este hito:** v0.8.0-fase8 (con 3 refinamientos posteriores)
 
-**Última fase completada:** ✅ Fase 8 — Panel de administración (login bcrypt + CRUD + búsqueda + danger zone + notas por medición)
+**Última fase completada:** ✅ Fase 8 — Panel de administración (login bcrypt + CRUD + búsqueda + notas por medición). Refinamientos: (1) contraseña para borrar cliente, (2) simplificación a barrera única, (3) **Zona Peligrosa eliminada y diferida**.
 
 **Próxima fase por hacer:** ⏭️ Fase 9 — PWA (instalable, offline, service worker)
 
 ---
 
-### 📌 Checkpoint — Julio 2026 (Fase 8 cerrada)
+### 📌 Checkpoint — Julio 2026 (Fase 8 cerrada + 3 refinamientos)
 
 **Sesión del 2026-07-08 (cerrada):**
 
-Fase 8 completa — panel de admin funcional con lazy load, autenticación local, CRUD de clientes y mediciones, búsqueda, danger zone y notas por medición.
+Fase 8 completa (panel de admin) + 3 refinamientos posteriores en la misma sesión:
 
-**Tags pusheados:**
-- `pre-fase8-2026-07-08` (en `262e939`, punto de partida)
-- `v0.8.0-fase8` (en el commit de cierre, admin completo)
+1. **`f0d28f4` — `fix(admin)`** — Agregar contraseña al borrar un cliente (doble barrera: tipeo del nombre + reingreso de contraseña).
+2. **`ac57d83` — `refactor(admin)`** — Simplificar `DeleteClientDialog` a barrera única (solo contraseña). El tipeo del nombre agregaba fricción sin valor real de seguridad.
+3. **commit nuevo — `refactor(admin)`** — **Eliminar la Zona Peligrosa (wipe total)**, diferida para una fase futura. Se removieron `AdminDangerZonePage`, `WipeAllDialog` y todas las claves i18n `admin.wipe.*` + `admin.actions.dangerZone`. `clearAllData` y `getAdminStats` siguen en `repo.ts` por si se retoman.
 
-**Métricas:**
-- Tests: 146 → 173 verde (+27 nuevos: 14 auth + 6 undo + 7 admin/repo)
+**Tag pusheado:**
+- `v0.8.0-fase8` (en `16c75cd`, cierre de Fase 8 — NO se mueve con los refinamientos)
+- `pre-fase8-2026-07-08` (en `262e939`, fin de v0.7.3)
+
+**Métricas (al cierre de la sesión):**
+- Tests: 146 → 173 verde (+27 nuevos en Fase 8: 14 auth + 6 undo + 7 admin/repo)
 - Typecheck: 0 errores
-- Build: OK, 1.16 MB main + 55.6 kB admin (lazy-loaded, no se descarga hasta que se hace click en "Admin")
-- Archivos nuevos: 13 (5 admin pages, 4 componentes, 3 auth, 1 hook)
-- Archivos modificados: 8 (i18n ES+EN, App, Header, MetricsForm, ResultsPage, HistoryPage, schema)
+- Build: OK, 1.165 MB main + **51.05 kB admin** (bajó -4.5 kB tras quitar la danger zone) — lazy-loaded, no se descarga hasta click en "Admin"
+- Archivos nuevos: 13 (5 admin pages, 4 componentes, 3 auth, 1 hook) → tras refactor: 11 (-2 archivos borrados: `AdminDangerZonePage`, `WipeAllDialog`)
+- Archivos modificados: 8 → 11 (+ refinamientos: AdminApp, DeleteClientDialog, i18n)
 
-**Decisiones clave:**
-- Login con bcryptjs (10 rounds) + comparación contra `VITE_ADMIN_PASSWORD` (sin hashear en disco). Cumple `PLAN §8` ("PIN admin local — filtro básico").
-- Sesión admin en `sessionStorage` (muere al cerrar pestaña) — decidido siguiendo `NN/g User Control & Freedom` y `PLAN §8`.
+**Decisiones clave de la sesión completa:**
+- Login con bcryptjs (10 rounds) + comparación contra `VITE_ADMIN_PASSWORD` (sin hashear en disco). Cumple `PLAN §8`.
+- Sesión admin en `sessionStorage` (muere al cerrar pestaña) — `PLAN §8`.
 - Lockout tras 3 intentos fallidos (30s) en `sessionStorage`.
-- Búsqueda con `useDeferredValue` (React 18) en lugar de `setTimeout` — typing fluido sin debounce manual.
-- Eliminar medición = undo 5s, sin modal previo (patrón NN/g: "ofrecer undo > pedir confirmación genérica"). Implementado con `UndoToastProvider` global.
-- Eliminar cliente = doble barrera: modal con tipeo del nombre (patrón Mailchimp, NN/g) + undo 5s.
-- Wipe total = triple barrera: tipeo "BORRAR TODO" + reingreso de contraseña + botón destructive. Sin undo (no recuperable).
-- Code splitting del admin vía `React.lazy` (cumple `PLAN §9` "admin lazy-loaded").
-- Notas por medición activadas (campo `notes?: string` que ya existía en el modelo desde Fase 2, ver `PLAN.md §4`).
+- Búsqueda con `useDeferredValue` (React 18) en lugar de `setTimeout` — typing fluido.
+- Eliminar medición = undo 5s, sin modal previo (NN/g).
+- **Eliminar cliente = contraseña única** (tras refinamiento) + undo 5s. Más simple que tipeo + contraseña, igualmente seguro.
+- ~~Wipe total = triple barrera~~ — **diferido** (refinamiento #3). `clearAllData` queda en repo.ts.
+- Code splitting del admin vía `React.lazy` (cumple `PLAN §9`).
+- Notas por medición activadas (campo `notes?: string` que ya existía en el modelo desde Fase 2).
 - Snapshots para undo vía `getClientSnapshot()` + `restoreClientSnapshot()` (transacción Dexie atómica).
 
+**Escalera de gravedad final del admin:**
+
+| Acción | Barrera | Undo |
+|---|---|---|
+| Borrar 1 medición | — | Sí (5s) |
+| Borrar 1 cliente | Contraseña de admin | Sí (5s) |
+| ~~Borrar todo (wipe)~~ | ~~DIFERIDO~~ | ~~No~~ |
+
 **Patrones de UX aplicados (de la investigación pre-fase):**
-- **NN/g Confirmation Dialogs** → ofrecimos undo en lugar de confirmaciones genéricas para acciones reversibles.
-- **NN/g User Control & Freedom** → siempre hay "emergency exit"; el header de admin tiene logout explícito.
-- **Mailchimp pattern** → tipeo del nombre como barrera para acciones destructivas.
-- **Notion / Airtable** → delete individual con undo en toast, sin modal previo.
-- **Kent C. Dodds — State colocation** → el state del undo vive en el provider global solo para el admin; el resto del state se levanta solo donde se necesita.
+- **NN/g Confirmation Dialogs** → ofrecemos undo en lugar de confirmaciones genéricas.
+- **NN/g User Control & Freedom** → "emergency exit" siempre visible.
+- **Mailchimp pattern** → re-autenticación (contraseña) para acciones destructivas.
+- **Notion / Airtable** → delete individual con undo en toast.
+- **Kent C. Dodds — State colocation** → provider global solo en admin.
 
 **Pendiente para próximas sesiones:**
 - Validar visualmente el admin en el celular.
 - Decidir si Fase 9 (PWA) arranca o si hay más polish pendiente.
-- Considerar roles/permisos si en el futuro se comparte el dispositivo entre profesionales (hoy es single-user por diseño).
+- **Re-evaluar la Zona Peligrosa**: ¿se reactiva? ¿se reemplaza por export-then-wipe? ¿se difiere permanentemente?
+- Considerar roles/permisos si en el futuro se comparte el dispositivo.
 
 **Para retomar:**
 ```bash
@@ -289,13 +302,14 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** commit de cierre de Fase 8
-- **Tag más reciente:** `v0.8.0-fase8` (Fase 8 cerrada el 2026-07-08)
+- **Último commit:** refinamiento #3 (commit nuevo que elimina la Zona Peligrosa)
+- **Tag más reciente:** `v0.8.0-fase8` (Fase 8 cerrada el 2026-07-08; NO se mueve con refinamientos)
 - **Snapshot pre-sesión:** `pre-fase8-2026-07-08` (en `262e939`, fin de v0.7.3)
-- **Tests:** 173 pasando (146 previos + 27 nuevos en admin: 14 auth + 6 undo + 7 admin/repo)
+- **Tests:** 173 verde (sin cambios en refinamientos)
 - **Typecheck:** 0 errores
-- **Build de producción:** OK (`dist/` generado, ~1.16 MB JS principal / gzip 374 kB + 55.6 kB chunk admin lazy-loaded / gzip 18.3 kB)
+- **Build de producción:** OK (`dist/` generado, ~1.165 MB JS principal / gzip 374 kB + **51.05 kB** chunk admin lazy-loaded / gzip 17.5 kB — bajó -4.5 kB tras quitar la danger zone)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
+- **Diferido para fase futura:** Zona Peligrosa (wipe total). `clearAllData` y `getAdminStats` siguen en `repo.ts` listos para retomarse.
 
 ---
 
@@ -1990,3 +2004,88 @@ package.json                                  # +bcryptjs, +@types/bcryptjs, +ha
 
 - **PWA**: service worker, manifest, installable, offline. Ver `PLAN §10`.
 - **APK con Capacitor**: wrap del build web en APK Android compartible por WhatsApp. Ver `PLAN §10`.
+
+---
+
+## Refinamientos post-Fase 8 (commits `f0d28f4`, `ac57d83`, y nuevo)
+
+**Fecha:** Julio 2026
+**Estado:** ✅ Aplicado sobre el tag `v0.8.0-fase8`
+
+Estos son 3 refinamientos detectados en la misma sesión de validación de la Fase 8. **El tag NO se mueve** — son iteraciones del mismo milestone, mismo patrón que `v0.6.1-fase6-hotfix` y `v0.7.1-fase7-refinement`.
+
+### 1. `f0d28f4` — `fix(admin)`: pedir contraseña para eliminar un cliente
+
+**Síntoma reportado (feedback del product owner):** *"Quiero que al momento de eliminar un cliente en el admin y me pida alguna contraseña. Sea con la misma contraseña del admin."*
+
+**Antes:** el `DeleteClientDialog` solo pedía tipear el nombre completo del cliente (patrón Mailchimp). Sin verificación de identidad.
+
+**Después:** doble barrera — tipeo del nombre (ya estaba) + re-ingreso de la contraseña de admin (nuevo).
+
+**Implementación:**
+- `DeleteClientDialog.tsx`: estado `password` + `passwordError` + `handleConfirm` async que valida con `getAdminPasswordFromEnv()` + `hashPassword()` + `verifyPassword()`.
+- Botón "Eliminar definitivamente" deshabilitado hasta que AMBAS barreras (name matches + password filled) pasen.
+- Validación on-submit (no on-keystroke) — bcrypt es caro (~80ms).
+- Reutiliza `admin.login.error` para el mensaje de error.
+- Nueva clave i18n `admin.deleteClient.passwordLabel` (ES + EN).
+
+**Justificación:** aunque el admin ya está logueado, esta acción borra un cliente + todos sus records (cascade). Re-autenticar cubre el caso de pestaña abierta y otra persona sentada a usarla — mismo patrón que `sudo mode` en Linux/macOS.
+
+**Consistencia:** reusa el mismo patrón de validación de `WipeAllDialog` (bcrypt). Las dos acciones destructivas del admin ahora comparten la misma mecánica.
+
+---
+
+### 2. `ac57d83` — `refactor(admin)`: simplificar DeleteClientDialog a barrera única (contraseña)
+
+**Síntoma reportado (feedback del product owner):** *"Quiero que se pueda eliminar solo con la contraseña del admin."*
+
+**Decisión:** quitar el tipeo del nombre. Mantener solo la contraseña.
+
+**Justificación:** el tipeo del nombre agregaba fricción sin valor real de seguridad. Alguien con la contraseña ya tiene autorización; tipear también el nombre es ruido visual. La contraseña es la barrera que importa.
+
+**Implementación:**
+- `DeleteClientDialog.tsx`: elimina el `typed` state, el `nameMatches` check, y el input del nombre. `canSubmit` ahora es solo `passwordFilled && !submitting`. El `inputRef` apunta al input de contraseña (foco automático).
+- `i18n`: se eliminan `admin.deleteClient.typePrompt`, `.placeholder` y `.mismatch` (ya no se referencian).
+
+**Escalera de gravedad resultante (consistente):**
+
+| Acción | Barrera | Undo |
+|---|---|---|
+| Borrar 1 medición | — | Sí (5s) |
+| Borrar 1 cliente | Contraseña | Sí (5s) |
+| ~~Borrar todo (wipe)~~ | ~~Token + contraseña~~ | ~~No~~ |
+
+Las tres acciones siguen un patrón coherente: **contraseña = autorización**, **undo = red de seguridad para errores recuperables**.
+
+**Patrón:** consistente con la convención de la industria (Linear, Notion, GitHub) — para borrar un solo recurso, una sola barrera fuerte (contraseña) es suficiente. La triple barrera queda reservada para acciones verdaderamente catastróficas (wipe total) si se retoman en el futuro.
+
+---
+
+### 3. Commit nuevo — `refactor(admin)`: eliminar la Zona Peligrosa (diferido)
+
+**Síntoma reportado (feedback del product owner):** *"Elimina la parte de Zona Peligrosa. Más adelante agregaremos esto."*
+
+**Decisión:** remover completamente la página de Zona Peligrosa y todos sus componentes. Diferir para una fase futura (cuando se evalúe de nuevo la necesidad real).
+
+**Implementación:**
+- `src/admin/AdminApp.tsx`: quitar import de `AdminDangerZonePage`, botón "Zona peligrosa" del header, variante `'danger'` del tipo `AdminRoute`, y la rama `route.kind === 'danger'`.
+- `git rm src/admin/pages/AdminDangerZonePage.tsx` (79 líneas borradas).
+- `git rm src/admin/components/WipeAllDialog.tsx` (195 líneas borradas).
+- `src/i18n/es.json` y `src/i18n/en.json`: eliminar bloque `admin.wipe.*` (8 claves por idioma) y `admin.actions.dangerZone`.
+
+**Lo que se mantiene intacto:**
+- `clearAllData()` en `src/db/repo.ts` — sigue exportado por si se retoma.
+- `getAdminStats()` en `src/db/repo.ts` — lo sigue usando `AdminStatsHeader`.
+- Toda la lógica de auth, CRUD, búsqueda, undo, notas — sin cambios.
+
+**Métricas del refactor:**
+- Bundle del admin: 55.6 kB → **51.05 kB** (-4.5 kB, -0.7 kB gzip).
+- Líneas eliminadas: 274 (WipeAllDialog + AdminDangerZonePage) + ~50 (i18n + AdminApp).
+- Typecheck: 0 errores · Tests: 173 verde · Build: OK.
+
+**Justificación (documentada para retomar):**
+- La Zona Peligrosa (wipe total) era la única acción global destructiva. Sin una necesidad concreta hoy, ocupa UI y código que se pueden simplificar.
+- Si en el futuro se necesita de nuevo, el patrón está documentado en este archivo y los helpers `clearAllData` / `getAdminStats` siguen listos.
+- Alternativas a explorar cuando se retome: (a) wipe simple con contraseña, (b) export-then-wipe (reusa motor de Fase 7), (c) audit log local de últimas 50 acciones, (d) acceso detrás de un toggle "modo avanzado".
+
+**Tag:** `v0.8.0-fase8` **NO se mueve**. Este es un refinement del mismo milestone, no un nuevo tag (mismo patrón que `v0.6.1-fase6-hotfix`).
