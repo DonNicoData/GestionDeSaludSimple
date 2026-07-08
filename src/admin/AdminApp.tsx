@@ -4,7 +4,6 @@ import { useAdminAuth } from '@/admin/hooks/useAdminAuth'
 import { AdminLoginPage } from '@/admin/pages/AdminLoginPage'
 import { AdminListPage } from '@/admin/pages/AdminListPage'
 import { AdminClientDetailPage } from '@/admin/pages/AdminClientDetailPage'
-import { AdminDangerZonePage } from '@/admin/pages/AdminDangerZonePage'
 import { Button } from '@/components/shared/Button'
 import { ConfirmDialog } from '@/admin/components/ConfirmDialog'
 import { UndoToastProvider } from '@/admin/components/UndoToast'
@@ -12,7 +11,6 @@ import { UndoToastProvider } from '@/admin/components/UndoToast'
 type AdminRoute =
   | { kind: 'list' }
   | { kind: 'detail'; clientId: number }
-  | { kind: 'danger' }
 
 export interface AdminAppProps {
   onClose: () => void
@@ -26,12 +24,15 @@ export interface AdminAppProps {
  * - Routing por state, no por URL: la app no usa router. Mantener todo
  *   en el mismo estilo de navegación de fases previas.
  * - El admin vive en una "página" completa, no en un modal. Decidido
- *   porque el alcance (lista, búsqueda, edición, danger zone) es
- *   demasiado para un modal.
+ *   porque el alcance (lista + detalle) es demasiado para un modal.
  * - `onClose` lleva al usuario de vuelta a la app cliente, no al home
  *   necesariamente (App.tsx decide).
  * - El `UndoToastProvider` envuelve toda la app autenticada para que
  *   el patrón de undo de 5s esté disponible en cualquier flujo.
+ * - **Refinamiento 2026-07-08**: se quitó la "Zona peligrosa" (wipe
+ *   total). Decidido diferir esa acción para una fase futura; la
+ *   página completa + dialog se eliminaron del código. `clearAllData`
+ *   y `getAdminStats` siguen en repo.ts por si se retoman.
  */
 export function AdminApp({ onClose }: AdminAppProps): ReactNode {
   const { t } = useTranslation()
@@ -80,14 +81,6 @@ export function AdminApp({ onClose }: AdminAppProps): ReactNode {
             <div className="flex items-center gap-1">
               <Button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setRoute({ kind: 'danger' })}
-              >
-                {t('admin.actions.dangerZone')}
-              </Button>
-              <Button
-                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setLogoutConfirmOpen(true)}
@@ -110,9 +103,6 @@ export function AdminApp({ onClose }: AdminAppProps): ReactNode {
               clientId={route.clientId}
               onBack={() => setRoute({ kind: 'list' })}
             />
-          )}
-          {route.kind === 'danger' && (
-            <AdminDangerZonePage onBack={() => setRoute({ kind: 'list' })} />
           )}
         </main>
 

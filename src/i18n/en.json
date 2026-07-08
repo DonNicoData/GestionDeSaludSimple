@@ -408,7 +408,6 @@
       "view": "View",
       "edit": "Edit",
       "delete": "Delete",
-      "dangerZone": "Danger zone",
       "back": "Back",
       "save": "Save",
       "cancel": "Cancel",
@@ -440,19 +439,6 @@
       "submit": "Delete",
       "cancel": "Cancel",
       "undo": "Measurement from {{date}} undone"
-    },
-    "wipe": {
-      "title": "Erase all data",
-      "subtitle": "This deletes ALL clients, measurements, and drafts. It cannot be undone.",
-      "stats_one": "{{clients}} client and {{records}} measurement will be erased.",
-      "stats_other": "{{clients}} clients and {{records}} measurements will be erased.",
-      "typePrompt": "To confirm, type DELETE ALL in uppercase:",
-      "placeholder": "DELETE ALL",
-      "passwordLabel": "Re-enter the admin password:",
-      "submit": "Erase everything permanently",
-      "cancel": "Cancel",
-      "typeMismatch": "You must type DELETE ALL exactly.",
-      "success": "All data was erased."
     },
     "undoToast": {
       "action": "Undo",

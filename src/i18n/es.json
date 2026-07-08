@@ -408,7 +408,6 @@
       "view": "Ver",
       "edit": "Editar",
       "delete": "Eliminar",
-      "dangerZone": "Zona peligrosa",
       "back": "Volver",
       "save": "Guardar",
       "cancel": "Cancelar",
@@ -440,19 +439,6 @@
       "submit": "Eliminar",
       "cancel": "Cancelar",
       "undo": "Medición del {{date}} deshecha"
-    },
-    "wipe": {
-      "title": "Borrar todos los datos",
-      "subtitle": "Esta acción elimina TODOS los clientes, mediciones y borradores. No se puede deshacer.",
-      "stats_one": "Se va a borrar {{clients}} cliente y {{records}} medición.",
-      "stats_other": "Se van a borrar {{clients}} clientes y {{records}} mediciones.",
-      "typePrompt": "Para confirmar, escribí BORRAR TODO en mayúsculas:",
-      "placeholder": "BORRAR TODO",
-      "passwordLabel": "Volvé a ingresar la contraseña de admin:",
-      "submit": "Borrar todo definitivamente",
-      "cancel": "Cancelar",
-      "typeMismatch": "Tenés que escribir BORRAR TODO exactamente.",
-      "success": "Todos los datos fueron eliminados."
     },
     "undoToast": {
       "action": "Deshacer",
