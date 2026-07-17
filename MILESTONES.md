@@ -10,11 +10,82 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.8.0-fase8 (con 3 refinamientos posteriores)
+**Estado al cierre de este hito:** v0.8.1-admin-buttons (post-fase8 polish)
 
-**Última fase completada:** ✅ Fase 8 — Panel de administración (login bcrypt + CRUD + búsqueda + notas por medición). Refinamientos: (1) contraseña para borrar cliente, (2) simplificación a barrera única, (3) **Zona Peligrosa eliminada y diferida**.
+**Última fase completada:** ✅ Fase 8 — Panel de administración (login bcrypt + CRUD + búsqueda + notas por medición) + refinamiento de botones destructivos (variant centralizado)
 
 **Próxima fase por hacer:** ⏭️ Fase 9 — PWA (instalable, offline, service worker)
+
+---
+
+### 📌 Checkpoint — Julio 2026 (post-fase8 polish: colores de admin + bug de cascade)
+
+**Sesión del 2026-07-17 (cerrada):**
+
+Sesión de refinamiento visual y bugfix estructural. No cierra una fase, deja v0.8.0 más pulido.
+
+**Cambios funcionales (5 archivos):**
+
+1. **`Button.tsx`** — Nuevo variant `destructive` que encapsula `bg-alert-dark text-white hover:bg-alert-darker shadow-soft hover:shadow-card`. Patrón simétrico al `primary` (verde). Reemplaza todos los usos previos con `className="!bg-alert-dark..."`.
+
+2. **`tailwind.config.js`** — Paleta suma:
+   - `alert-dark: '#DC2626'` (Tailwind red-600) — vive red, contraste 5.7:1 con blanco (AA)
+   - `alert-darker: '#B91C1C'` (Tailwind red-700) — hover, contraste 5.5:1 (AA)
+
+3. **`AdminClientDetailPage.tsx`** (2 botones) — "Editar" y "Editar datos" usan `variant` default (primary, bg-info override). "Eliminar" (por medición) y "Eliminar cliente" (bottom) usan `variant="destructive"`. **Cero `!important` en código de feature.**
+
+4. **`DeleteClientDialog.tsx` + `ConfirmDialog.tsx`** — Submit del modal con contraseña y el variant condicional del ConfirmDialog usan `variant="destructive"`/`"primary"` directamente.
+
+5. **`AdminStatsHeader.tsx`** — Bugfix: el header de KPIs (clientes / mediciones / última fecha) mostraba **skeleton con `animate-pulse` para siempre** en el admin list. Causa: `AdminListPage` pasaba `stats={null}` y el `useEffect` lo interpretaba como "ya tengo stats" (`null !== undefined`), nunca fetcheaba. Fix: distinguir `null` de `undefined` en el effect.
+
+**Tag pusheado:**
+- `v0.8.1-admin-buttons` (en `609c73d`)
+- `pre-fase9-2026-07-17` (mismo commit, para rollback target)
+
+**Métricas:**
+- Tests: 173/173 verde (sin cambios, bugfix sin tests añadidos por ser visual)
+- Typecheck: 0 errores
+- Build: OK
+- Archivos modificados: 7 (1 shared, 1 config, 5 admin)
+
+**Decisiones de arquitectura de la sesión:**
+
+| Decisión | Razón |
+|---|---|
+| `variant="destructive"` en Button | Patrón idiomático React. Encapsula `!important` a nivel del componente, no en features. |
+| CSS generado SIN `!important` (`.bg-alert-dark` puro) | Los variants de Button emiten las clases en el mismo string, sin cascade竞争. |
+| Brighter red (#DC2626) en vez de #B91C1C | Referencia visual del usuario pidió "vivo y saturado". #DC2626 matchea el rojo típico de admin templates (Bootstrap danger-like). |
+| NO agregamos `bg-alert-darker` para hover al palette previo | Cada color sigue con patrón `-dark`/-darker` simétrico a `info`/`info-dark`. |
+
+**Bug histórico investigado (no es código):**
+
+**"Los clientes desaparecen al reabrir cloudflared"** — NO es bug del código, es comportamiento esperado:
+- IndexedDB se aísla por origen (scheme+host+port, [MDN Same-origin policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy#cross-origin_data_storage_access))
+- Cloudflare **Quick Tunnel** genera un subdominio aleatorio nuevo (`*.trycloudflare.com`) cada vez que se reinicia `cloudflared`
+- Cada subdominio = origen distinto = IndexedDB vacío para el navegador
+- Los datos **siguen ahí** (en el origen viejo que ya no visitás), no se borraron
+
+**Workarounds documentados en MILESTONES.md (sección Cloudflare Tunnel):**
+1. Misma WiFi + IP local: gratis, sin tunnel. Origen estable.
+2. Cloudflare Pages / Vercel / Netlify: gratis, deploy. URL fija.
+3. Cloudflare Named Tunnel: gratis pero requiere dominio propio.
+4. ngrok paid plan: ~$8/mes, subdominio fijo.
+
+Recomendación: hacer deploy a Cloudflare Pages antes de seguir con Fase 9 (PWA), para evitar este problema en dev prolongado.
+
+**Pendiente para próximas sesiones:**
+- Validar visualmente el admin en el celular después del refactor de botones
+- Decidir si arranca Fase 9 (PWA) o hay más polish pendiente
+- Considerar `safelist` en `tailwind.config.js` para blindar contra HMR flaky de Tailwind JIT al agregar colores nuevos al palette
+- **Re-evaluar la Zona Peligrosa**: ¿se reactiva? ¿se reemplaza por export-then-wipe? ¿se difiere permanentemente?
+- Resolver el problema de origen (deploy o alternativa) antes de extender el dev por tunnel
+
+**Para retomar:**
+```bash
+./scripts/run.sh sync    # sincroniza repo a Windows
+./scripts/run.sh dev     # levanta el server en localhost:5173
+./scripts/run.sh test    # corre los 173 tests
+```
 
 ---
 
@@ -267,6 +338,7 @@ https://football-technician-valuable-tel.trycloudflare.com
 - La URL es **temporal**: muere al cerrar cloudflared. Cada vez genera una URL nueva.
 - Es **pública**: cualquiera con el link puede entrar. Apto para testeo, no para producción.
 - Cada dispositivo tiene su propio IndexedDB — los datos no se comparten entre quien pruebe.
+- ⚠️ **Cada subdominio de `trycloudflare.com` también es un origen distinto.** Si reabrís cloudflared, el navegador genera un subdominio aleatorio nuevo (`abc.trycloudflare.com` → `xyz.trycloudflare.com`). Al ser orígenes diferentes según la [Same-Origin Policy](https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy#cross-origin_data_storage_access), cada uno tiene su propio almacén. **Los datos no se borraron: están en el origen viejo que ya no visitás.** Para que sobrevivan, hace falta un origen estable (deploy en Cloudflare Pages/Vercel/Netlify, ngrok paid con subdominio fijo, o Cloudflare Named Tunnel con dominio propio).
 - Para detener: `Ctrl+C` en la PowerShell de cloudflared.
 
 ### Crear nuevo hito (cuando se cierra una fase)
