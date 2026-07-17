@@ -47,11 +47,7 @@ export function AdminListPage({ onOpenClient, onBack }: AdminListPageProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <AdminStatsHeader
-        variant="filled"
-        stats={null}
-        onRefresh={refresh}
-      />
+      <AdminStatsHeader variant="filled" onRefresh={refresh} />
       <ClientSearchBar value={search} onChange={setSearch} />
       {items.length === 0 ? (
         <div className="rounded-2xl border border-divider bg-white p-6 text-center flex flex-col gap-3">

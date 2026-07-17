@@ -169,11 +169,11 @@ export function DeleteClientDialog({
           </Button>
           <Button
             type="button"
+            variant="destructive"
             size="md"
             onClick={handleConfirm}
             disabled={!canSubmit}
             fullWidth
-            className="bg-alert hover:bg-alert/90 text-white"
           >
             {submitting ? t('common.saving') : t('admin.deleteClient.submit')}
           </Button>

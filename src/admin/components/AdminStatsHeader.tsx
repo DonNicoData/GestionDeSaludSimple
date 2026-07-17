@@ -4,6 +4,11 @@ import { getAdminStats, type AdminStats } from '@/db/repo'
 
 interface AdminStatsHeaderProps {
   variant: 'filled' | 'empty'
+  /**
+   * Stats ya calculados por el padre. Si se omite, el componente las
+   * busca por su cuenta vía `getAdminStats()`. Pasar `null` se trata
+   * igual que omitir (se considera "el padre no las tiene listas").
+   */
   stats?: AdminStats | null
   onRefresh?: () => void
 }
@@ -12,6 +17,15 @@ interface AdminStatsHeaderProps {
  * Header con KPIs del admin: total clientes, total mediciones, fecha
  * del último record. Una sola pasada vía `getAdminStats()` (3 queries
  * paralelas internamente).
+ *
+ * Regla de fetch:
+ * - `stats` omitido o `null` → el componente busca solo (caso normal).
+ * - `stats` con un objeto → se usa tal cual (caso lifted-state del
+ *   padre, ej. cuando ya cargó la lista y quiere evitar una query
+ *   extra).
+ *
+ * El refresco manual (botón ⟳) bumpea `tick` para volver a fetchear
+ * incluso cuando el padre pasa stats pre-calculadas.
  */
 export function AdminStatsHeader({
   variant,
@@ -19,12 +33,14 @@ export function AdminStatsHeader({
   onRefresh,
 }: AdminStatsHeaderProps) {
   const { t } = useTranslation()
-  const [stats, setStats] = useState<AdminStats | null>(statsProp ?? null)
+  const [stats, setStats] = useState<AdminStats | null>(
+    statsProp && typeof statsProp === 'object' ? statsProp : null,
+  )
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
     if (variant === 'empty') return
-    if (statsProp !== undefined) {
+    if (tick === 0 && statsProp && typeof statsProp === 'object') {
       setStats(statsProp)
       return
     }
