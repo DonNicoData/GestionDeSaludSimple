@@ -205,10 +205,10 @@ export function AdminClientDetailPage({
           </h2>
           <Button
             type="button"
-            variant="ghost"
             size="sm"
             onClick={() => setEditClientOpen(true)}
             disabled={isSoftDeleted}
+            className="!bg-info hover:!bg-info-dark"
           >
             {t('admin.detail.editClient')}
           </Button>
@@ -282,18 +282,17 @@ export function AdminClientDetailPage({
                   <div className="flex items-center gap-1">
                     <Button
                       type="button"
-                      variant="ghost"
                       size="sm"
                       onClick={() => setEditRecord(rec)}
+                      className="!bg-info hover:!bg-info-dark"
                     >
                       {t('admin.actions.edit')}
                     </Button>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteRecord(rec)}
-                      className="text-alert hover:bg-alert/10"
                     >
                       {t('admin.actions.delete')}
                     </Button>
@@ -307,11 +306,10 @@ export function AdminClientDetailPage({
 
       <Button
         type="button"
-        variant="outline"
+        variant="destructive"
         size="md"
         onClick={() => setDeleteClientOpen(true)}
         fullWidth
-        className="text-alert border-alert/40 hover:bg-alert/10 hover:border-alert"
         disabled={isSoftDeleted}
       >
         {t('admin.detail.deleteClient')}

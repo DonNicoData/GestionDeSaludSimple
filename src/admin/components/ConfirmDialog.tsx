@@ -96,10 +96,10 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
+            variant={destructive ? 'destructive' : 'primary'}
             size="md"
             onClick={onConfirm}
             fullWidth
-            className={destructive ? 'bg-alert hover:bg-alert/90 text-white' : ''}
           >
             {confirmLabel || t('admin.actions.confirm')}
           </Button>
