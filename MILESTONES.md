@@ -10,11 +10,11 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.10.0-fase10 (scaffold)
+**Estado al cierre de este hito:** v0.10.0-fase10 (build verificado)
 
-**Última fase completada:** ✅ Fase 9 — PWA instalable + offline (Web App Manifest + Service Worker con Workbox + íconos 192/512/maskable/iOS) — tag `v0.9.0-fase9`
+**Última fase completada:** ✅ Fase 10 — APK Android con Capacitor (toolchain WSL + build OK) — tag `v0.10.0-fase10`
 
-**Fase actual:** 🚧 Fase 10 — APK Android con Capacitor (scaffold listo, falta compilar el APK con Android Studio o SDK)
+**Próxima fase por hacer:** ⏭️ Fase 11 — Polish final (reemplazar íconos Capacitor, smoke test APK, opcional: deploy PWA a host permanente)
 
 ---
 
@@ -2471,3 +2471,96 @@ Capacitor carga la PWA desde `https://localhost` dentro del WebView. Los service
 - **iOS / Xcode.** Capacitor también lo soporta, pero requiere macOS. Queda fuera hasta que haya un Mac disponible (o se haga vía CI con un runner macOS, fuera del scope de Fase 10).
 - **Publicar en Play Store.** Solo se genera el APK debug; release firmado y publicación son Fase 10.5 / 11 si se prioriza.
 - **Notificaciones push / deep links / plugins nativos.** No son necesarios para v1.0.
+
+### Update: build verificado ✅
+
+En este commit también se verificó el build completo del APK. Se instaló el toolchain nativo en WSL (sin sudo, todo en `~/`):
+
+| Pieza | Versión | Ubicación |
+|---|---|---|
+| JDK | Temurin 21.0.5 LTS | `~/jdk-21/` |
+| Android cmdline-tools | 11076708 | `~/android-sdk/cmdline-tools/latest/` |
+| platform-tools | 37.0.0 | `~/android-sdk/platform-tools/` |
+| platforms | android-35 | `~/android-sdk/platforms/android-35/` |
+| build-tools | 35.0.0 | `~/android-sdk/build-tools/35.0.0/` |
+
+**Build output:**
+
+```
+BUILD SUCCESSFUL in 56s
+85 actionable tasks: 50 executed, 35 up-to-date
+```
+
+**APK generado:** `android/app/build/outputs/apk/debug/app-debug.apk` — **4.5 MB**
+
+```
+package: com.salud.siete.parametros
+versionCode: 1
+versionName: 1.0
+minSdkVersion: 23 (Android 6.0)
+targetSdkVersion: 35 (Android 15)
+application-label: Salud 7
+```
+
+**Contenido del APK (verificado con `unzip -l`):**
+- `assets/public/index.html`, `sw.js`, `workbox-*.js`, `manifest.webmanifest`
+- `assets/public/assets/*` (todos los JS/CSS bundleados)
+- `assets/public/icons/{pwa-192,pwa-512,pwa-maskable-512,apple-touch}.png`
+- `assets/capacitor.config.json` con `androidScheme: https` (clave para que el SW funcione en el WebView)
+
+### Caveat del primer build
+
+El primer `gradlew assembleDebug` falló porque **Capacitor 7.6.8 requiere JDK 21** (no 17). Se descargó Temurin 21 y se reintentó. El build OK con JDK 21. Esto queda documentado para la próxima vez:
+
+```bash
+# SIEMPRE usar JDK 21, no 17
+export JAVA_HOME=~/jdk-21
+```
+
+### Caveat del WSL UNC path
+
+El `npx cap add android` directo desde WSL falló por el bug de UNC paths (mismo problema que `run.sh` documenta). Workaround aplicado: invocar el binario de Capacitor directamente con `node.exe` de Windows:
+
+```bash
+/mnt/c/Program\ Files/nodejs/node.exe \
+  /home/nico/projects/GestionDeSaludSimple/node_modules/@capacitor/cli/bin/capacitor \
+  add android
+```
+
+Si surge de nuevo, está la receta en este milestone.
+
+### Comandos para rebuildear (receta)
+
+```bash
+# 1. Setear env vars (siempre, en cada sesión nueva de WSL)
+export JAVA_HOME=~/jdk-21
+export PATH=$JAVA_HOME/bin:$PATH
+export ANDROID_HOME=~/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# 2. Build de la PWA
+cd /home/nico/projects/GestionDeSaludSimple
+./scripts/run.sh build
+
+# 3. Sincronizar dist/ a WSL
+rsync -a --delete /mnt/c/Users/User/projects_tmp/salud/dist/ dist/
+
+# 4. Sincronizar al proyecto Android (esto re-copia dist/ a android/app/src/main/assets/public/)
+/mnt/c/Program\ Files/nodejs/node.exe \
+  /home/nico/projects/GestionDeSaludSimple/node_modules/@capacitor/cli/bin/capacitor \
+  sync android
+
+# 5. Build del APK
+cd android
+./gradlew assembleDebug
+
+# 6. APK queda en: app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Pendiente real de Fase 10 / entrada a Fase 11
+
+1. **Reemplazar íconos y splash defaults de Capacitor** por los de la PWA (hoja verde de `public/icons/pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512x512.png`). Hoy el APK tiene los placeholders de Capacitor.
+2. **Smoke test en el celular real** (Android): `adb install app-debug.apk`, abrir, validar standalone + offline + íconos.
+3. **Decidir deploy permanente de la PWA** (Cloudflare Pages, surge, GitHub Pages) para tener un link público estable en vez del `localtunnel` temporal.
+
+Estos 3 puntos son los que quedan para cerrar Fase 10 / arrancar Fase 11.
