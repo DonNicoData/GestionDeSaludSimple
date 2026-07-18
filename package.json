@@ -1,7 +1,7 @@
 {
   "name": "salud-en-7-parametros",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.10.0",
   "type": "module",
   "description": "Aplicación local (PWA + APK) para registrar y dar seguimiento a 7 métricas de salud con visualización por semáforo.",
   "scripts": {
@@ -10,9 +10,14 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cap:sync": "cap sync",
+    "cap:open:android": "cap open android",
+    "android:build": "npm run build && cap sync && cd android && ./gradlew assembleDebug",
+    "android:install": "cd android && ./gradlew installDebug"
   },
   "dependencies": {
+    "@capacitor/core": "^7.6.8",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "dexie": "^4.0.10",
@@ -27,6 +32,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.6.8",
+    "@capacitor/cli": "^7.6.8",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.12",
