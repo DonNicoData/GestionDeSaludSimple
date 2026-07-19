@@ -56,9 +56,8 @@ jobs:
           bundler-cache: true
 
       - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
+        working-directory: ios/App
+        run: pod install
 
       - name: Build .app (iphonesimulator, unsigned)
         working-directory: ios
