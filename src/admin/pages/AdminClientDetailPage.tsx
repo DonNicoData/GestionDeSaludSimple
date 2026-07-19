@@ -273,6 +273,9 @@ export function AdminClientDetailPage({
                     <p className="text-xs text-graphite/60">
                       {rec.weight} kg · IMC {rec.bmi} · {rec.bodyFatPct}% grasa
                     </p>
+                    <p className="text-xs text-graphite/60">
+                      {rec.muscleMassPct}% músculo · {rec.calories} kcal · {rec.bioAge} años · {rec.visceralFat} visceral
+                    </p>
                     {rec.notes && (
                       <p className="text-xs text-graphite/70 mt-1 italic">
                         “{rec.notes}”
