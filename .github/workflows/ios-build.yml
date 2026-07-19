@@ -25,6 +25,9 @@ on:
       - 'vite.config.ts'
       - '.github/workflows/ios-build.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -33,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -99,13 +104,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Crear/resetear rama ipa-dist basada en main
-          git checkout -B ipa-dist origin/main
+          # Switch to ipa-dist (create if missing) on top of current HEAD
+          git checkout ipa-dist 2>/dev/null || git checkout -b ipa-dist
 
-          # Copiar el .ipa en un subdirectorio
+          # Remove the .ipa we may have committed before so we don't accumulate
+          rm -rf dist-ipa
           mkdir -p dist-ipa
           cp "$IPA_PATH" dist-ipa/app.ipa
 
           git add dist-ipa/app.ipa
-          git commit -m "ci: upload .ipa (run ${{ github.run_number }})" || echo "nothing to commit"
+          git commit -m "ci: upload .ipa (run ${{ github.run_number }})"
           git push origin ipa-dist --force
