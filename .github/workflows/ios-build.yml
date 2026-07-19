@@ -89,3 +89,23 @@ jobs:
           path: ios/build/Build/Products/Debug-iphonesimulator/App.ipa
           retention-days: 30
           if-no-files-found: error
+
+      - name: Publish .ipa to ipa-dist branch
+        env:
+          IPA_PATH: ios/build/Build/Products/Debug-iphonesimulator/App.ipa
+        run: |
+          cd ${{ github.workspace }}
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Crear/resetear rama ipa-dist basada en main
+          git checkout -B ipa-dist origin/main
+
+          # Copiar el .ipa en un subdirectorio
+          mkdir -p dist-ipa
+          cp "$IPA_PATH" dist-ipa/app.ipa
+
+          git add dist-ipa/app.ipa
+          git commit -m "ci: upload .ipa (run ${{ github.run_number }})" || echo "nothing to commit"
+          git push origin ipa-dist --force
