@@ -10,11 +10,113 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.10.0-fase10 (build verificado)
+**Estado al cierre de este hito:** v0.11.0-fase11 (iOS scaffold + CI build verde)
 
-**Última fase completada:** ✅ Fase 10 — APK Android con Capacitor (toolchain WSL + build OK) — tag `v0.10.0-fase10`
+**Última fase completada:** ✅ Fase 11 — iOS scaffold + GitHub Actions workflow publicando `.ipa` en rama `ipa-dist` (sin firmar, corre en simulator o vía AltStore) — tag `v0.11.0-fase11`
 
-**Próxima fase por hacer:** ⏭️ Fase 11 — Polish final (reemplazar íconos Capacitor, smoke test APK, opcional: deploy PWA a host permanente)
+**Próxima fase por hacer:** ⏭️ Fase 12 — Reemplazar íconos iOS default + (opcional) signing para App Store o releases firmados con Apple Developer Account
+
+---
+
+### 📌 Checkpoint — Sesión del 2026-07-19 (cierre Fase 10 polish + Fase 11 iOS scaffold)
+
+**Trabajo hecho en esta sesión (no commiteado aún como milestone al tag, ver bloque inferior):**
+
+#### Fase 10 — Polish
+1. **Reemplazo de íconos Android (hoja verde)**:
+   - `android/app/src/main/res/values/ic_launcher_background.xml`: fondo `#FFFFFF` → `#4CAF7C` (matchea PWA)
+   - 15 PNGs nuevos generados: `ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png` × 5 densidades (mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi)
+   - Script nuevo: `scripts/generate-android-icons.mjs` (idempotente, rerunnable)
+   - Foreground SVG fuente: `scripts/leaf-foreground.svg` (solo la hoja, sin rect verde, fondo transparente)
+   - Genera desde `public/icons/leaf-source.svg` (master)
+2. **Preview de mediciones con 2da línea** (`src/admin/pages/AdminClientDetailPage.tsx:273-277`):
+   - Antes: 1 línea con `weight · IMC · bodyFatPct`
+   - Ahora: 2 líneas — la 1ra igual + 2da con `muscleMassPct% músculo · calories kcal · bioAge años · visceralFat visceral`
+
+#### Fase 11 — iOS scaffold + CI
+1. **Dependencia nueva**: `@capacitor/ios@^7.6.8` (en `dependencies`)
+2. **Config iOS**: `capacitor.config.ts` ahora tiene bloque `ios: { contentInset: 'automatic', backgroundColor: '#FAF8F5' }`
+3. **Scripts nuevos en `package.json`**: `cap:sync:ios`, `cap:open:ios`, `ios:build`
+4. **Carpeta `ios/`** generada con `npx cap add ios` (committeada al repo — Capacitor docs lo recomienda):
+   - `ios/App/App.xcodeproj/`, `ios/App/App.xcworkspace/`, `ios/App/Podfile`, `ios/App/App/AppDelegate.swift`, `ios/App/App/Assets.xcassets/` (con slots de íconos y splash vacíos)
+   - `ios/App/App/public/` bundle web syncronizado vía `npx cap sync ios`
+5. **GitHub Actions workflow** (`.github/workflows/ios-build.yml`):
+   - Trigger: push a main (con cambios relevantes) o manual (`workflow_dispatch`)
+   - Runner: `macos-latest`, Node 21, Ruby 3.2, CocoaPods
+   - Steps: install deps → `npm run build` → `npx cap sync ios` → `pod install` → `xcodebuild -sdk iphonesimulator` (sin firma) → package `.ipa` → upload artifact + publicar a rama `ipa-dist`
+   - Permisos: `contents: write` (para pushear a `ipa-dist`)
+   - Tiempo: ~3 min con caches; primer build ~10-15 min
+6. **Publicación del `.ipa`**:
+   - URL raw: `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa`
+   - Tamaño: ~2 MB
+   - **Sin firmar**: solo corre en Xcode Simulator (necesita Mac) o vía AltStore (gratis, refresh cada 7 días desde PC/Mac con AltServer)
+   - MD5 cambia en cada build
+
+#### Bugfixes descubiertos y resueltos en la sesión
+
+1. **Bug de `npm ci` en CI**: lockfile no estaba sincronizado con `@capacitor/ios`. Resuelto committeando `package-lock.json` regenerado.
+2. **Bug de `pod install` path**: `Podfile` está en `ios/App/Podfile` (no `ios/Podfile`). Resuelto con `working-directory: ios/App`.
+3. **Bug de permissions para push**: GITHUB_TOKEN default es read-only. Resuelto con `permissions: contents: write` a nivel de workflow.
+4. **Bug de checkout de rama nueva**: `git checkout -B ipa-dist origin/main` fallaba en shallow clone. Resuelto con `git checkout ipa-dist 2>/dev/null || git checkout -b ipa-dist`.
+5. **Bug de `dist/` desactualizado en WSL** (descubierto durante validación interna del cambio de preview):
+   - `./scripts/run.sh build` sincroniza `src/` WSL → Windows path, ejecuta Vite allá, deja el bundle nuevo en `/mnt/c/Users/User/projects_tmp/salud/dist/`
+   - Pero el `python3 -m http.server` local sirve `/home/nico/.../dist/` (WSL), que quedaba con el bundle viejo
+   - Solución aplicada: `rsync -a --delete /mnt/c/Users/User/projects_tmp/salud/dist/ /home/nico/projects/GestionDeSaludSimple/dist/` después del build
+   - **Recomendación a futuro**: agregar este rsync inverso al wrapper `scripts/run.sh build` para que no haya que acordarse manualmente. Issue abierta.
+
+#### Servicios de prueba levantados en la sesión (a matar cuando se termine)
+
+- `python3 -m http.server 5173 --bind 0.0.0.0` (PID 2269) — sirve `dist/` para testing local
+- `ssh -R 80:localhost:5173 nokey@serveo.net` (PID 3063) — tunnel HTTPS público
+  - URL pública: `https://f8bb3c107a0db82b-64-43-50-9.serveousercontent.com`
+  - **Probado y funcionando** en iPad y Android del product owner
+  - ⚠️ Subdominio aleatorio: si se mata y se relanza cambia la URL
+
+#### Artefactos publicados
+
+| Asset | URL | MD5 (al cierre de sesión) |
+|---|---|---|
+| APK Android | `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/apk-dist/app-debug.apk` | `ec6fc4d04e2476dd3c1f825220a12065` (4.96 MB) |
+| IPA iOS | `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa` | `d893ac04d3591a2c874dd6e32c535548` (2.07 MB) |
+
+Ambos artefactos se rebuildean automáticamente en cada push a main (APK requiere build manual local; IPA via GitHub Actions).
+
+#### Commits nuevos (todos pusheados)
+
+```
+55bca48 fix(ci): permissions contents:write + checkout robusto en rama nueva
+74f1ccc ci(ios): publicar .ipa en rama ipa-dist (descarga sin auth)
+4f7554d fix(ci): pod install corre desde ios/App (donde está el Podfile)
+1c7a949 chore(deps): regenerar package-lock.json con @capacitor/ios
+f0a3b9b feat(fase11): iOS scaffold + GitHub Actions workflow para .ipa
+dfce083 feat(fase10): hoja verde en launcher Android + 2da línea en preview de mediciones
+```
+
+#### Pendiente real para Fase 12+
+
+1. **Reemplazar íconos iOS default** (slots ya preparados en `ios/App/App/Assets.xcassets/AppIcon.appiconset/`). Mismo enfoque que Android: PNGs hoja verde en todas las densidades que pide iOS (20/29/40/58/60/76/87/120/152/167/180/1024).
+2. **Splash iOS personalizado** (slots en `ios/App/App/Assets.xcassets/Splash.imageset/`).
+3. **Signing + notarization** para App Store (solo con Apple Developer Account):
+   - Agregar secrets al repo: `APPLE_TEAM_ID`, `APPLE_CERT_P12_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64`, `APPLE_APP_STORE_CONNECT_API_KEY`
+   - Modificar el workflow para usar `xcodebuild ... -allowProvisioningUpdates` + `xcrun altool` para subir a App Store Connect
+4. **Fix del rsync inverso**: agregar al script `scripts/run.sh build` el paso `rsync -a --delete /mnt/c/Users/User/projects_tmp/salud/dist/ dist/` para que `dist/` de WSL siempre quede sincronizado. Issue menor pero molesta.
+5. **Cleanup**: matar `python3 -m http.server` (PID 2269) y `ssh serveo.net` (PID 3063) cuando se decida cerrar el entorno de testing.
+6. **Commit del MILESTONES** + tag `v0.11.0-fase11` (este commit).
+7. **Deploy permanente de la PWA** (Cloudflare Pages, surge, GitHub Pages) para evitar el subdominio aleatorio del tunnel cada vez que se relanza.
+
+#### Próxima sesión — orden sugerido
+
+1. Re-leer este checkpoint
+2. Decidir si se quiere cerrar Fase 11 con tag o seguir a Fase 12 directamente
+3. Si se va a iOS: agregar íconos + splash iOS primero (es lo más visible)
+4. Si se va a Web: deploy permanente de la PWA
+5. El bugfix del rsync inverso da igual cuándo se haga, es interno
+
+#### Contexto WSL/Python para retomar
+
+- En WSL, **no hay node** (`/usr/bin/node` no existe). Solo está en `/mnt/c/Program Files/nodejs/node.exe`. Por eso `scripts/run.sh` invoca node.exe de Windows desde WSL, con sync previo.
+- El bundle siempre queda en `/mnt/c/Users/User/projects_tmp/salud/dist/` después de `./scripts/run.sh build`. Hay que rsyncearlo a WSL antes de servirlo localmente con python.
+- GitHub Actions funciona bien con ~3 min de build para iOS después de los primeros cachés.
 
 ---
 
