@@ -5,6 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Salud 7',
   webDir: 'dist',
   bundledWebRuntime: false,
+  ios: {
+    contentInset: 'automatic',
+    backgroundColor: '#FAF8F5',
+  },
   android: {
     allowMixedContent: false,
     backgroundColor: '#FAF8F5',

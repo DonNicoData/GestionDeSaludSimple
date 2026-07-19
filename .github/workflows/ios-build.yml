@@ -1,0 +1,92 @@
+name: Build iOS (.ipa)
+
+# Genera el .ipa debug (sin firmar) en un runner macOS.
+# Resultado: simulator build (corre en Xcode Simulator o se puede sideload
+# con AltStore). No requiere Apple Developer Account para este flujo.
+#
+# Trigger:
+#   - Manual desde la pestaña Actions (workflow_dispatch)
+#   - Automático en push a main cuando cambian archivos relevantes
+#
+# Tiempo: ~10-15 min en la primera corrida (instala Xcode + CocoaPods).
+# Runs subsiguientes con cache: ~3-5 min.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.ts'
+      - 'vite.config.ts'
+      - '.github/workflows/ios-build.yml'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Sync assets to iOS
+        run: npx cap sync ios
+
+      - name: Setup Ruby (for CocoaPods)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build .app (iphonesimulator, unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tail -50
+
+      - name: Package .ipa
+        working-directory: ios/build/Build/Products/Debug-iphonesimulator
+        run: |
+          mkdir -p Payload
+          cp -r App.app Payload/
+          zip -r App.ipa Payload
+          ls -lh App.ipa
+
+      - name: Upload .ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: salud-7-ipa
+          path: ios/build/Build/Products/Debug-iphonesimulator/App.ipa
+          retention-days: 30
+          if-no-files-found: error
