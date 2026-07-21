@@ -10,11 +10,87 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.11.0-fase11 (iOS scaffold + CI build verde + PWA deploy workflow + APK v0.11.0 actualizado)
+**Estado al cierre de este hito:** v0.12.0-fase12 (íconos y splash iOS hoja verde)
 
-**Última fase completada:** ✅ Fase 11 — iOS scaffold + GitHub Actions workflow publicando `.ipa` en rama `ipa-dist` (sin firmar, corre en simulator o vía AltStore/Sideloadly) + workflow de deploy PWA a GitHub Pages + APK Android rebuildeado y publicado vía jsDelivr — tag `v0.11.0-fase11`
+**Última fase completada:** ✅ Fase 12 — Reemplazo de íconos iOS default (Apple/blank) por hoja verde #4CAF7C + splash iOS personalizado (fondo verde + hoja) — tag `v0.12.0-fase12`
 
-**Próxima fase por hacer:** ⏭️ Fase 12 — Reemplazar íconos iOS default + splash iOS personalizado (mismo enfoque que Android: hoja verde con `scripts/generate-ios-icons.mjs`)
+**Próxima fase por hacer:** ⏭️ Fase 13 — Signing + notarization para App Store (requiere Apple Developer Account USD 99/año) — o alternativamente, polish extra / nuevas features / bugfixes / deploy permanente de PWA en GitHub Pages
+
+---
+
+### 📌 Checkpoint — Sesión del 2026-07-21 (cierre de Fase 12: íconos iOS hoja verde)
+
+**Sesión motivada por:** El usuario pidió pasar a Fase 12 después del cierre real de Fase 11. Continúa el flujo de la sesión del mismo día (cierre real de Fase 11 documentado en el checkpoint siguiente).
+
+#### Trabajo hecho en esta fase
+
+1. **Reemplazo de íconos iOS default** (los de Capacitor que vienen con el template):
+   - Slot usado: `AppIcon-512@2x.png` (1024x1024, formato moderno Xcode 14+)
+   - Diseño: fondo verde `#4CAF7C` + hoja blanca `#FAF8F5` centrada, igual que la PWA
+   - Generado desde `public/icons/leaf-source.svg` (master) con `sharp`
+   - Script nuevo: `scripts/generate-ios-icons.mjs` (idempotente, rerunnable, 1 file + 4 assets)
+
+2. **Splash iOS personalizado**:
+   - 3 imágenes PNG de 2732x2732: `splash-2732x2732{,-1,-2}.png`
+   - Diseño: fondo `#4CAF7C` sólido + hoja blanca centrada, mismo SVG fuente
+   - Sobreescriben los placeholders default de Capacitor (que eran verde uniforme sin hoja)
+
+3. **Validación visual del IPA publicado**:
+   - Workflow `ios-build.yml` se disparó con el push a `main` → completó en 2m 12s ✓
+   - IPA nuevo en `ipa-dist/dist-ipa/app.ipa`, MD5 `aaa2229b0627ac3b1e13b5bebaa4f66a` (1.90 MB)
+   - Extracción con `yauzl` + análisis con `sharp`: `AppIcon60x60@2x.png` extraído por Xcode desde `AppIcon-512@2x.png`
+   - **Distribución de pixeles del ícono**:
+     - 80.5% verde `#4CAF7C` (fondo)
+     - 8.4% blanco `#FAF8F5` (hoja)
+     - 2.9% transparente (esquinas redondeadas)
+     - resto: bordes anti-aliasing
+   - **Conclusión**: ícono correcto, hoja verde ✓
+   - Splash verificado indirectamente: `Assets.car` (135 KB) contiene la imagen compilada; `LaunchScreen.storyboardc` la referencia por nombre
+
+#### Archivos modificados/creados
+
+```
+scripts/generate-ios-icons.mjs                                              (nuevo, 77 líneas)
+ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png          (modificado, 41 KB)
+ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png            (modificado, 187 KB)
+ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png          (modificado, 187 KB)
+ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png          (modificado, 187 KB)
+```
+
+#### Commits nuevos
+
+```
+0a1eda8 feat(fase12): íconos y splash iOS hoja verde (#4CAF7C)
+```
+
+Tag: `v0.12.0-fase12` (en `0a1eda8`).
+
+#### Decisiones de la sesión
+
+| Decisión | Razón |
+|---|---|
+| Solo 1 slot de ícono (`AppIcon-512@2x.png`) en vez de los 13+ slots legacy | Xcode 14+ usa asset catalog moderno con un solo PNG de 1024×1024 que se auto-escala a todas las densidades; los slots individuales de iPhone/iPad/etc son legacy |
+| Splash en 3 archivos idénticos de 2732×2732 | Convención de Capacitor (1x/2x/3x); los 3 son la misma imagen para máxima compatibilidad |
+| `sharp` con SVG inline para el splash (no raster→resize) | Más rápido y mantiene bordes nítidos al escalar; SVG del splash incluye el `transform="rotate(-45)"` igual que la hoja fuente |
+| No modificar `LaunchScreen.storyboard` (que ya referencia "Splash") | El storyboard ya apuntaba a una imagen llamada "Splash" del `Splash.imageset` — solo fue necesario regenerar los PNGs del imageset |
+
+#### Pendiente para Fase 13+ (opcional)
+
+1. **Signing + notarization para App Store** (requiere Apple Developer Account USD 99/año):
+   - Modificar `ios-build.yml` para build con `-sdk iphoneos` + code signing con Apple ID
+   - Agregar secrets al repo: `APPLE_TEAM_ID`, `APPLE_CERT_P12_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_PROVISIONING_PROFILE_BASE64`, `APPLE_APP_STORE_CONNECT_API_KEY`
+   - Para TestFlight o App Store: usar `xcrun altool` o `xcrun notarytool`
+2. **Fix del rsync inverso** en `scripts/run.sh build` (issue menor pero molesta de WSL/Windows)
+3. **Cleanup de servicios de testing**: matar `python3 -m http.server` (PID 2020) y `ssh serveo.net` (PID 2047) cuando se decida cerrar el entorno
+4. **Activar GitHub Pages** en Settings (1 click) para que `https://DonNicoData.github.io/GestionDeSaludSimple/` quede permanente
+
+#### Artefactos publicados al cierre de Fase 12
+
+| Asset | URL | MD5 | Tamaño |
+|---|---|---|---|
+| IPA iOS (v0.12 con íconos verdes) | `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa` | `aaa2229b0627ac3b1e13b5bebaa4f66a` | 1.90 MB |
+| APK Android (v0.11.0) | `https://cdn.jsdelivr.net/gh/DonNicoData/GestionDeSaludSimple@apk-dist/.apk-dist/app-debug.apk` | `72fa63f34a4210d3bb36e83c96b1606e` | 4.96 MB |
+| PWA bundle | `https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com` (serveo tunnel) | — | — |
 
 ---
 
