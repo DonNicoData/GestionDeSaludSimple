@@ -10,11 +10,113 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.11.0-fase11 (iOS scaffold + CI build verde)
+**Estado al cierre de este hito:** v0.11.0-fase11 (iOS scaffold + CI build verde + PWA deploy workflow + APK v0.11.0 actualizado)
 
-**Última fase completada:** ✅ Fase 11 — iOS scaffold + GitHub Actions workflow publicando `.ipa` en rama `ipa-dist` (sin firmar, corre en simulator o vía AltStore) — tag `v0.11.0-fase11`
+**Última fase completada:** ✅ Fase 11 — iOS scaffold + GitHub Actions workflow publicando `.ipa` en rama `ipa-dist` (sin firmar, corre en simulator o vía AltStore/Sideloadly) + workflow de deploy PWA a GitHub Pages + APK Android rebuildeado y publicado vía jsDelivr — tag `v0.11.0-fase11`
 
-**Próxima fase por hacer:** ⏭️ Fase 12 — Reemplazar íconos iOS default + (opcional) signing para App Store o releases firmados con Apple Developer Account
+**Próxima fase por hacer:** ⏭️ Fase 12 — Reemplazar íconos iOS default + splash iOS personalizado (mismo enfoque que Android: hoja verde con `scripts/generate-ios-icons.mjs`)
+
+---
+
+### 📌 Checkpoint — Sesión del 2026-07-21 (cierre real de Fase 11: deploy PWA + validación cross-device)
+
+**Sesión motivada por:** El usuario probó el link `.ipa` en su celular iOS y no funcionó. Análisis: el `.ipa` se generó con `-sdk iphonesimulator` + `CODE_SIGNING_ALLOWED=NO`, lo que produce un binario solo para simulator (x86_64/arm64-simulator), no instalable en iPhone real. iOS rechaza IPAs sin firmar y de simulator SDK.
+
+#### Trabajo hecho en esta sesión
+
+1. **Verificación de causa raíz del link iOS roto**:
+   - HTTP 200 en `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa` (2.07 MB, archivo válido)
+   - El link descarga OK, el archivo es un IPA válido (contiene `Payload/App.app/`, `AppIcon60x60@2x.png`, `Info.plist`)
+   - **Pero el contenido no se puede instalar en iPhone real**:
+     - SDK = `iphonesimulator` (en `.github/workflows/ios-build.yml:67`)
+     - Code signing = `CODE_SIGN_IDENTITY=""` + `CODE_SIGNING_ALLOWED=NO` (líneas 73-75)
+   - **Conclusión**: El IPA solo sirve para Xcode Simulator (necesita Mac) o para sideloading con re-firma (Sideloadly/AltStore, requiere PC/Mac)
+
+2. **Deploy permanente de la PWA vía GitHub Pages** (resolver problema del subdominio aleatorio de serveo):
+   - Workflow nuevo: `.github/workflows/deploy-pwa.yml`
+   - Estrategia: `peaceiris/actions-gh-pages@v4` (no requiere Pages habilitado de antemano)
+   - Trigger: push a main con cambios en `src/`, `public/`, `package.json`, configs
+   - Build: `npm ci && npm run build` → publica rama `gh-pages` con el contenido de `dist/`
+   - 2 runs OK (35s y 31s)
+   - **Pendiente del usuario**: 1 click en Settings → Pages → Branch: `gh-pages` para activar `https://DonNicoData.github.io/GestionDeSaludSimple/`
+
+3. **Rebuild del APK Android a v0.11.0** (incluye polish de Fase 10: íconos hoja verde + 2da línea preview):
+   - Build local: `./scripts/run.sh build` → `cap sync android` (vía Windows path por UNC issue) → `./gradlew assembleDebug`
+   - APK actualizado: `android/app/build/outputs/apk/debug/app-debug.apk`
+   - MD5 nuevo: `72fa63f34a4210d3bb36e83c96b1606e` (4.96 MB)
+   - Pusheado a rama `apk-dist` (en `.apk-dist/app-debug.apk`)
+   - **Workaround para cache de GitHub raw**: el viejo MD5 `ec6fc4d0...` se sigue sirviendo en `raw.githubusercontent.com/.../apk-dist/app-debug.apk` por cache (max-age=300)
+   - **URL alternativa sin cache**: `https://cdn.jsdelivr.net/gh/DonNicoData/GestionDeSaludSimple@apk-dist/.apk-dist/app-debug.apk` (jsDelivr siempre devuelve la versión actual del ref)
+
+4. **Entorno de validación inmediata activado** (testing HOY):
+   - HTTP server local: `python3 -m http.server 5173 --bind 0.0.0.0` (PID 2020) sirviendo `dist/`
+   - Tunnel serveo: `ssh -R 80:localhost:5173 nokey@serveo.net` (PID 2047)
+   - **URL pública serveo**: `https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com`
+   - Verificado: HTTP 200, manifest PWA correcto, iconos servidos
+
+#### Cómo validar (receta para retomar)
+
+**Laptop**:
+```
+https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com
+```
+o local: `http://localhost:5173/`
+
+**Android (2 opciones)**:
+- APK: descargar `https://cdn.jsdelivr.net/gh/DonNicoData/GestionDeSaludSimple@apk-dist/.apk-dist/app-debug.apk` → instalar (permitir origen desconocido) → abrir "Salud 7"
+- PWA: abrir URL serveo en Chrome mobile → menú ⋮ → "Agregar a pantalla de inicio"
+
+**iOS (sin Mac, sin pagar)**:
+- PWA: abrir URL serveo en **Safari** → botón compartir ↑ → "Añadir a pantalla de inicio" → aparece como app con icono propio
+- Sideloadly (alternativa con PC Windows): descargar Sideloadly → conectar iPhone USB → arrastrar `.ipa` viejo de `ipa-dist` → re-firma con Apple ID → ⚠️ caduca en 7 días
+
+**Para dejarlo 100% permanente**: Settings → Pages → Branch: `gh-pages` → Save → URL fija `https://DonNicoData.github.io/GestionDeSaludSimple/`
+
+#### Decisiones de la sesión
+
+| Decisión | Razón |
+|---|---|
+| `peaceiris/actions-gh-pages@v4` en vez de `actions/deploy-pages@v4` | El primero no requiere Pages habilitado de antemano; el segundo falla con `HttpError: Not Found` si Pages no está activo |
+| jsDelivr como CDN alternativo para el APK | El cache de `raw.githubusercontent.com` (max-age=300) sigue sirviendo el APK viejo; jsDelivr siempre sirve la versión actual del ref |
+| Rama `apk-dist/.apk-dist/app-debug.apk` (con punto al inicio) | El punto evita que GitHub Pages (cuando se active) interprete el archivo como página; sigue siendo descargable vía raw y jsDelivr |
+| No commitear cambios en `android/` generados por `cap sync` | Esos cambios son ruido (line endings, files con diff=0); solo importa el `app-debug.apk` final |
+
+#### Commits nuevos (todos pusheados)
+
+```
+ab204bf ci(pwa): usar peaceiris/actions-gh-pages (no requiere Pages habilitado)
+7ddad7e ci(pwa): deploy a GitHub Pages en push a main
+342549f build(android): APK debug v0.11.0 actualizado (md5 72fa63f3)
+```
+
+#### Servicios activos (a matar cuando se decida cerrar el entorno de testing)
+
+- `python3 -m http.server 5173 --bind 0.0.0.0` (PID 2020) — sirve `dist/`
+- `ssh -R 80:localhost:5173 nokey@serveo.net` (PID 2047) — tunnel HTTPS público
+- URL pública: `https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com`
+- ⚠️ Subdominio aleatorio: si se matan y se relanzan, cambia la URL. **Para URL fija: activar GitHub Pages**
+
+#### Artefactos publicados al cierre de sesión
+
+| Asset | URL | MD5 | Tamaño |
+|---|---|---|---|
+| APK Android (v0.11.0) | `https://cdn.jsdelivr.net/gh/DonNicoData/GestionDeSaludSimple@apk-dist/.apk-dist/app-debug.apk` | `72fa63f34a4210d3bb36e83c96b1606e` | 4.96 MB |
+| PWA bundle | `https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com` | (cambia en cada build) | — |
+| IPA iOS (viejo v0.10, sin polish Fase 10) | `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa` | `d893ac04d3591a2c874dd6e32c535548` | 2.07 MB |
+
+#### Contexto WSL/Python para retomar
+
+- En WSL, **no hay node** (`/usr/bin/node` no existe). Solo está en `/mnt/c/Program Files/nodejs/node.exe`. Por eso `scripts/run.sh` invoca node.exe de Windows desde WSL, con sync previo.
+- El bundle siempre queda en `/mnt/c/Users/User/projects_tmp/salud/dist/` después de `./scripts/run.sh build`. Hay que rsyncearlo a WSL antes de servirlo localmente con python.
+- Para Android: `source scripts/android-env.sh` antes de cualquier `gradlew`. Herramientas en `$HOME/jdk-21/` y `$HOME/android-sdk/`.
+- Para `cap sync android` desde WSL: falla por UNC paths. Hay que correrlo desde `/mnt/c/Users/User/projects_tmp/salud/` con `node.exe` de Windows, después rsync el resultado a WSL.
+
+#### Pendiente para Fase 12
+
+1. **Generar íconos iOS hoja verde** (`AppIcon-512@2x.png` de 1024x1024): mismo enfoque que Android, script `scripts/generate-ios-icons.mjs` que lee `public/icons/leaf-source.svg` y renderiza a 1024×1024 con `sharp`.
+2. **Generar splash iOS personalizado** (3 archivos `splash-2732x2732{,-1,-2}.png`): fondo `#4CAF7C` + hoja centrada.
+3. **Validar con nuevo workflow iOS** (push dispara build → verificar íconos en el nuevo IPA).
+4. (Opcional, requiere Apple Developer Account USD 99/año): signing + notarization para App Store.
 
 ---
 
