@@ -373,7 +373,8 @@
       "lockedPrefix": "Too many attempts. Try again in",
       "lockedSuffix": "s.",
       "backToApp": "Back to the app",
-      "noPasswordConfigured": "No password is configured. Check the .env file."
+      "noPasswordConfigured": "No password is configured. Check the .env file.",
+      "noPasswordConfiguredPages": "No password is configured in this build. If you own this site, add VITE_ADMIN_PASSWORD as a GitHub Secret and re-run the deploy-pwa.yml workflow."
     },
     "shell": {
       "title": "Admin panel",

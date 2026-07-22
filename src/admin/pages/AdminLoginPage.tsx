@@ -33,6 +33,14 @@ export function AdminLoginPage({
   )
   const locked = lockedSecondsRemaining > 0
 
+  // Detecta si la app corre en GitHub Pages para mostrar un mensaje de
+  // error accionable cuando falta la contraseña de admin. El secret
+  // VITE_ADMIN_PASSWORD vive en GitHub Secrets y se inyecta al build;
+  // si el build se hizo sin el secret, este branch se muestra.
+  const isHostedOnPages =
+    typeof window !== 'undefined' &&
+    /\.github\.io$/i.test(window.location.hostname)
+
   // Si el componente padre reporta un error (e.g. mismatch del login
   // previo), sincronizamos al state local. Si no, limpiamos.
   useEffect(() => {
@@ -114,7 +122,9 @@ export function AdminLoginPage({
 
           {localError === 'noPassword' && (
             <p role="alert" className="text-xs text-alert leading-relaxed">
-              {t('admin.login.noPasswordConfigured')}
+              {isHostedOnPages
+                ? t('admin.login.noPasswordConfiguredPages')
+                : t('admin.login.noPasswordConfigured')}
             </p>
           )}
 
