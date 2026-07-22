@@ -14,7 +14,7 @@ Convenciones de tags:
 
 **Última fase completada:** ✅ Fase 12 — Reemplazo de íconos iOS default (Apple/blank) por hoja verde #4CAF7C + splash iOS personalizado (fondo verde + hoja) — tag `v0.12.0-fase12`
 
-**Próxima fase por hacer:** ⏭️ Fase 13 — Signing + notarization para App Store (requiere Apple Developer Account USD 99/año) — o alternativamente, polish extra / nuevas features / bugfixes / deploy permanente de PWA en GitHub Pages
+**Próxima fase por hacer:** ⏭️ Deploy permanente PWA en GitHub Pages — receta completa paso a paso documentada en el checkpoint "Sesión 2026-07-22" más abajo (incluye fix de `base` en `vite.config.ts` + 1 click en Settings). Fase 13 (signing App Store) queda fuera de alcance por costo.
 
 ---
 
@@ -91,6 +91,110 @@ Tag: `v0.12.0-fase12` (en `0a1eda8`).
 | IPA iOS (v0.12 con íconos verdes) | `https://raw.githubusercontent.com/DonNicoData/GestionDeSaludSimple/ipa-dist/dist-ipa/app.ipa` | `aaa2229b0627ac3b1e13b5bebaa4f66a` | 1.90 MB |
 | APK Android (v0.11.0) | `https://cdn.jsdelivr.net/gh/DonNicoData/GestionDeSaludSimple@apk-dist/.apk-dist/app-debug.apk` | `72fa63f34a4210d3bb36e83c96b1606e` | 4.96 MB |
 | PWA bundle | `https://8443dc6b6c91fba1-64-43-50-35.serveousercontent.com` (serveo tunnel) | — | — |
+
+---
+
+### 📌 Checkpoint — Sesión del 2026-07-22 (receta GitHub Pages + siguiente paso)
+
+**Sesión motivada por:** el usuario eligió la opción 2 del cierre de Fase 12: en vez de pagar Apple Developer Account (USD 99/año) para Fase 13, hacer deploy permanente de la PWA en GitHub Pages + polish/features/bugfixes. Pidió que le dejara **anotada la receta paso a paso** para activar Pages por su cuenta, y que luego siga con el siguiente paso útil.
+
+**Lo único que se commitea en esta sesión** es este bloque documental en `MILESTONES.md` (sin cambios de código). La activación de Pages queda en manos del usuario.
+
+#### Receta paso a paso — Activar GitHub Pages permanente
+
+**Diagnóstico previo (importante):** la build actual de Vite usa rutas absolutas (`/assets/...`, `/favicon.svg`, etc.) porque no hay `base` configurado. Si activás Pages hoy sin tocar `vite.config.ts`, la app carga el HTML pero los assets dan 404 en `https://DonNicoData.github.io/GestionDeSaludSimple/`. Por eso la receta incluye el fix de `base` como **Paso 0** (obligatorio).
+
+##### Paso 0 — Agregar `base` a `vite.config.ts`
+
+Abrir `vite.config.ts` y agregar una línea `base: '/GestionDeSaludSimple/'` adentro del `defineConfig({...})`:
+
+```ts
+export default defineConfig({
+  base: '/GestionDeSaludSimple/',  // ← agregar esta línea
+  plugins: [react(), VitePWA({ ... })],
+  // ...resto igual
+})
+```
+
+**Por qué ese valor exacto:** GitHub Pages sirve este repo bajo el subpath `/GestionDeSaludSimple/` (nombre del repo, case-sensitive). El `base` le dice a Vite que prefije todos los assets con ese path en el HTML final.
+
+##### Paso 1 — Commit + push (dispara el workflow `deploy-pwa.yml`)
+
+```bash
+git add vite.config.ts
+git commit -m "build(pwa): base path /GestionDeSaludSimple/ para GitHub Pages"
+git push origin main
+```
+
+El workflow `.github/workflows/deploy-pwa.yml` se dispara automáticamente porque `vite.config.ts` está en sus `paths` (`MILESTONES.md:13`). Va a:
+1. Correr `npm ci && npm run build` (con el `base` nuevo, el `index.html` queda con paths `/GestionDeSaludSimple/assets/...`)
+2. Pushear el bundle a la rama `gh-pages` con `peaceiris/actions-gh-pages@v4`
+3. Tarda ~35s si hay cache de `node_modules`, ~3 min en frío
+
+Para verificar que corrió: https://github.com/DonNicoData/GestionDeSaludSimple/actions/workflows/deploy-pwa.yml → último run debe estar en verde ✓.
+
+##### Paso 2 — Activar Pages en GitHub Settings
+
+1. Ir a https://github.com/DonNicoData/GestionDeSaludSimple/settings/pages
+2. En **"Source"**:
+   - Branch: `gh-pages`
+   - Folder: `/ (root)`
+3. Click **"Save"**
+
+Esperar 1-2 minutos. GitHub publica:
+- **URL permanente**: `https://DonNicoData.github.io/GestionDeSaludSimple/`
+- HTTPS automático ✓
+- Re-deploy automático en cada push futuro a `main` que toque `src/`, `public/`, configs o el workflow mismo
+
+##### Paso 3 — Validar
+
+Abrir `https://DonNicoData.github.io/GestionDeSaludSimple/` en el celular:
+
+- **Safari iOS** → botón compartir ↑ → "Añadir a pantalla de inicio" → instalar PWA con icono hoja verde ✓
+- **Chrome Android** → menú ⋮ → "Instalar app" → ícono en launcher ✓
+- **Desktop** → barra de URL muestra ícono de "instalar" a la derecha → PWA installable ✓
+
+Sanity checks:
+- `view-source:` debe mostrar `<script src="/GestionDeSaludSimple/assets/...` (no `/assets/...`)
+- DevTools → Application → Service Workers debe mostrar el SW activo
+- DevTools → Application → Manifest debe mostrar `start_url: "/GestionDeSaludSimple/"` y los 3 íconos
+
+##### Paso 4 (opcional) — Limpiar servicios de testing
+
+Una vez validada la URL de GitHub Pages, podés matar:
+
+```bash
+# en WSL
+kill 2020   # python3 -m http.server (serveo)
+kill 2047   # ssh serveo.net
+```
+
+Confirmar que no queden con `ps aux | grep -E "http.server|serveo"`.
+
+##### Troubleshooting
+
+| Síntoma | Causa probable | Fix |
+|---|---|---|
+| Pantalla blanca, sin assets | Olvidaste el Paso 0 (`base`) | Agregar `base: '/GestionDeSaludSimple/'`, commit, push |
+| 404 en `/assets/...` | Mismo problema del paso 0 | Idem |
+| "There isn't a GitHub Pages site here" | Pages aún no activado (Paso 2) o rama `gh-pages` no existe | Esperar 1-2 min después del primer push; chequear `https://github.com/DonNicoData/GestionDeSaludSimple/branches` |
+| `force_orphan: true` borró commits viejos de `gh-pages` | Es el comportamiento esperado del workflow | No es problema — `gh-pages` solo contiene el bundle, no historial |
+| El SW no se actualiza en el celular | Cache del navegador | DevTools → Application → Service Workers → "Update on reload" + "Unregister"; o cerrar y reabrir la app instalada |
+
+#### Lo que NO se hace en esta sesión
+
+- **No se commitea el fix de `base` en `vite.config.ts`** — el usuario lo hace al seguir la receta (Paso 0).
+- **No se mata el http.server / serveo** — los sigue usando para testing en lo que decide el deploy.
+- **No se toca el workflow `deploy-pwa.yml`** — ya está configurado para funcionar apenas se commitee el `base`.
+
+#### Decisión de la sesión
+
+| Decisión | Razón |
+|---|---|
+| Documentar la receta en MILESTONES.md en vez de un README.md aparte | MILESTONES.md ya tiene el formato de "receta para retomar" que usamos en sesiones anteriores; un README separado se desactualizaría |
+| `base: '/GestionDeSaludSimple/'` hardcodeado (no dinámico) | El repo no se va a renombrar; ganar flexibilidad con `REPO_NAME` o import.meta.env complicaría el build sin necesidad |
+| Dejar el `base` fix al usuario y no hacerlo yo | El usuario pidió explícitamente "para hacerlo por mi cuenta"; además le sirve entender por qué hace falta (mejor ownership del deploy) |
+| No agregar un nuevo tag/milestone por esto | Es documentación de proceso, no un cierre de fase; un tag `v0.12.1-doc` sería ruido |
 
 ---
 
