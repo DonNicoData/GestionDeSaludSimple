@@ -40,6 +40,13 @@ case "$cmd" in
     sync_to_win
     cd "$PROJECT_WIN"
     "$NODE_WIN" node_modules/vite/bin/vite.js build "$@"
+    # Rsync inverso: Vite corre dentro de $PROJECT_WIN (path de Windows,
+    # porque node.exe nativo rompe con rutas UNC), entonces el bundle
+    # queda en $PROJECT_WIN/dist/. Si hay un http.server local sirviendo
+    # $PROJECT_ROOT/dist/ (WSL nativo), va a servir el bundle viejo.
+    # Traemos el dist nuevo de vuelta para que el server local lo vea.
+    rsync -a --delete "$PROJECT_WIN/dist/" "$PROJECT_ROOT/dist/" >/dev/null
+    echo "Bundle sincronizado a $PROJECT_ROOT/dist/"
     ;;
   dev)
     sync_to_win

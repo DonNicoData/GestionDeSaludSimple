@@ -196,6 +196,22 @@ Confirmar que no queden con `ps aux | grep -E "http.server|serveo"`.
 | Dejar el `base` fix al usuario y no hacerlo yo | El usuario pidió explícitamente "para hacerlo por mi cuenta"; además le sirve entender por qué hace falta (mejor ownership del deploy) |
 | No agregar un nuevo tag/milestone por esto | Es documentación de proceso, no un cierre de fase; un tag `v0.12.1-doc` sería ruido |
 
+#### Siguiente paso ejecutado en esta misma sesión: fix de rsync inverso en `scripts/run.sh build`
+
+**Issue abierta desde sesión 2026-07-19** (ver checkpoint "Fase 10 polish + Fase 11 iOS scaffold" más abajo, sección "Bugfixes descubiertos" punto 5): el comando `./scripts/run.sh build` corría Vite dentro del path de Windows (`$PROJECT_WIN`) pero el `python3 -m http.server` local sirve `dist/` desde el path de WSL nativo (`$PROJECT_ROOT`). Resultado: el bundle nuevo quedaba en `$PROJECT_WIN/dist/` mientras el server local servía el bundle viejo de `$PROJECT_ROOT/dist/`. Solución manual era acordarse de rsync-ear después.
+
+**Fix aplicado** (commit siguiente a este milestone):
+- `scripts/run.sh:39-50` — agregado `rsync -a --delete "$PROJECT_WIN/dist/" "$PROJECT_ROOT/dist/"` después del comando vite build
+- Echo final: `"Bundle sincronizado a $PROJECT_ROOT/dist/"` para feedback visual
+- Comentario explicando el porqué (paths WSL/Windows + UNC issue)
+- Sanity check con `rsync --dry-run` confirma que ambos `dist/` están en sync (no hay diff)
+
+**Por qué este fix como siguiente paso y no otra cosa**:
+- Era la única "issue abierta" explícitamente marcada en MILESTONES sin resolver
+- Cambio chico, autocontenido, sin riesgo de regresión (es solo un comando extra al final)
+- Beneficio inmediato cada vez que se hace un build local durante desarrollo
+- No depende de nada externo (no requiere GitHub, no requiere deploy)
+
 ---
 
 ### 📌 Checkpoint — Sesión del 2026-07-21 (cierre real de Fase 11: deploy PWA + validación cross-device)
