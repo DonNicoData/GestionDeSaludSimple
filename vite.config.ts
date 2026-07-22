@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 export default defineConfig({
+  base: '/GestionDeSaludSimple/',
   plugins: [
     react(),
     VitePWA({
@@ -18,8 +19,8 @@ export default defineConfig({
         theme_color: '#4CAF7C',
         background_color: '#FAF8F5',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
+        start_url: '/GestionDeSaludSimple/',
+        scope: '/GestionDeSaludSimple/',
         lang: 'es',
         dir: 'ltr',
         orientation: 'portrait',
