@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" role="img" aria-labelledby="t" preserveAspectRatio="xMidYMid meet">
+  <title id="t">Contextura gruesa: pulgar y dedo medio no se tocan</title>
+  <defs>
+    <style>
+      .stroke { stroke: #3A4A4F; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .flesh { fill: #FAF8F5; stroke: #3A4A4F; stroke-width: 1.5; }
+      .wrist-fill { fill: #A8E6C9; }
+    </style>
+  </defs>
+
+  <g transform="translate(60, 60)">
+    <path class="stroke" d="M -55 18 Q -50 -5 -42 -8 L 42 -8 Q 50 -5 55 18" opacity="0.25"/>
+    <rect class="wrist-fill" stroke="#3A4A4F" stroke-width="1.5" x="-38" y="-10" width="76" height="20" rx="10"/>
+    <path class="stroke" d="M -32 -10 Q -42 -32 -34 -52"/>
+    <circle class="flesh" cx="-34" cy="-52" r="5"/>
+    <path class="stroke" d="M 32 -10 Q 42 -32 34 -52"/>
+    <circle class="flesh" cx="34" cy="-52" r="5"/>
+    <line x1="-30" y1="-60" x2="-30" y2="-44" stroke="#F4B860" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <line x1="30"  y1="-60" x2="30"  y2="-44" stroke="#F4B860" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <path d="M -28 -52 Q 0 -68 28 -52" stroke="#F4B860" stroke-width="1.2" fill="none" stroke-dasharray="3 2" opacity="0.7"/>
+  </g>
+</svg>
