@@ -238,6 +238,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   }
 
   const isMatchPhase = matchPhase.kind !== 'idle' && matchPhase.kind !== 'loading'
+  const base = import.meta.env.BASE_URL
   const wristOptions = [
     {
       value: 'thin' as const,
@@ -245,7 +246,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.thin'),
       icon: (
         <img
-          src="/images/wrist-thin.svg"
+          src={`${base}images/wrist-thin.svg`}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
@@ -258,7 +259,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.normal'),
       icon: (
         <img
-          src="/images/wrist-normal.svg"
+          src={`${base}images/wrist-normal.svg`}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
@@ -271,7 +272,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.thick'),
       icon: (
         <img
-          src="/images/wrist-thick.svg"
+          src={`${base}images/wrist-thick.svg`}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
