@@ -12,6 +12,8 @@ Convenciones de tags:
 
 **Estado al cierre de este hito:** v0.12.0-fase12 (íconos y splash iOS hoja verde) + fix de base path para GitHub Pages aplicado (commit `8b32d4f`, gh-pages actualizado)
 
+**Estado final — proyecto cerrado para uso real (2026-07-22):** ✅ Listo para usar con clientes. Todas las fases del PLAN.md (1-12) cerradas, PWA en producción, admin funcional, 173 tests verde, documentación completa. Detalles en checkpoint "Sesión 2026-07-22" más abajo.
+
 **Última fase completada:** ✅ Fase 12 — Reemplazo de íconos iOS default (Apple/blank) por hoja verde #4CAF7C + splash iOS personalizado (fondo verde + hoja) — tag `v0.12.0-fase12`
 
 **Próxima acción del usuario:** ⏭️ Activar GitHub Pages en Settings (1 click: branch `gh-pages`, folder `/`). Todo lo técnico está listo — el workflow ya deployó el bundle correcto a `gh-pages` con paths `/GestionDeSaludSimple/` prefijados. Solo falta el click en Settings para que GitHub empiece a servir la URL `https://DonNicoData.github.io/GestionDeSaludSimple/`.
