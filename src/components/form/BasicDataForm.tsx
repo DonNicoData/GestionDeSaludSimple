@@ -13,6 +13,9 @@ import { calculateAge, todayIso } from '@/lib/age'
 import { combineName, normalizeName } from '@/lib/name'
 import { useFormDraftDB } from '@/hooks/useFormDraftDB'
 import { findClientMatch, type ClientMatch } from '@/db/repo'
+import wristThinUrl from '/images/wrist-thin.svg?url'
+import wristNormalUrl from '/images/wrist-normal.svg?url'
+import wristThickUrl from '/images/wrist-thick.svg?url'
 import type { Client, Gender, WristContexture } from '@/types'
 
 interface BasicDataFormProps {
@@ -238,7 +241,6 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
   }
 
   const isMatchPhase = matchPhase.kind !== 'idle' && matchPhase.kind !== 'loading'
-  const base = import.meta.env.BASE_URL
   const wristOptions = [
     {
       value: 'thin' as const,
@@ -246,7 +248,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.thin'),
       icon: (
         <img
-          src={`${base}images/wrist-thin.svg`}
+          src={wristThinUrl}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
@@ -259,7 +261,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.normal'),
       icon: (
         <img
-          src={`${base}images/wrist-normal.svg`}
+          src={wristNormalUrl}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
@@ -272,7 +274,7 @@ export function BasicDataForm({ onSubmit, onBack }: BasicDataFormProps) {
       description: t('basicForm.fields.wristContexture.descriptions.thick'),
       icon: (
         <img
-          src={`${base}images/wrist-thick.svg`}
+          src={wristThickUrl}
           alt=""
           className="h-full w-full object-contain"
           loading="lazy"
