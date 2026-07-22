@@ -20,6 +20,13 @@ Convenciones de tags:
 1. Imágenes de contextura de muñeca rotas (commit `b10b6ba`, refactor a `?url` imports en `0dd6c8b`)
 2. **Panel de control no funciona el login**: ver bloque "Bug crítico Panel de control" más abajo
 
+**Actualización 2026-07-22 (cierre del fix admin)**: ✅ El usuario confirmó que el login del admin funciona después de:
+- Agregar `VITE_ADMIN_PASSWORD` como GitHub Secret
+- Push del commit `4fd8f22` que triggereó un nuevo build con el secret inyectado
+- Verificación: `grep adminadmin` en `origin/gh-pages:assets/AdminApp-DgyFARP_.js` → presente
+
+También se mejoró el mensaje de error en AdminLoginPage (`src/admin/pages/AdminLoginPage.tsx`) para detectar si la app corre en GitHub Pages y dar instrucciones accionables si el secret falta.
+
 **Por qué no se activó Pages automáticamente:** la activación de GitHub Pages es una acción de UI en Settings (o requiere un token personal con `repo` scope via API, que no tengo disponible en este entorno). Receta completa en checkpoint "Sesión 2026-07-22" más abajo.
 
 ---
