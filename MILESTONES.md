@@ -864,14 +864,149 @@ kill <PID>                     # detener el server (PID aparece al arrancar)
 ### Resumen del estado actual
 
 - **Rama:** `main`
-- **Último commit:** refinamiento #3 (commit nuevo que elimina la Zona Peligrosa)
-- **Tag más reciente:** `v0.8.0-fase8` (Fase 8 cerrada el 2026-07-08; NO se mueve con refinamientos)
-- **Snapshot pre-sesión:** `pre-fase8-2026-07-08` (en `262e939`, fin de v0.7.3)
-- **Tests:** 173 verde (sin cambios en refinamientos)
+- **Último tag:** `v0.12.0-fase12` (íconos iOS hoja verde, publicado 2026-07-21)
+- **Commits recientes (sesión 2026-07-22 — deploy Pages):**
+  - `bd0b276` docs: cierre del fix admin
+  - `4fd8f22` feat: mensaje de error accionable en login + triggereó deploy con secret
+  - `a0dc172` fix(ci): inyectar VITE_ADMIN_PASSWORD desde GitHub Secrets
+  - `0dd6c8b` refactor: imágenes de muñeca con `?url` imports
+  - `b10b6ba` fix: prefijar paths de imágenes con BASE_URL
+  - `6a6c414` docs: actualización estado Pages
+  - `8b32d4f` build: base path `/GestionDeSaludSimple/` en vite.config.ts
+  - `869dcb2` fix: rsync inverso en `scripts/run.sh build`
+  - `2ed929c` docs: receta paso a paso Pages
+- **PWA en producción:** `https://DonNicoData.github.io/GestionDeSaludSimple/`
+- **GitHub Pages config:** Settings → Pages → Source = `Deploy from a branch` / Branch = `gh-pages` / Folder = `/ (root)`
+- **GitHub Secret configurado:** `VITE_ADMIN_PASSWORD` = `adminadmin` (inyectado en build de PWA + iOS)
+- **Workflows:**
+  - `.github/workflows/deploy-pwa.yml` — push a main (paths filter) → build → push a `gh-pages`
+  - `.github/workflows/ios-build.yml` — push a main (paths filter) o manual → build iOS → publish `ipa-dist`
+- **Tests:** 173 verde
 - **Typecheck:** 0 errores
-- **Build de producción:** OK (`dist/` generado, ~1.165 MB JS principal / gzip 374 kB + **51.05 kB** chunk admin lazy-loaded / gzip 17.5 kB — bajó -4.5 kB tras quitar la danger zone)
+- **Build de producción:** OK (`dist/` generado, ~1.165 MB JS principal / gzip 374 kB + ~51 kB chunk admin lazy-loaded / gzip 17.5 kB)
 - **Dev server:** http://localhost:5173 (puerto configurable en `vite.config.ts`)
 - **Diferido para fase futura:** Zona Peligrosa (wipe total). `clearAllData` y `getAdminStats` siguen en `repo.ts` listos para retomarse.
+
+---
+
+## 📚 Recetas para futuras modificaciones
+
+> Sección de referencia rápida. Si tenés que tocar algo del proyecto y no querés re-leer todo, empezá por acá.
+
+### Cambiar la contraseña de admin
+
+La contraseña se lee desde `import.meta.env.VITE_ADMIN_PASSWORD`. Vive en **dos lugares** que hay que mantener sincronizados:
+
+1. **Local** (`.env.local`, gitignored): editá el valor
+2. **Producción** (GitHub Secret): https://github.com/DonNicoData/GestionDeSaludSimple/settings/secrets/actions → editá `VITE_ADMIN_PASSWORD`
+
+Después de cambiar el secret, el workflow NO se re-dispara solo. Opciones para forzar:
+- Push de cualquier cambio a `src/**`, `vite.config.ts`, etc. (dispara workflow)
+- Manual: https://github.com/DonNicoData/GestionDeSaludSimple/actions/workflows/deploy-pwa.yml → "Run workflow" → branch `main`
+
+Verificación post-deploy:
+```bash
+curl -s "https://DonNicoData.github.io/GestionDeSaludSimple/assets/$(curl -s https://DonNicoData.github.io/GestionDeSaludSimple/ | grep -oE 'AdminApp-[A-Za-z0-9_]+\.js' | head -1)" | grep -o "$NUEVA_PASS"
+```
+
+### Cambiar mensajes / copy / traducciones
+
+- ES: `src/i18n/es.json` (448 líneas)
+- EN: `src/i18n/en.json` (448 líneas)
+- Mismas keys en ambos — TypeScript no valida el match, pero los tests fallan si faltan keys (ver `src/lib/__tests__/` si agregás tests)
+- Después de editar: `bash scripts/run.sh build && git push`
+
+### Cambiar paleta de colores / tema visual
+
+- Tokens de Tailwind: `tailwind.config.js` (paleta `salud.*` ya configurada con hex codes de `PLAN.md §3`)
+- CSS custom / variables: `src/index.css`
+- Para cambios profundos de marca: ver `PLAN.md §3` (Identidad visual) y `PLAN.md §3` (paleta)
+
+### Cambiar ícono / logo
+
+- **Source SVG (master):** `public/icons/leaf-source.svg`
+- **Regenerar PWA icons:** `bash scripts/generate-pwa-icons.mjs` → produce 192x192, 512x512, maskable en `public/icons/`
+- **Regenerar iOS icons:** `bash scripts/generate-ios-icons.mjs` → produce `AppIcon-512@2x.png` en `ios/App/App/Assets.xcassets/AppIcon.appiconset/`
+- **Regenerar Android icons:** `bash scripts/generate-android-icons.mjs` → produce `ic_launcher*` en `android/app/src/main/res/mipmap-*/`
+- Después de regenerar: commit + push → workflow re-deploya PWA con íconos nuevos
+
+### Agregar una nueva métrica
+
+Este es el cambio más invasivo. Toca 5+ archivos. Orden recomendado:
+
+1. **`src/types/index.ts`** — agregar el tipo a `MetricsOutput`
+2. **`src/lib/validation.ts`** — agregar el campo al schema Zod y el rango de validación (ver rangos en `PLAN.md §6`)
+3. **`src/lib/evaluator.ts`** — agregar la lógica de evaluación (rangos por edad/género + ajustes por contextura)
+4. **`src/lib/__tests__/evaluator.test.ts`** — agregar tests para la nueva métrica (buscar `// CONTEXTURE` para los tests de contextura)
+5. **`src/components/form/MetricsForm.tsx`** — agregar el input (label, help text, validación)
+6. **`src/components/results/MetricCard.tsx`** y/o `src/components/results/ResultsSummary.tsx` — agregar la card
+7. **`src/i18n/{es,en}.json`** — agregar labels, helps, mensajes
+8. **`src/lib/export/serialize.ts`** — agregar la columna al Excel/PDF
+9. **`src/lib/export/__tests__/serialize.test.ts`** — agregar test de export
+10. **Rebuild + tests:** `bash scripts/run.sh test && bash scripts/run.sh build`
+11. **Deploy:** commit + push
+
+### Cambiar la URL de GitHub Pages (renombrar repo)
+
+Si renombras el repo de `GestionDeSaludSimple` a otra cosa:
+
+1. **`vite.config.ts:7`** — cambiar `base: '/GestionDeSaludSimple/'` al nuevo nombre
+2. **`vite.config.ts:22-23`** — cambiar `manifest.start_url` y `manifest.scope` igual
+3. **`MILESTONES.md`** — actualizar todas las referencias
+4. **GitHub Settings → Pages** — verificar que el branch `gh-pages` siga funcionando (debería ser automático)
+5. Rebuild + push → el workflow re-deploya con los paths nuevos
+
+### Forzar re-deploy sin hacer cambios de código
+
+- **Opción A (manual):** https://github.com/DonNicoData/GestionDeSaludSimple/actions/workflows/deploy-pwa.yml → "Run workflow"
+- **Opción B (cambio mínimo):** touch un archivo en `src/` (ej: agregar un comentario en cualquier `.tsx`) → commit → push
+- **Opción C (rebuild iOS):** mismo workflow pero `ios-build.yml` (también tiene `workflow_dispatch:`)
+
+### Limpiar cache del SW en el celular (cuando algo se ve raro)
+
+Si la PWA instalada muestra comportamiento raro (assets viejos, login que falla cuando debería andar):
+
+- **iOS Safari:** cerrar app desde switch de apps + reabrir (fuerza SW update check)
+- **Android Chrome:** Settings → Apps → Salud 7 → Storage → Clear storage
+- **DevTools (desktop):** Application → Service Workers → "Unregister" + recargar
+
+Si el problema persiste, ver si la versión desplegada es la correcta:
+```bash
+git log origin/gh-pages --oneline -1
+curl -s -I "https://DonNicoData.github.io/GestionDeSaludSimple/sw.js" | grep -i "last-modified"
+```
+
+### Debug: ¿por qué X no funciona en Pages pero sí en local?
+
+Checklist sistemático:
+
+1. **¿El bundle tiene la config correcta?** `curl -s "https://DonNicoData.github.io/GestionDeSaludSimple/assets/$(curl -s https://DonNicoData.github.io/GestionDeSaludSimple/ | grep -oE 'index-[A-Za-z0-9_]+\.js' | head -1)" | head -c 5000` — buscar el símbolo relevante
+2. **¿El env var está en el bundle?** `grep -l "EXPECTED_VALUE" dist/assets/*.js` después de un build local con `.env.local`
+3. **¿El workflow inyectó el secret?** GitHub Actions → último run → step "Build PWA" → logs muestran `VITE_ADMIN_PASSWORD=***` si todo OK
+4. **¿Hay un service worker cacheando bundle viejo?** Ver sección anterior
+
+### Convenciones del proyecto (para mantener consistencia)
+
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`, `build:`, `ci:`)
+- **Tags:** `v0.X.0-faseN` para cierres de fase; el último es `v0.12.0-fase12`
+- **Branches de artifact:**
+  - `gh-pages` — bundle PWA servida por Pages (auto-deploy)
+  - `ipa-dist` — `.ipa` para sideloading iOS (auto-publish por ios-build.yml)
+  - `apk-dist` — `.apk` Android debug (auto-publish por workflow histórico, hoy no activo)
+- **i18n:** todos los textos nuevos van en AMBOS `es.json` y `en.json`. Tests cubren que las keys matcheen.
+- **Tests:** Vitest, 173 verde al cierre de esta sesión. Correr con `bash scripts/run.sh test`.
+- **No usar emojis** en UI (decisión de `PLAN.md §9`).
+- **No commits de archivos generados** (`dist/`, `node_modules/`, `android/app/build/`, etc.) — están en `.gitignore`.
+
+### Próximas features posibles (backlog)
+
+Ordenadas por valor/impacto:
+
+1. **Sincronización opcional entre dispositivos** (no en PLAN actual, sería nueva fase). Hoy todo es local.
+2. **Zona peligrosa restaurada** — `clearAllData` y `getAdminStats` siguen en `src/db/repo.ts` listos para reconectarse (ver checkpoint "post-fase8 polish").
+3. **Notificaciones push** — para recordar al cliente de su próxima medición.
+4. **Exportación a Google Sheets** — explícitamente fuera de alcance hasta nueva orden (`PLAN.md §12`).
+5. **Backup/restore de la DB local** — exportar todo el IndexedDB como JSON para no perder datos al cambiar de dispositivo.
 
 ---
 
