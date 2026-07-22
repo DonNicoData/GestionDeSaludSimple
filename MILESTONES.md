@@ -10,11 +10,13 @@ Convenciones de tags:
 
 ## 🟢 Punto de Control — Dónde estamos
 
-**Estado al cierre de este hito:** v0.12.0-fase12 (íconos y splash iOS hoja verde)
+**Estado al cierre de este hito:** v0.12.0-fase12 (íconos y splash iOS hoja verde) + fix de base path para GitHub Pages aplicado (commit `8b32d4f`, gh-pages actualizado)
 
 **Última fase completada:** ✅ Fase 12 — Reemplazo de íconos iOS default (Apple/blank) por hoja verde #4CAF7C + splash iOS personalizado (fondo verde + hoja) — tag `v0.12.0-fase12`
 
-**Próxima fase por hacer:** ⏭️ Deploy permanente PWA en GitHub Pages — receta completa paso a paso documentada en el checkpoint "Sesión 2026-07-22" más abajo (incluye fix de `base` en `vite.config.ts` + 1 click en Settings). Fase 13 (signing App Store) queda fuera de alcance por costo.
+**Próxima acción del usuario:** ⏭️ Activar GitHub Pages en Settings (1 click: branch `gh-pages`, folder `/`). Todo lo técnico está listo — el workflow ya deployó el bundle correcto a `gh-pages` con paths `/GestionDeSaludSimple/` prefijados. Solo falta el click en Settings para que GitHub empiece a servir la URL `https://DonNicoData.github.io/GestionDeSaludSimple/`.
+
+**Por qué no se activó Pages automáticamente:** la activación de GitHub Pages es una acción de UI en Settings (o requiere un token personal con `repo` scope via API, que no tengo disponible en este entorno). Receta completa en checkpoint "Sesión 2026-07-22" más abajo.
 
 ---
 
@@ -183,9 +185,34 @@ Confirmar que no queden con `ps aux | grep -E "http.server|serveo"`.
 
 #### Lo que NO se hace en esta sesión
 
-- **No se commitea el fix de `base` en `vite.config.ts`** — el usuario lo hace al seguir la receta (Paso 0).
+- **No se activa Pages en GitHub Settings** — eso requiere UI en el navegador (o un PAT con scope `repo` que no tengo disponible). Es el único paso manual que queda.
 - **No se mata el http.server / serveo** — los sigue usando para testing en lo que decide el deploy.
 - **No se toca el workflow `deploy-pwa.yml`** — ya está configurado para funcionar apenas se commitee el `base`.
+
+#### Activación ejecutada en esta misma sesión (commit `8b32d4f`)
+
+A pedido del usuario ("Adelante, hazlo por tu cuenta"), tomé la posta del Paso 0-3 de la receta y los ejecuté automáticamente. Solo queda el click en Settings.
+
+1. **Fix de `base` aplicado** en `vite.config.ts:7` y `vite.config.ts:22-23`:
+   - `base: '/GestionDeSaludSimple/'` (Vite prefijea todos los assets)
+   - `manifest.start_url: '/GestionDeSaludSimple/'`
+   - `manifest.scope: '/GestionDeSaludSimple/'`
+2. **Build local verificado** con `bash scripts/run.sh build`:
+   - `dist/index.html` tiene paths `/GestionDeSaludSimple/assets/...`, `/GestionDeSaludSimple/favicon.svg`, etc.
+   - `dist/manifest.webmanifest` tiene `start_url` y `scope` correctos
+   - `dist/registerSW.js` registra SW con path y scope correctos
+   - `dist/sw.js` precache usa paths relativos (workbox los resuelve contra el scope del SW)
+3. **Tests y typecheck OK**:
+   - `bash scripts/run.sh typecheck` → sin errores
+   - `bash scripts/run.sh test` → 173/173 passed en 14 archivos
+4. **Commit + push a main** → workflow `deploy-pwa.yml` se disparó
+5. **Workflow verificado post-deploy**:
+   - Rama `gh-pages` actualizada: SHA viejo `5819bcc` (2026-07-21) → SHA nuevo `f344a64` (2026-07-22 18:16:23 UTC)
+   - `https://raw.githubusercontent.com/.../gh-pages/index.html` ahora tiene `/GestionDeSaludSimple/` en todos los assets
+   - `https://raw.githubusercontent.com/.../gh-pages/manifest.webmanifest` tiene `start_url` y `scope` correctos
+   - Confirmado con `git ls-remote origin gh-pages` + `git show origin/gh-pages:...`
+
+**Lo único que falta del lado del usuario**: 1 click en https://github.com/DonNicoData/GestionDeSaludSimple/settings/pages → Branch: `gh-pages` → Save. En 1-2 minutos la URL `https://DonNicoData.github.io/GestionDeSaludSimple/` empieza a servir la PWA con HTTPS.
 
 #### Decisión de la sesión
 
