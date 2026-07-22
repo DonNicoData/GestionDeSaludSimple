@@ -16,6 +16,10 @@ Convenciones de tags:
 
 **Próxima acción del usuario:** ⏭️ Activar GitHub Pages en Settings (1 click: branch `gh-pages`, folder `/`). Todo lo técnico está listo — el workflow ya deployó el bundle correcto a `gh-pages` con paths `/GestionDeSaludSimple/` prefijados. Solo falta el click en Settings para que GitHub empiece a servir la URL `https://DonNicoData.github.io/GestionDeSaludSimple/`.
 
+**Actualización 2026-07-22 (cierre)**: Pages ya activado por el usuario. URL `https://DonNicoData.github.io/GestionDeSaludSimple/` funcionando. Pero durante la validación aparecieron 2 bugs adicionales que ya fueron fixeados:
+1. Imágenes de contextura de muñeca rotas (commit `b10b6ba`, refactor a `?url` imports en `0dd6c8b`)
+2. **Panel de control no funciona el login**: ver bloque "Bug crítico Panel de control" más abajo
+
 **Por qué no se activó Pages automáticamente:** la activación de GitHub Pages es una acción de UI en Settings (o requiere un token personal con `repo` scope via API, que no tengo disponible en este entorno). Receta completa en checkpoint "Sesión 2026-07-22" más abajo.
 
 ---
@@ -238,6 +242,55 @@ A pedido del usuario ("Adelante, hazlo por tu cuenta"), tomé la posta del Paso 
 - Cambio chico, autocontenido, sin riesgo de regresión (es solo un comando extra al final)
 - Beneficio inmediato cada vez que se hace un build local durante desarrollo
 - No depende de nada externo (no requiere GitHub, no requiere deploy)
+
+#### Bug crítico Panel de control (reportado por el usuario al validar Pages)
+
+**Síntoma reportado:** el usuario entra al login del admin (la pantalla carga bien), pero al tipear la contraseña siempre falla. La pantalla se queda "congelada" o devuelve error.
+
+**Causa raíz (diagnosticada en este checkpoint):** la contraseña de admin se lee con `import.meta.env.VITE_ADMIN_PASSWORD` en `src/admin/auth/hash.ts:59`. Esa variable existe en `.env.local` (gitignored, presente solo en la máquina de desarrollo), pero **no existe en el entorno de GitHub Actions** que buildea la PWA. Por lo tanto:
+- `getAdminPasswordFromEnv()` devuelve string vacío
+- `useAdminAuth.login()` hace `if (!expected) { setErrorKey('noPassword'); return false }` antes incluso de comparar la contraseña
+- El bundle deployado en `gh-pages` literalmente no tiene la contraseña hardcodeada
+
+Verificación: busqué `noPassword` en `origin/gh-pages:assets/AdminApp-DCLPMeb0.js` y aparece; busqué `VITE_ADMIN_PASSWORD` (o el valor esperado `adminadmin`) y no aparece como string — está como `""` literal, lo que confirma el diagnóstico.
+
+**Fix aplicado (próximos commits):**
+- `.github/workflows/deploy-pwa.yml` — agregada env al step de build:
+  ```yaml
+  - name: Build PWA
+    run: npm run build
+    env:
+      VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+  ```
+- `.github/workflows/ios-build.yml` — mismo cambio (el IPA también necesita la pass)
+- `.env.example` — nota explicando que CI usa GitHub Secrets, no el archivo local
+
+**Receta para el usuario (1 sola vez):**
+
+1. Ir a https://github.com/DonNicoData/GestionDeSaludSimple/settings/secrets/actions
+2. Click **"New repository secret"**
+3. Name: `VITE_ADMIN_PASSWORD`
+4. Secret: `adminadmin` (o el valor que prefieras; recordá actualizar también `.env.local` para que coincida)
+5. Click **"Add secret"**
+6. Disparar de nuevo el workflow: https://github.com/DonNicoData/GestionDeSaludSimple/actions/workflows/deploy-pwa.yml → "Run workflow" → branch `main`
+
+A partir del próximo deploy, el bundle tendrá la contraseña correcta y el login funcionará.
+
+**Por qué este bug se nos pasó:**
+- En local todo funciona porque `.env.local` está
+- En CI asumí implícitamente que "no había secretos" = "no había nada que inyectar"
+- El error `noPassword` tiene UI mensaje ("No hay contraseña configurada. Revisá el archivo .env") pero el usuario en Pages no tiene acceso a un .env
+- Lección: cualquier variable `VITE_*` que el código use **debe** tener un flujo explícito en CI (secret) o un fallback razonable
+
+**Otras cosas validadas en este checkpoint (no había bug):**
+- Service worker precachea `AdminApp-*.js` correctamente (lazy chunk disponible offline)
+- `AdminApp` lazy chunk URL es `https://DonNicoData.github.io/GestionDeSaludSimple/assets/AdminApp-DCLPMeb0.js` → 200 OK
+- `manifest.webmanifest` → 200 OK
+- `favicon.svg` → 200 OK
+- Routing es state-based (no URL), así que no hay problema de paths en SPA
+- Único `VITE_*` env usado en src: `VITE_ADMIN_PASSWORD` (no hay otros secretos colgados)
+- Único lazy chunk: `AdminApp` (no hay otros que puedan romperse)
+- Cero paths absolutos hardcodeados en src/ (los wrist ya se fixearon en commit anterior)
 
 ---
 

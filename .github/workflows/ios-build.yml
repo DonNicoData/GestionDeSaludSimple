@@ -50,6 +50,8 @@ jobs:
 
       - name: Build web bundle
         run: npm run build
+        env:
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
 
       - name: Sync assets to iOS
         run: npx cap sync ios
